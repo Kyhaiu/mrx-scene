@@ -62,7 +62,7 @@ namespace GUI
     }
   }
 
-  void GUI::components::object_inspector(models::Scene *scene)
+  void GUI::components::object_inspector(GUI::Controller *controller)
   {
     // std::cout << "Object options" << std::endl;
     // std::cout << "Content Region: " << ImGui::GetContentRegionAvail().x << " " << ImGui::GetContentRegionAvail().y << std::endl;
@@ -77,15 +77,20 @@ namespace GUI
       if (ImGui::BeginTabItem("Propriedades"))
       {
 
-        ImGui::InputFloat3("Posição", reinterpret_cast<float *>(&scene->getCamera()->position));
-        ImGui::InputFloat3("Alvo", reinterpret_cast<float *>(&scene->getCamera()->target));
-        ImGui::Checkbox("Rotacionar em torno do alvo", &scene->getCamera()->rotateAroundTarget);
+        auto camera = controller->getScene()->getCamera();
+
+        ImGui::InputFloat3("Posição", reinterpret_cast<float *>(&camera->position));
+        ImGui::InputFloat3("Alvo", reinterpret_cast<float *>(&camera->target));
+
+        ImGui::SliderAngle("Angulo de rotação", &controller->camera_rotation_sensitivity, 0.0f, 360.0f);
+
+        ImGui::Checkbox("Rotacionar em torno do alvo", &camera->rotateAroundTarget);
         ImGui::SameLine();
         components::HelpMarker("Flag que indica se a câmera deve rotacionar em torno do ponto alvo.\nUsada nas funções de rotação da câmera Yaw e Pitch");
-        ImGui::Checkbox("Travar visão", &scene->getCamera()->lockView);
+        ImGui::Checkbox("Travar visão", &camera->lockView);
         ImGui::SameLine();
         components::HelpMarker("Flag que previne a super rotação da câmera.\n Usada na função de rotação da câmera Pitch");
-        ImGui::Checkbox("Rotacionar o vetor up", &scene->getCamera()->rotateUp);
+        ImGui::Checkbox("Rotacionar o vetor up", &camera->rotateUp);
         ImGui::SameLine();
         components::HelpMarker("Flag que indica se a câmera deve rotacionar o vetor up (tipicamente usado em camera livre).\nUsada na função de rotação da câmera Pitch");
 
@@ -114,6 +119,10 @@ namespace GUI
     {
       for (auto face : object->getFaces())
       {
+
+        if (!face->getVisible())
+          continue;
+
         he = face->getHalfEdge();
         while (true)
         {
@@ -127,6 +136,8 @@ namespace GUI
           if (he == face->getHalfEdge())
             break;
         }
+
+        draw_list->AddText(ImVec2(face->getFaceCentroid(true).x, face->getFaceCentroid(true).y), sf::Color::Red.toInteger(), face->getId().c_str());
       }
     }
   }

@@ -1,5 +1,7 @@
 #include <math/math.hpp>
 
+#include <iostream>
+
 namespace math
 {
 
@@ -1153,18 +1155,16 @@ namespace math
   {
     core::Matrix result = {0};
 
-    float x = axis.x;
-    float y = axis.y;
-    float z = axis.z;
-    float length = sqrtf(x * x + y * y + z * z);
+    float x = axis.x, y = axis.y, z = axis.z;
 
-    if (length == 0.0f)
-      length = 1.0f;
-    if (length != 1.0f)
+    float lengthSquared = x * x + y * y + z * z;
+
+    if ((lengthSquared != 1.0f) && (lengthSquared != 0.0f))
     {
-      x /= length;
-      y /= length;
-      z /= length;
+      float ilength = 1.0f / sqrtf(lengthSquared);
+      x *= ilength;
+      y *= ilength;
+      z *= ilength;
     }
 
     float sinres = sinf(angle);
@@ -1172,24 +1172,23 @@ namespace math
     float t = 1.0f - cosres;
 
     result.m0 = x * x * t + cosres;
+    result.m1 = y * x * t + z * sinres;
+    result.m2 = z * x * t - y * sinres;
+    result.m3 = 0.0f;
+
+    result.m4 = x * y * t - z * sinres;
     result.m5 = y * y * t + cosres;
+    result.m6 = z * y * t + x * sinres;
+    result.m7 = 0.0f;
+
+    result.m8 = x * z * t + y * sinres;
+    result.m9 = y * z * t - x * sinres;
     result.m10 = z * z * t + cosres;
+    result.m11 = 0.0f;
 
-    float tmp1 = x * y * t;
-    float tmp2 = z * sinres;
-    result.m1 = tmp1 + tmp2;
-    result.m4 = tmp1 - tmp2;
-
-    tmp1 = x * z * t;
-    tmp2 = y * sinres;
-    result.m2 = tmp1 - tmp2;
-    result.m8 = tmp1 + tmp2;
-
-    tmp1 = y * z * t;
-    tmp2 = x * sinres;
-    result.m6 = tmp1 + tmp2;
-    result.m9 = tmp1 - tmp2;
-
+    result.m12 = 0.0f;
+    result.m13 = 0.0f;
+    result.m14 = 0.0f;
     result.m15 = 1.0f;
 
     return result;

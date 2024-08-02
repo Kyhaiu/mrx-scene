@@ -1,7 +1,30 @@
-// #include <gtest/gtest.h>
-// #include <core/vector.hpp>
-// #include <math/math.hpp>
-// #include <iostream>
+#include <gtest/gtest.h>
+#include <core/vector.hpp>
+#include <core/vertex.hpp>
+#include <math/math.hpp>
+#include <iostream>
+
+class MathTest : public ::testing::Test
+{
+protected:
+  core::Matrix identity = core::MatrixIdentity();
+
+  void SetUp() override {}
+};
+
+/**
+ * @brief Caso de teste para a função de matrix identidade.
+ */
+TEST_F(MathTest, matrix_identity)
+{
+
+  for (int i = 0; i < 4; i++)
+    for (int j = 0; j < 4; j++)
+      if (i == j)
+        EXPECT_EQ(identity(i, j), 1.0);
+      else
+        EXPECT_EQ(identity(i, j), 0.0);
+}
 
 // class MathVectorTest : public ::testing::Test
 // {

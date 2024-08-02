@@ -52,6 +52,7 @@
 
 #include <vector>
 #include <string>
+#include <limits> // Include this for std::numeric_limits
 
 namespace core
 {
@@ -85,6 +86,11 @@ namespace core
      */
     std::string id;
 
+    /**
+     * @brief Vetor normal da face
+     */
+    core::Vector3 normal;
+
   public:
     // Constructors and destructors
     Face();
@@ -105,18 +111,21 @@ namespace core
     core::HalfEdge *getHalfEdge() const;
     void setHalfEdge(core::HalfEdge *halfEdge);
 
-    bool isVisible() const;
+    bool getVisible() const;
     void setVisible(bool is_visible);
 
-    bool isHole() const;
+    bool getHole() const;
     void setHole(bool is_hole);
 
     std::string getId() const;
     void setId(const std::string &id);
 
     // Methods
-    bool isVisible();
     bool isHole();
+    bool isConterClockwise(core::Vector3 a, core::Vector3 b);
+    bool isVisible(const core::Vector3 camera_position);
+    void getFaceNormal();
+    core::Vector3 getFaceCentroid(bool screen_coords = false);
 
     // Friend functions
     friend std::ostream &operator<<(std::ostream &os, const Face &face);

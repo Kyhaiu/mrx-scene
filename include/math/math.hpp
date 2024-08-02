@@ -63,6 +63,8 @@
  **********************************************************************************************/
 #pragma once
 
+#include <math.h>
+
 #include <core/vector.hpp>
 
 namespace math
@@ -156,7 +158,7 @@ namespace math
   core::Matrix MatrixTranspose(core::Matrix mat);
   core::Matrix MatrixInvert(core::Matrix mat);
   core::Matrix MatrixTranslate(core::Vector3 vec);
-  core::Matrix MatrixRotate(float angle, core::Vector3 axis);
+  core::Matrix MatrixRotate(core::Vector3 axis, float angle);
   core::Matrix MatrixScale(core::Vector3 vec);
 
 } // namespace math

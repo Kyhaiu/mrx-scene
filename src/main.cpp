@@ -22,7 +22,6 @@ int main()
   sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
 
   sf::RenderWindow window(sf::VideoMode(desktopMode.width * 0.90, desktopMode.height * 0.90), "ImGui + SFML = <3", sf::Style::Default);
-
   GUI::UI *ui = new GUI::UI(window);
 
   sf::Clock deltaClock;

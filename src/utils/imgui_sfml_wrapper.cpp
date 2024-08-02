@@ -19,6 +19,8 @@ namespace utils
 
     draw_list->AddCircle({circle.getPosition().x, circle.getPosition().y}, 2.0f,
                          IM_COL32(255, 255, 255, 255), 0);
+
+    draw_list->AddText({circle.getPosition().x, circle.getPosition().y + 5}, IM_COL32(255, 255, 255, 255), vertex.getId().c_str());
   }
 
   /**

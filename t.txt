@@ -5,6 +5,8 @@ C++ builder community ed.
 Estrutura de dados
   - Half-edge
 
+Usar gestor de referencias do TeX
+
 
 Triangularização de Delaunay
 

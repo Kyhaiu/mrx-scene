@@ -42,8 +42,8 @@ namespace core
   {
     this->setVertex(face.getVertex());
     this->setHalfEdge(face.getHalfEdge());
-    this->setVisible(face.isVisible());
-    this->setHole(face.isHole());
+    this->setVisible(face.getVisible());
+    this->setHole(face.getHole());
     this->setId(face.getId());
   }
 
@@ -118,7 +118,7 @@ namespace core
    *
    * @return bool
    */
-  bool Face::isVisible() const
+  bool Face::getVisible() const
   {
     return this->is_visible;
   }
@@ -138,7 +138,7 @@ namespace core
    *
    * @return bool
    */
-  bool Face::isHole() const
+  bool Face::getHole() const
   {
     return this->is_hole;
   }
@@ -187,8 +187,8 @@ namespace core
   {
     this->setVertex(face.getVertex());
     this->setHalfEdge(face.getHalfEdge());
-    this->setVisible(face.isVisible());
-    this->setHole(face.isHole());
+    this->setVisible(face.getVisible());
+    this->setHole(face.getHole());
     this->setId(face.getId());
     return *this;
   }
@@ -216,13 +216,98 @@ namespace core
   // ------------------------------------------------------------------------------------------
 
   /**
-   * @brief Método para verificar se a face é visível
+   * @brief Função utilizada para saber o sentido dos vértices da face
    *
-   * TODO: Implementar método para verificar se a face é visível
-   * @return bool
+   * @param a  Vetor 1
+   * @param b Vetor 2
+   *
+   * @return bool - Retorna true se o sentido dos vértices for anti-horário e false se for horário
+   * @note O produto vetorial dos vetores A e B fornece a área do paralelogramo. Logo, metade disso é a área do triângulo.
+   *
+   * @note Se o valor da área for positivo, a face é orientada no sentido anti-horário. Caso contrário, é orientada no sentido horário.
    */
-  bool Face::isVisible()
+  bool Face::isConterClockwise(core::Vector3 a, core::Vector3 b)
   {
-    return false;
+    return (0.5 * math::MatrixDeterminant({1, 1, 1, a.x, a.y, 0, b.x, b.y, 0})) > 0;
+  }
+
+  /**
+   * @brief Verifica se a face é visível
+   *
+   * @param camera_position Posição da câmera
+   *
+   * @return bool
+   *
+   * @note A face é visível se o produto escalar entre o vetor normal da face e o vetor da face para a câmera for maior que 0
+   */
+  bool Face::isVisible(const core::Vector3 camera_position)
+  {
+    this->getFaceNormal();
+
+    core::Vector3 centroid = this->getFaceCentroid();
+
+    core::Vector3 face2camera = math::Vector3Normalize({camera_position.x - centroid.x,
+                                                        camera_position.y - centroid.y,
+                                                        camera_position.z - centroid.z});
+
+    return math::Vector3DotProduct(this->normal, face2camera) > 0;
+  }
+
+  /**
+   * @brief Calcula o vetor normal da face
+   *
+   * @return void - O vetor normal é armazenado no atributo normal da classe
+   */
+  void Face::getFaceNormal()
+  {
+    core::Vector3 p1, p2, p3;
+
+    core::HalfEdge *he = this->getHalfEdge();
+
+    p1 = he->getPrev()->getOrigin()->getVector().toVector3();
+    p2 = he->getOrigin()->getVector().toVector3();
+    p3 = he->getNext()->getOrigin()->getVector().toVector3();
+
+    core::Vector3 a = {p1.x - p2.x, p1.y - p2.y, p1.z - p2.z};
+    core::Vector3 b = {p3.x - p2.x, p3.y - p2.y, p3.z - p2.z};
+
+    // Vetor normal da face = B x A
+    this->normal = math::Vector3Normalize(math::Vector3CrossProduct(a, b));
+
+    // Se a face não estiver orientada no sentido anti-horário, inverte o vetor normal
+    if (!this->isConterClockwise(a, b))
+    {
+      this->normal.x *= -1;
+      this->normal.y *= -1;
+      this->normal.z *= -1;
+    }
+  }
+
+  /**
+   * @brief Obtém uma aproximação do centroide da face
+   *
+   * @param bool screen_coords Flag para indicar se o cálculo deve ser feito em coordenadas de tela
+   *
+   * @return core::Vector3 Vetor com a posição do centroide da face
+   */
+  core::Vector3 Face::getFaceCentroid(bool screen_coords)
+  {
+
+    core::Vector3 centroid = {0, 0, 0};
+
+    for (auto vertex : this->getVertex())
+    {
+      centroid.x += vertex->getVector().x;
+      centroid.y += vertex->getVector().y;
+      centroid.z += vertex->getVector().z;
+    }
+
+    int size = this->getVertex().size();
+
+    centroid.x /= size;
+    centroid.y /= size;
+    centroid.z /= size;
+
+    return centroid;
   }
 } // namespace core

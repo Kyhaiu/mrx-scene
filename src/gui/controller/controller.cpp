@@ -1,9 +1,10 @@
 #include <gui/controller/controller.hpp>
+#include <iostream>
 
 GUI::Controller::Controller(float canvasWidth, float canvasHeight)
 {
   this->scene = new models::Scene(
-      models::CreateCamera3D({0, 0, 20}, {0, 0, 2}, {0, 1, 0}, 18),
+      models::CreateCamera3D({10, 10, 20}, {1, 1, 2}, {0, 1, 0}, 18),
       {},
       // The canvas don't start at the left corner
       // If the layout changes it will be necessary to change this values
@@ -47,6 +48,8 @@ void GUI::Controller::setScene(models::Scene &_scene)
  */
 void GUI::Controller::updateScene()
 {
+  models::CameraOrbital(this->scene->getCamera(), this->camera_rotation_sensitivity);
+
   this->scene->rasterize();
 }
 
@@ -109,23 +112,15 @@ void GUI::Controller::handleEvents(const sf::Event &event, sf::RenderWindow &win
       // Update the mouse position
       this->mousePosition = sf::Mouse::getPosition(window);
 
-      float yaw = math::Vector2Angle({(float)this->mousePosition.x, (float)this->mousePosition.y}, {(float)this->startMousePosition.x, (float)this->startMousePosition.y});
-      float pitch = math::Vector2Angle({(float)this->mousePosition.x, (float)this->mousePosition.y}, {(float)this->startMousePosition.x, (float)this->startMousePosition.y});
-
-      std::cout << "Yaw: " << yaw << std::endl;
-      std::cout << "Pitch: " << pitch << std::endl;
+      // float pitch = math::Vector2Angle({(float)this->mousePosition.x, (float)this->mousePosition.y}, {(float)this->startMousePosition.x, (float)this->startMousePosition.y});
 
       // Use yaw and pitch to update the camera orientation
-      models::CameraPitch(
-          this->scene->getCamera(),
-          pitch,
-          this->scene->getCamera()->lockView,
-          this->scene->getCamera()->rotateAroundTarget,
-          this->scene->getCamera()->rotateUp);
-
-      models::CameraYaw(
-          this->scene->getCamera(),
-          yaw, this->scene->getCamera()->rotateAroundTarget);
+      // models::CameraPitch(
+      //     this->scene->getCamera(),
+      //     pitch,
+      //     this->scene->getCamera()->lockView,
+      //     this->scene->getCamera()->rotateAroundTarget,
+      //     this->scene->getCamera()->rotateUp);
 
       // Optionally reset start position to allow continuous rotation
       this->startMousePosition = this->mousePosition;

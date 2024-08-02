@@ -66,7 +66,7 @@ namespace GUI
       void render(models::Scene *scene);
     };
 
-    void object_inspector(models::Scene *scene);
+    void object_inspector(GUI::Controller *_controller);
     void viewport(models::Scene *scene);
     void performance_monitor();
 

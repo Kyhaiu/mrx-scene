@@ -143,21 +143,21 @@ TEST_F(MeshTest, cube_mesh_constructor)
   // Top Face
 
   // Bottom-left-back
-  core::Vertex *v0 = new core::Vertex(-1.0, -1.0, -1.0, 1.0, nullptr, "v0");
+  core::Vertex *v0 = new core::Vertex(-1.0, -1.0, -1.0, 1.0, nullptr, "v1");
   // Bottom-right-back
-  core::Vertex *v1 = new core::Vertex(1.0, -1.0, -1.0, 1.0, nullptr, "v1");
+  core::Vertex *v1 = new core::Vertex(1.0, -1.0, -1.0, 1.0, nullptr, "v2");
   // Bottom-right-front
-  core::Vertex *v2 = new core::Vertex(1.0, -1.0, 1.0, 1.0, nullptr, "v2");
+  core::Vertex *v2 = new core::Vertex(1.0, -1.0, 1.0, 1.0, nullptr, "v3");
   // Bottom-left-front
-  core::Vertex *v3 = new core::Vertex(-1.0, -1.0, 1.0, 1.0, nullptr, "v3");
+  core::Vertex *v3 = new core::Vertex(-1.0, -1.0, 1.0, 1.0, nullptr, "v4");
   // Top-left-back
-  core::Vertex *v4 = new core::Vertex(-1.0, 1.0, -1.0, 1.0, nullptr, "v4");
+  core::Vertex *v4 = new core::Vertex(-1.0, 1.0, -1.0, 1.0, nullptr, "v5");
   // Top-right-back
-  core::Vertex *v5 = new core::Vertex(1.0, 1.0, -1.0, 1.0, nullptr, "v5");
+  core::Vertex *v5 = new core::Vertex(1.0, 1.0, -1.0, 1.0, nullptr, "v6");
   // Top-right-front
-  core::Vertex *v6 = new core::Vertex(1.0, 1.0, 1.0, 1.0, nullptr, "v6");
+  core::Vertex *v6 = new core::Vertex(1.0, 1.0, 1.0, 1.0, nullptr, "v7");
   // Top-left-front
-  core::Vertex *v7 = new core::Vertex(-1.0, 1.0, 1.0, 1.0, nullptr, "v7");
+  core::Vertex *v7 = new core::Vertex(-1.0, 1.0, 1.0, 1.0, nullptr, "v8");
 
   std::vector<std::vector<int>> edges = {
       // Back Face
@@ -175,21 +175,26 @@ TEST_F(MeshTest, cube_mesh_constructor)
 
   models::Mesh *mesh = new models::Mesh({v0, v1, v2, v3, v4, v5, v6, v7}, edges, "cube");
 
-  for (auto &f : mesh->getFaces())
+  std::cout << "Face\tHalf-edge" << std::endl;
+  for (auto face : mesh->getFaces())
   {
-    core::HalfEdge *he = f->getHalfEdge();
-    // std::cout << "Face: " << f->getId() << std::endl;
-    std::cout << *f << std::endl;
-    while (true)
-    {
-      std::cout << he->getOrigin()->getId() << "->";
-      he = he->getNext();
+    std::cout << face->getId() << "\t" << face->getHalfEdge()->getId() << std::endl;
+  }
 
-      if (he == f->getHalfEdge())
-      {
-        break;
-      }
-    }
-    std::cout << std::endl;
+  std::cout << std::endl;
+  std::cout << std::endl;
+
+  std::cout << "Vertex\tCoordinate\tIncident edge" << std::endl;
+  for (auto vertex : mesh->getVertices())
+  {
+    std::cout << vertex->getId() << "\t(" << vertex->getX() << ", " << vertex->getY() << ", " << vertex->getZ() << ")\t" << vertex->getHalfEdge()->getId() << std::endl;
+  }
+
+  std::cout << std::endl;
+
+  std::cout << "Half-edge\tOrigin\tTwin\tIncident face\tNext\tPrev" << std::endl;
+  for (auto edge : mesh->getHalfEdges())
+  {
+    std::cout << edge->getId() << "\t\t" << edge->getOrigin()->getId() << "\t" << edge->getTwin()->getId() << "\t" << edge->getFace()->getId() << "\t\t" << edge->getNext()->getId() << "\t" << edge->getPrev()->getId() << std::endl;
   }
 }

@@ -1,7 +1,9 @@
 #pragma once
 
-#include <models/scene.hpp>
 #include <SFML/Graphics.hpp>
+
+#include <models/scene.hpp>
+#include <models/camera.hpp>
 
 namespace GUI
 {
@@ -43,7 +45,7 @@ namespace GUI
     /**
      * @brief Sensibilidade da rotação da camera
      */
-    float camera_rotation_sensitivity = 0.1f;
+    float camera_rotation_sensitivity = 0.01667f;
 
     // Constructor and Destructor
     Controller(float canvasWidth, float canvasHeight);

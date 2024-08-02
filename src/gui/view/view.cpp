@@ -15,9 +15,8 @@ GUI::UI::UI(sf::RenderWindow &_window) : window(_window)
 
   this->controller->updateScene();
 
-  this->window.setFramerateLimit(30);
-  this->window.setVerticalSyncEnabled(true); // Disable VSync
-  // ImGui::SFML::Init(_window);
+  this->window.setFramerateLimit(0);
+  this->window.setVerticalSyncEnabled(false); // Disable VSync
   if (!ImGui::SFML::Init(window))
     return;
 
@@ -93,13 +92,14 @@ void GUI::UI::insertOptions()
  */
 void GUI::UI::object_properties()
 {
-  GUI::components::object_inspector(this->controller->getScene());
+  GUI::components::object_inspector(this->controller);
 }
 
 void GUI::UI::render()
 {
   this->menu();
 
+  ImGui::SetNextWindowPos(ImVec2(0, 20));
   ImGui::SetNextWindowSize(ImVec2(ImGui::GetWindowSize().x * 0.2f, ImGui::GetWindowSize().y));
   ImGui::Begin("left-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
@@ -121,11 +121,10 @@ void GUI::UI::render()
   // std::cout << "Content Region: " << ImGui::GetContentRegionAvail().x << " " << ImGui::GetContentRegionAvail().y << std::endl;
   // std::cout << "Window Size: " << ImGui::GetWindowSize().x << " " << ImGui::GetWindowSize().y << std::endl;
 
+  this->controller->updateScene();
   this->viewport(this->controller->getScene());
 
   ImGui::End();
-
-  this->controller->updateScene();
 
   // ImGui::SetNextWindowPos(ImVec2((windowSize.x / 2) - 100, windowSize.y * 0.85f));
   // this->objectActions();

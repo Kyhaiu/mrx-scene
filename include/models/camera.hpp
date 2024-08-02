@@ -37,6 +37,7 @@
  *      - math::Vector3RotateByAxisAngle
  *      - math::Vector3Angle
  *      - math::Vector3Negate
+ *      - math::MatrixRotation
  *    <iostream>        - Required for: std::ostream, std::endl
  *
  *   CONTRIBUTORS:
@@ -61,8 +62,8 @@
  **********************************************************************************************/
 #pragma once
 
-#include <core/vector.hpp>
 #include <math/math.hpp>
+#include <core/vector.hpp>
 
 #include <iostream>
 
@@ -116,6 +117,8 @@ namespace models
   void CameraYaw(Camera3D *camera, float angle, bool rotateAroundTarget);
   void CameraPitch(Camera3D *camera, float angle, bool lockView, bool rotateAroundTarget, bool rotateUp);
   void CameraRoll(Camera3D *camera, float angle);
+
+  void CameraOrbital(Camera3D *camera, float orbitalSpeed);
 
   models::Camera3D *CreateCamera3D(core::Vector3 position, core::Vector3 target, core::Vector3 up, float d);
 

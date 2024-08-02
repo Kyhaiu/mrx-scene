@@ -35,7 +35,7 @@ namespace models
    */
   core::Vector3 getCameraUp(models::Camera3D *camera)
   {
-    return camera->up;
+    return math::Vector3Normalize(camera->up);
   }
 
   /**
@@ -237,6 +237,20 @@ namespace models
 
     // Rotacionar o vetor up em torno do vetor forward
     camera->up = math::Vector3RotateByAxisAngle(camera->up, forward, angle);
+  }
+
+  /**
+   * @brief Camera orbital, apenas orbita o objeto
+   *
+   * @param camera Ponteiro para a câmera
+   */
+  void CameraOrbital(models::Camera3D *camera, float orbitalSpeed)
+  {
+
+    core::Matrix rotation = math::MatrixRotate({0, 1, 0}, orbitalSpeed);
+    core::Vector3 view = math::Vector3Subtract(camera->position, camera->target);
+    view = math::Vector3Transform(view, rotation);
+    camera->position = math::Vector3Add(camera->target, view);
   }
 
   /**

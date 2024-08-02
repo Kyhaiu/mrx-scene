@@ -290,11 +290,13 @@ namespace models
    */
   void Scene::rasterize()
   {
-    core::Matrix sru_src_matrix = math::sru_to_src(this->getCamera()->position, this->getCamera()->target);
+    models::Camera3D *camera = this->getCamera();
+
+    core::Matrix sru_src_matrix = math::sru_to_src(camera->position, camera->target);
     core::Matrix projection_matrix = math::projection(
-        this->getCamera()->position,
-        this->getCamera()->target,
-        this->getCamera()->d);
+        camera->position,
+        camera->target,
+        camera->d);
     core::Matrix viewport_matrix = math::src_to_srt(
         this->getMinWindow(),
         this->getMinViewport(),
@@ -315,6 +317,11 @@ namespace models
         vectorResult = math::MatrixMultiplyVector(result, vertex->getVector());
 
         vertex->setVectorScreen({vectorResult.x / vectorResult.w, vectorResult.y / vectorResult.w, vectorResult.z});
+      }
+
+      for (auto face : object->getFaces())
+      {
+        face->setVisible(face->isVisible(camera->position));
       }
     }
   }

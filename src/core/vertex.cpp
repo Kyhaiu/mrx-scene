@@ -317,7 +317,7 @@ namespace core
 
   std::ostream &operator<<(std::ostream &os, const core::Vertex &v)
   {
-    os << v.id << ": (" << v.vector.x << ", \t" << v.vector.x << ", \t" << v.vector.x << ", \t" << v.vector.x << ")" << "\t" << v._vector_screen.x << ", \t" << v._vector_screen.y << ", \t" << v._vector_screen.z << std::endl;
+    os << v.id << ": (" << v.vector.x << ", \t" << v.vector.y << ", \t" << v.vector.z << ", \t" << v.vector.w << ")" << "\t" << v._vector_screen.x << ", \t" << v._vector_screen.y << ", \t" << v._vector_screen.z << std::endl;
     return os;
   }
 

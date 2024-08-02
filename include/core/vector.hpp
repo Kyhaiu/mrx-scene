@@ -69,8 +69,10 @@
  **********************************************************************************************/
 #pragma once
 
-#include <cmath>
 #include <core/common.hpp>
+
+#include <cmath>
+#include <iostream>
 
 namespace core
 {
@@ -91,12 +93,20 @@ namespace core
     float z;
   } Vector3;
 
+  std::ostream &operator<<(std::ostream &os, const Vector3 &v);
+
   typedef struct Vector4
   {
     float x;
     float y;
     float z;
     float w;
+
+    // Vector4toVector3 - Returns a Vector3 from a Vector4
+    Vector3 toVector3()
+    {
+      return {x, y, z};
+    }
   } Vector4;
 
   typedef struct Matrix
