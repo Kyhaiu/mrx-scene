@@ -29,11 +29,9 @@ namespace GUI
      */
     sf::Vector2i mousePosition;
     /**
-     * @brief Posição inicial do mouse
-     *
-     * @note Utilizado para calcular a diferença de posição do mouse
+     * @brief Posição do mouse no frame anterior
      */
-    sf::Vector2i startMousePosition;
+    sf::Vector2i lastMousePosition;
     /**
      * @brief Flag que indica se o mouse está pressionado
      */
@@ -61,6 +59,6 @@ namespace GUI
 
     // Events
     void on_hierarchy_item_selected(int index);
-    void handleEvents(const sf::Event &event, sf::RenderWindow &window);
+    void handleEvents(const sf::Event &event, sf::RenderWindow &window, sf::Time deltaTime);
   };
 }

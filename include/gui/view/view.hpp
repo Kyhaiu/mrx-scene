@@ -58,10 +58,6 @@ namespace GUI
      */
     sf::RenderWindow &window;
     /**
-     * @brief Relógio para controlar o tempo de execução
-     */
-    sf::Clock deltaClock;
-    /**
      * @brief Controlador da aplicação
      */
     Controller *controller;
@@ -75,6 +71,11 @@ namespace GUI
     components::HierarchyViewer *hierarchyViewer;
 
   public:
+    /**
+     * @brief Relógio para controlar o tempo de execução
+     */
+    sf::Clock deltaClock;
+
     UI(sf::RenderWindow &_window);
     ~UI();
 

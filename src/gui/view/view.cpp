@@ -147,5 +147,5 @@ void GUI::UI::handleEvents(const sf::Event &event, sf::RenderWindow &window)
   // ImGuiIO &io = ImGui::GetIO();
 
   // std::cout << "Mouse Pos: " << io.MousePos.x << " " << io.MousePos.y << std::endl;
-  this->controller->handleEvents(event, window);
+  this->controller->handleEvents(event, window, this->deltaClock.getElapsedTime());
 }

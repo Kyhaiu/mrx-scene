@@ -84,16 +84,6 @@ namespace GUI
 
         ImGui::SliderAngle("Angulo de rotação", &controller->camera_rotation_sensitivity, 0.0f, 360.0f);
 
-        ImGui::Checkbox("Rotacionar em torno do alvo", &camera->rotateAroundTarget);
-        ImGui::SameLine();
-        components::HelpMarker("Flag que indica se a câmera deve rotacionar em torno do ponto alvo.\nUsada nas funções de rotação da câmera Yaw e Pitch");
-        ImGui::Checkbox("Travar visão", &camera->lockView);
-        ImGui::SameLine();
-        components::HelpMarker("Flag que previne a super rotação da câmera.\n Usada na função de rotação da câmera Pitch");
-        ImGui::Checkbox("Rotacionar o vetor up", &camera->rotateUp);
-        ImGui::SameLine();
-        components::HelpMarker("Flag que indica se a câmera deve rotacionar o vetor up (tipicamente usado em camera livre).\nUsada na função de rotação da câmera Pitch");
-
         // models::CameraYaw(scene->getCamera(), *f * 3.14159, false);
         ImGui::EndTabItem();
       }

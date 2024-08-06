@@ -529,6 +529,16 @@ namespace math
     return result;
   }
 
+  /**
+   * @brief Divide dois vetores 3D.
+   *
+   * Esta função calcula a divisão de dois vetores tridimensionais(core::Vector3),
+   * `a` e `b`, e retorna o resultado como um novo vetor tridimensional.
+   *
+   * @param a O primeiro vetor tridimensional.
+   * @param b O segundo vetor tridimensional.
+   * @return O vetor tridimensional resultante da divisão.
+   */
   core::Vector3 Vector3Divide(core::Vector3 a, core::Vector3 b)
   {
     core::Vector3 result = {a.x / b.x, a.y / b.y, a.z / b.z};
@@ -1189,6 +1199,75 @@ namespace math
     result.m12 = 0.0f;
     result.m13 = 0.0f;
     result.m14 = 0.0f;
+    result.m15 = 1.0f;
+
+    return result;
+  }
+
+  /**
+   * @brief Obtém uma matriz de rotação em torno do eixo X.
+   *
+   * @param angle O ângulo de rotação.
+   * @return core::Matrix A matriz de rotação resultante.
+   */
+  core::Matrix MatrixRotateX(float angle)
+  {
+    core::Matrix result = {0};
+
+    float sinres = sinf(angle);
+    float cosres = cosf(angle);
+
+    result.m0 = 1.0f;
+    result.m5 = cosres;
+    result.m6 = -sinres;
+    result.m9 = sinres;
+    result.m10 = cosres;
+    result.m15 = 1.0f;
+
+    return result;
+  }
+
+  /**
+   * @brief Obtém uma matriz de rotação em torno do eixo Y.
+   *
+   * @param angle O ângulo de rotação.
+   * @return core::Matrix A matriz de rotação resultante.
+   */
+  core::Matrix MatrixRotateY(float angle)
+  {
+    core::Matrix result = {0};
+
+    float sinres = sinf(angle);
+    float cosres = cosf(angle);
+
+    result.m0 = cosres;
+    result.m2 = sinres;
+    result.m5 = 1.0f;
+    result.m8 = -sinres;
+    result.m10 = cosres;
+    result.m15 = 1.0f;
+
+    return result;
+  }
+
+  /**
+   * @brief Obtém uma matriz de rotação em torno do eixo Z.
+   *
+   * @param angle O ângulo de rotação.
+   * @return core::Matrix A matriz de rotação resultante.
+   */
+  core::Matrix MatrixRotateZ(float angle)
+  {
+    core::Matrix result = {0};
+
+    float sinres = sinf(angle);
+    float cosres = cosf(angle);
+
+    result.m0 = cosres;
+    result.m1 = -sinres;
+    result.m4 = sinres;
+    result.m5 = cosres;
+    result.m10 = 1.0f;
     result.m15 = 1.0f;
 
     return result;

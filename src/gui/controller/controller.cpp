@@ -48,7 +48,7 @@ void GUI::Controller::setScene(models::Scene &_scene)
  */
 void GUI::Controller::updateScene()
 {
-  models::CameraOrbital(this->scene->getCamera(), this->camera_rotation_sensitivity);
+  // models::CameraOrbital(this->scene->getCamera(), this->camera_rotation_sensitivity);
 
   this->scene->rasterize();
 }
@@ -74,8 +74,9 @@ void GUI::Controller::addObject(models::Mesh *object)
  *
  * @param event Evento do mouse ou do teclado
  * @param window Janela da aplicação
+ * @param deltaTime Tempo entre frames
  */
-void GUI::Controller::handleEvents(const sf::Event &event, sf::RenderWindow &window)
+void GUI::Controller::handleEvents(const sf::Event &event, sf::RenderWindow &window, sf::Time deltaTime)
 {
   if (event.type == sf::Event::Closed)
   {
@@ -90,8 +91,8 @@ void GUI::Controller::handleEvents(const sf::Event &event, sf::RenderWindow &win
   {
     if (event.mouseButton.button == sf::Mouse::Left)
     {
-      this->isMouseHeld = true;                                  // Mouse button is held down
-      this->startMousePosition = sf::Mouse::getPosition(window); // Get the initial position of the mouse
+      this->isMouseHeld = true;                                 // Mouse button is held down
+      this->lastMousePosition = sf::Mouse::getPosition(window); // Get the initial position of the mouse
       if (this->scene->getSelectedObject() == nullptr)
       {
         this->scene->selectObject(event.mouseButton.x, event.mouseButton.y);
@@ -112,18 +113,15 @@ void GUI::Controller::handleEvents(const sf::Event &event, sf::RenderWindow &win
       // Update the mouse position
       this->mousePosition = sf::Mouse::getPosition(window);
 
-      // float pitch = math::Vector2Angle({(float)this->mousePosition.x, (float)this->mousePosition.y}, {(float)this->startMousePosition.x, (float)this->startMousePosition.y});
+      // Get the deltas that describe how much the mouse got moved between frames
+      float deltaAngleX = ((2 * M_PI) / this->scene->getMaxViewport().x); // a movement from left to right = 2*PI = 360 deg
+      float deltaAngleY = (M_PI / this->scene->getMaxViewport().y);       // a movement from top to bottom = PI = 180 deg
+      float dx = (this->lastMousePosition.x - this->mousePosition.x) * deltaAngleX;
+      float dy = (this->lastMousePosition.y - this->mousePosition.y) * deltaAngleY;
 
-      // Use yaw and pitch to update the camera orientation
-      // models::CameraPitch(
-      //     this->scene->getCamera(),
-      //     pitch,
-      //     this->scene->getCamera()->lockView,
-      //     this->scene->getCamera()->rotateAroundTarget,
-      //     this->scene->getCamera()->rotateUp);
-
+      models::CameraArcball(this->scene->getCamera(), dx, dy);
       // Optionally reset start position to allow continuous rotation
-      this->startMousePosition = this->mousePosition;
+      this->lastMousePosition = this->mousePosition;
     }
   }
   else if (event.type == sf::Event::KeyPressed)

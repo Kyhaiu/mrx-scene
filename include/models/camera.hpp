@@ -65,6 +65,7 @@
 #include <math/math.hpp>
 #include <core/vector.hpp>
 
+#include <math.h>
 #include <iostream>
 
 namespace models
@@ -108,6 +109,7 @@ namespace models
   core::Vector3 getCameraTarget(Camera3D *camera);
   core::Vector3 getCameraUp(Camera3D *camera);
   core::Vector3 getCameraForward(Camera3D *camera);
+  core::Vector3 getCameraRight(Camera3D *camera);
 
   void CameraMoveForward(Camera3D *camera, float distance, bool moveInWorldPlane);
   void CameraMoveUp(Camera3D *camera, float distance);
@@ -119,8 +121,12 @@ namespace models
   void CameraRoll(Camera3D *camera, float angle);
 
   void CameraOrbital(Camera3D *camera, float orbitalSpeed);
+  void CameraArcball(Camera3D *camera, float deltaAngleX, float deltaAngleY);
 
   models::Camera3D *CreateCamera3D(core::Vector3 position, core::Vector3 target, core::Vector3 up, float d);
+
+  core::Vector3 GetSphericalCoordinates(core::Vector3 camera);
+  core::Vector3 GetCartesianCoordinates(core::Vector3 camera);
 
   std::ostream &operator<<(std::ostream &os, const Camera3D &camera);
 

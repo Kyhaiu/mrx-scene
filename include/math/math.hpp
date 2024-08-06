@@ -161,4 +161,7 @@ namespace math
   core::Matrix MatrixRotate(core::Vector3 axis, float angle);
   core::Matrix MatrixScale(core::Vector3 vec);
 
+  core::Matrix RotationMatrixX(float angle);
+  core::Matrix RotationMatrixY(float angle);
+  core::Matrix RotationMatrixZ(float angle);
 } // namespace math

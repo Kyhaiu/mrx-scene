@@ -51,6 +51,21 @@ namespace models
   }
 
   /**
+   * @brief Função que retorna o vetor que representa a direção para a direita da câmera
+   *
+   * @param camera Ponteiro para a câmera
+   *
+   * @return Vetor 3D com as coordenadas do vetor que representa a direção para a direita da câmera
+   */
+  core::Vector3 getCameraRight(models::Camera3D *camera)
+  {
+    core::Vector3 forward = models::getCameraForward(camera);
+    core::Vector3 right = math::Vector3CrossProduct(forward, camera->up);
+
+    return math::Vector3Normalize(right);
+  }
+
+  /**
    * @brief Função que move a câmera para frente
    *
    * @param camera Ponteiro para a câmera
@@ -98,9 +113,7 @@ namespace models
    */
   void CameraMoveRight(models::Camera3D *camera, float distance, bool moveInWorldPlane)
   {
-    core::Vector3 forward = models::getCameraForward(camera);
-    core::Vector3 right = math::Vector3CrossProduct(forward, camera->up);
-    right = math::Vector3Normalize(right);
+    core::Vector3 right = models::getCameraRight(camera);
 
     if (moveInWorldPlane)
     {
@@ -247,10 +260,34 @@ namespace models
   void CameraOrbital(models::Camera3D *camera, float orbitalSpeed)
   {
 
-    core::Matrix rotation = math::MatrixRotate({0, 1, 0}, orbitalSpeed);
+    core::Matrix rotation = math::MatrixRotate(math::Vector3Normalize({0, 1, 0}), orbitalSpeed);
     core::Vector3 view = math::Vector3Subtract(camera->position, camera->target);
     view = math::Vector3Transform(view, rotation);
     camera->position = math::Vector3Add(camera->target, view);
+  }
+
+  /**
+   * @brief Função que rotaciona a câmera em torno do ponto alvo
+   *
+   * @param camera Ponteiro para a câmera
+   * @param deltaAngleX Ângulo de rotação em torno do eixo X
+   * @param deltaAngleY Ângulo de rotação em torno do eixo Y
+   *
+   * @ref https://asliceofrendering.com/camera/2019/11/30/ArcballCamera/
+   */
+  void CameraArcball(models::Camera3D *camera, float deltaAngleX, float deltaAngleY)
+  {
+    core::Vector3 camera_position = camera->position;
+    core::Vector3 camera_direction = math::Vector3Subtract(camera_position, camera->target);
+
+    // Rotate the camera around the target
+    camera_position = math::Vector3Add(camera->target, math::Vector3Transform(camera_direction, math::MatrixRotate({1, 0, 0}, deltaAngleX)));
+    camera_direction = math::Vector3Subtract(camera_position, camera->target);
+
+    // Rotate the camera around the target
+    camera_position = math::Vector3Add(camera->target, math::Vector3Transform(camera_direction, math::MatrixRotate({0, 1, 0}, deltaAngleY)));
+
+    camera->position = camera_position;
   }
 
   /**
@@ -274,6 +311,49 @@ namespace models
     result->lockView = false;
     result->rotateAroundTarget = false;
     result->rotateUp = false;
+
+    return result;
+  }
+
+  /**
+   * @brief Função que retorna as coordenadas esféricas da câmera
+   *
+   * @param camera Posição da câmera
+   *
+   * @return core::Vector3 - Vetor 3D com as coordenadas esféricas da câmera
+   */
+  core::Vector3 GetSphericalCoordinates(core::Vector3 camera)
+  {
+    core::Vector3 result = {0};
+
+    float r = sqrtf(powf(camera.x, 2) + powf(camera.y, 2) + powf(camera.z, 2));
+    float phi = atan2f(camera.z / camera.y, camera.x);
+    float theta = acosf(camera.y / r);
+
+    if (camera.x < 0)
+      phi += M_PI;
+
+    result.x = r;
+    result.y = phi;
+    result.z = theta;
+
+    return result;
+  }
+
+  /**
+   * @brief Função que retorna as coordenadas cartesianas da câmera
+   *
+   * @param camera Ponteiro para a câmera
+   *
+   * @return core::Vector3 - Vetor 3D com as coordenadas cartesianas da câmera
+   */
+  core::Vector3 GetCartesianCoordinates(core::Vector3 camera)
+  {
+    core::Vector3 result = {0};
+
+    result.x = camera.x * cosf(camera.z) * cosf(camera.y);
+    result.y = camera.x * sinf(camera.z);
+    result.z = camera.x * cosf(camera.z) * sinf(camera.y);
 
     return result;
   }

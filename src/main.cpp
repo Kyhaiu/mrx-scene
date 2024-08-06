@@ -24,8 +24,6 @@ int main()
   sf::RenderWindow window(sf::VideoMode(desktopMode.width * 0.90, desktopMode.height * 0.90), "ImGui + SFML = <3", sf::Style::Default);
   GUI::UI *ui = new GUI::UI(window);
 
-  sf::Clock deltaClock;
-
   while (window.isOpen())
   {
     sf::Event event{};
@@ -34,9 +32,7 @@ int main()
       ui->handleEvents(event, window);
     }
 
-    sf::Time deltaTime = deltaClock.restart();
-
-    ImGui::SFML::Update(window, deltaTime);
+    ImGui::SFML::Update(window, ui->deltaClock.restart());
 
     ui->render();
 

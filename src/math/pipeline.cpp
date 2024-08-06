@@ -89,6 +89,23 @@ namespace math
     return result;
   }
 
+  /**
+   * @brief Obtém a matriz de transformação de SRC para SRT.
+   *
+   * A matriz de transformação obtida é dada por:
+   *
+   * | (u_max - u_min)/(x_max - x_min)  0  0  -x_min *((u_max - u_min)/(x_max - x_min)) + u_min |
+   * | 0  (v_min - v_max)/(y_max - y_min)  0  y_min * ((v_max - v_min)/(y_max - y_min)) + v_max |
+   * | 0  0  1  0 |
+   * | 0  0  0  1 |
+   *
+   * @param min_window Vetor 2D que representa o canto inferior esquerdo da janela
+   * @param min_viewport Vetor 2D que representa o canto inferior esquerdo da viewport
+   * @param max_window Vetor 2D que representa o canto superior direito da janela
+   * @param max_viewport Vetor 2D que representa o canto superior direito da viewport
+   * @param reflected Flag que indica se a transformação é refletida
+   * @return Matriz de transformação de SRC para SRT
+   */
   core::Matrix src_to_srt(const core::Vector2 min_window, const core::Vector2 min_viewport, const core::Vector2 max_window, const core::Vector2 max_viewport, bool reflected = false)
   {
     float u_min = min_viewport.x;
