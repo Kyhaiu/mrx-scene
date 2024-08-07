@@ -84,6 +84,11 @@ namespace core
     MRX_VECTOR3_TYPE _vector_screen;
 
     /**
+     * @brief Flag para indicar se o vértice foi clipado
+     */
+    bool clipped = false;
+
+    /**
      * @brief Ponteiro para a meia aresta que tem o vértice como origem
      */
     core::HalfEdge *half_edge;
@@ -109,8 +114,11 @@ namespace core
     MRX_VECTOR4_TYPE getVector() const;
     void setVector(const MRX_VECTOR4_TYPE &vector);
 
-    MRX_VECTOR3_TYPE getVectorScreen() const;
+    MRX_VECTOR3_TYPE getVectorScreen();
     void setVectorScreen(const MRX_VECTOR3_TYPE &vector);
+
+    bool getClipped() const;
+    void setClipped(bool clipped);
 
     float getX(bool screen_coord = false) const;
     void setX(float x, bool screen_coord = false);

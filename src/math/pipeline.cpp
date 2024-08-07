@@ -1,6 +1,8 @@
 #include <math/pipeline.hpp>
 #include <math/math.hpp>
 
+#include <iostream>
+
 namespace math
 {
 
@@ -144,5 +146,135 @@ namespace math
     }
 
     return result;
+  }
+
+  //-------------------------------------------------------------------------------------------------
+  // Clipagem de Linhas
+  //-------------------------------------------------------------------------------------------------
+
+  /**
+   * @brief Calcula o código de saída de um ponto em relação a uma janela de recorte.
+   *
+   * @param p Ponto a ser verificado
+   * @param min Canto inferior esquerdo da janela de recorte
+   * @param max Canto superior direito da janela de recorte
+   * @return Código de saída do ponto
+   *
+   * @note O código de saída é uma combinação de bits que indicam a posição do ponto em relação à janela de recorte.
+   * @note O código de saída é calculado da seguinte forma:
+   * @note 0000: Ponto dentro da janela
+   * @note 0001: Ponto à esquerda da janela
+   * @note 0010: Ponto à direita da janela
+   * @note 0100: Ponto abaixo da janela
+   * @note 1000: Ponto acima da janela
+   */
+  int compute_outcode(core::Vector3 p, core::Vector2 min, core::Vector2 max)
+  {
+    int code = INSIDE;
+
+    if (p.x < min.x) // to the left of rectangle
+    {
+      code |= LEFT;
+    }
+    else if (p.x > max.x) // to the right of rectangle
+    {
+      code |= RIGHT;
+    }
+
+    if (p.y < min.y) // below the rectangle
+    {
+      code |= BOTTOM;
+    }
+    else if (p.y > max.y) // above the rectangle
+    {
+      code |= TOP;
+    }
+
+    return code;
+  }
+
+  /**
+   * @brief Recorta uma linha em relação a uma janela de recorte.
+   *
+   * @param p1 Ponto inicial da linha
+   * @param p2 Ponto final da linha
+   * @param min Canto inferior esquerdo da janela de recorte
+   * @param max Canto superior direito da janela de recorte
+   *
+   * @return Vetor 4D com os pontos recortados x, y = P1 e z, w = P2
+   *
+   * @note A função recorta uma linha em relação a uma janela de recorte.
+   * @note A função modifica os pontos p1 e p2 para que a linha seja recortada.
+   * @note O algoritmo utilizado é o de Cohen-Sutherland.
+   * @note Se a linha estiver inteiramente fora da janela, os pontos são modificados para (-1, -1).
+   */
+  core::Vector4 clip_line(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max)
+  {
+    // Computa os códigos das extremidades da linha
+    int P = compute_outcode(p1, min, max);
+    int Q = compute_outcode(p2, min, max);
+
+    while (true)
+    {
+      if (P == 0 && Q == 0) // Ambos os pontos estão dentro da janela
+      {
+        break;
+      }
+      else if (P & Q) // Ambos os pontos estão fora da janela
+      {
+        // Valores usados para indicar que a linha não está dentro da janela e não precisa ser desenhada
+        p1.x = -1.0f;
+        p1.y = -1.0f;
+        p2.x = -1.0f;
+        p2.y = -1.0f;
+        break;
+      }
+      else
+      {
+        // Alguns dos segmento está dentro da janela
+        int outcode = Q > P ? Q : P;
+        float x, y;
+
+        // Encontra o ponto de interseção
+        // Usando a fórmula y = y1 + coeficiente de inclinação * (x - x1)
+        // x = x1 + (1 / coeficiente de inclinação) * (y - y1)
+        if (outcode & TOP) // O Ponto está acima da janela
+        {
+          x = p1.x + (p2.x - p1.x) * (max.y - p1.y) / (p2.y - p1.y);
+          y = max.y;
+        }
+        else if (outcode & BOTTOM) // O Ponto está abaixo da janela
+        {
+          x = p1.x + (p2.x - p1.x) * (min.y - p1.y) / (p2.y - p1.y);
+          y = min.y;
+        }
+        else if (outcode & RIGHT) // O Ponto está à direita da janela
+        {
+          y = p1.y + (p2.y - p1.y) * (max.x - p1.x) / (p2.x - p1.x);
+          x = max.x;
+        }
+        else if (outcode & LEFT) // O Ponto está à esquerda da janela
+        {
+          y = p1.y + (p2.y - p1.y) * (min.x - p1.x) / (p2.x - p1.x);
+          x = min.x;
+        }
+
+        // Move o ponto externo para a interseção
+        if (outcode == P)
+        {
+          p1.x = x;
+          p1.y = y;
+          P = compute_outcode(p1, min, max);
+        }
+        else
+        {
+          p2.x = x;
+          p2.y = y;
+          Q = compute_outcode(p2, min, max);
+        }
+      }
+    }
+
+    return {p1.x, p1.y, p2.x, p2.y};
   }
 } // namespace math

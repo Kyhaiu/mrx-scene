@@ -51,7 +51,18 @@
 
 namespace math
 {
+  // Funções do Pipeline de Visualização 3D	- Adair Santa Catarina
   core::Matrix sru_to_src(const core::Vector3 &vrp, const core::Vector3 fp);
   core::Matrix projection(const core::Vector3 &vrp, const core::Vector3 p, const float d);
   core::Matrix src_to_srt(const core::Vector2 min_window, const core::Vector2 min_viewport, const core::Vector2 max_window, const core::Vector2 max_viewport, bool reflected);
+
+  // Clipagem de Linhas
+#define INSIDE 0b0000 // 0000
+#define LEFT 0b0001   // 0001
+#define RIGHT 0b0010  // 0010
+#define BOTTOM 0b0100 // 0100
+#define TOP 0b1000    // 1000
+
+  int compute_outcode(core::Vector3 p, core::Vector2 min, core::Vector2 max);
+  core::Vector4 clip_line(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max);
 } // namespace math

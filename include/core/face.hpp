@@ -92,6 +92,14 @@ namespace core
     core::Vector3 normal;
 
   public:
+    /**
+     * @brief Vetor que armazena os vértices da face após o clipping
+     *
+     * @note O clipping é feito em coordenadas de tela
+     * @note A ordem no sentido anti-horário é preservada neste vetor
+     */
+    std::vector<core::Vector2> clipped_vertex;
+
     // Constructors and destructors
     Face();
     ~Face();

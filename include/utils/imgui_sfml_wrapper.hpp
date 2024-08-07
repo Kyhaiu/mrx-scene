@@ -46,9 +46,11 @@
 #include <SFML/Graphics.hpp>
 
 #include <core/vertex.hpp>
+#include <math/pipeline.hpp>
+#include <vector>
 
 namespace utils
 {
   void DrawVertex(ImDrawList *draw_list, const core::Vertex &vertex);
-  void DrawLine(ImDrawList *draw_list, const core::Vertex &v1, const core::Vertex &v2, const sf::Color &color);
+  void DrawLine(ImDrawList *draw_list, const std::vector<core::Vector2> vertexes, const sf::Color &color);
 }

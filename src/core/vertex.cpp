@@ -106,7 +106,7 @@ namespace core
    *
    * @return MRX_VECTOR3_TYPE
    */
-  MRX_VECTOR3_TYPE Vertex::getVectorScreen() const
+  MRX_VECTOR3_TYPE Vertex::getVectorScreen()
   {
     return this->_vector_screen;
   }

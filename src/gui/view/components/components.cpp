@@ -64,9 +64,6 @@ namespace GUI
 
   void GUI::components::object_inspector(GUI::Controller *controller)
   {
-    // std::cout << "Object options" << std::endl;
-    // std::cout << "Content Region: " << ImGui::GetContentRegionAvail().x << " " << ImGui::GetContentRegionAvail().y << std::endl;
-    // std::cout << "Window Size: " << ImGui::GetWindowSize().x << " " << ImGui::GetWindowSize().y << std::endl;
 
     ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetContentRegionAvail().y + 15));
     ImGui::SetNextWindowSize(ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y));
@@ -101,9 +98,11 @@ namespace GUI
     // this can be used to get the position of the window
     // ImVec2 window_pos = ImGui::GetWindowPos();
 
-    // std::cout << "Window Pos:" << window_pos.x << " " << window_pos.y << std::endl;
-
     core::HalfEdge *he = nullptr;
+
+    core::Vector2 min_viewport = scene->getMinViewport();
+    core::Vector2 max_viewport = scene->getMaxViewport();
+    core::Vector4 clipped_vertex = {0};
 
     for (auto object : scene->getObjects())
     {
@@ -114,18 +113,30 @@ namespace GUI
           continue;
 
         he = face->getHalfEdge();
+
+        // Necessário limpar o vetor pois a cada frame ele é preenchido novamente
+        // TODO: Descobrir uma maneira de não precisar limpar o vetor se não houver mudanças
+        face->clipped_vertex.clear();
+
         while (true)
         {
-          utils::DrawVertex(draw_list, *he->getOrigin());
 
-          object->isSelected()
-              ? utils::DrawLine(draw_list, *he->getOrigin(), *he->getNext()->getOrigin(), sf::Color::Red)
-              : utils::DrawLine(draw_list, *he->getOrigin(), *he->getNext()->getOrigin(), sf::Color::White);
+          clipped_vertex = math::clip_line(he->getOrigin()->getVectorScreen(), he->getNext()->getOrigin()->getVectorScreen(), min_viewport, max_viewport);
+          // x, y = Origin
+          face->clipped_vertex.push_back({clipped_vertex.x, clipped_vertex.y});
+          // z, w = Next
+          face->clipped_vertex.push_back({clipped_vertex.z, clipped_vertex.w});
+
+          utils::DrawVertex(draw_list, *he->getOrigin());
 
           he = he->getNext();
           if (he == face->getHalfEdge())
             break;
         }
+
+        object->isSelected()
+            ? utils::DrawLine(draw_list, face->clipped_vertex, sf::Color::Red)
+            : utils::DrawLine(draw_list, face->clipped_vertex, sf::Color::White);
 
         draw_list->AddText(ImVec2(face->getFaceCentroid(true).x, face->getFaceCentroid(true).y), sf::Color::Red.toInteger(), face->getId().c_str());
       }
@@ -143,10 +154,6 @@ namespace GUI
 
   void GUI::components::HierarchyViewer::render(models::Scene *scene)
   {
-    // std::cout << "Hierarchy" << std::endl;
-    // std::cout << "Content Region: " << ImGui::GetContentRegionAvail().x << " " << ImGui::GetContentRegionAvail().y << std::endl;
-    // std::cout << "Window Size: " << ImGui::GetWindowSize().x << " " << ImGui::GetWindowSize().y << std::endl;
-
     ImGui::SetNextWindowSize(ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y));
     ImGui::Begin("hierarchy-component-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
     if (ImGui::TreeNode("Hierarquia da cena"))

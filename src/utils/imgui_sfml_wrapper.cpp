@@ -27,17 +27,27 @@ namespace utils
    * @brief Desenha uma linha na janela
    *
    * @param window Referência para a janela onde a linha será desenhada
-   * @param v1 Vértice inicial da linha
-   * @param v2 Vértice final da linha
+   * @param vertexes Vetor de vértices que compõem a face
    * @param color Cor da linha
    */
-  void DrawLine(ImDrawList *draw_list, const core::Vertex &v1, const core::Vertex &v2, const sf::Color &color)
+  void DrawLine(ImDrawList *draw_list, const std::vector<core::Vector2> vertexes, const sf::Color &color)
   {
-    sf::Vertex line[] = {
-        sf::Vertex(sf::Vector2f(v1.getX(true), v1.getY(true))),
-        sf::Vertex(sf::Vector2f(v2.getX(true), v2.getY(true)))};
-    draw_list->AddLine({line[0].position.x, line[0].position.y},
-                       {line[1].position.x, line[1].position.y},
-                       ImU32(color.toInteger()), 1.0f);
+    int vertex_length = vertexes.size();
+    for (size_t i = 0; i < vertex_length - 1; i++)
+    {
+      // Se o vértice for válido
+      if (vertexes[i].x != -1 && vertexes[i + 1].x != -1)
+      {
+        sf::Vertex line[] = {
+            sf::Vertex(sf::Vector2f(vertexes[i].x, vertexes[i].y)),
+            // Se for o último vértice, fecha a linha com o primeiro
+            sf::Vertex(sf::Vector2f(vertexes[i + 1].x,
+                                    vertexes[i + 1].y))};
+
+        draw_list->AddLine({line[0].position.x, line[0].position.y},
+                           {line[1].position.x, line[1].position.y},
+                           ImU32(color.toInteger()), 1.0f);
+      }
+    }
   }
 } // namespace utils

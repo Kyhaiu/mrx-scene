@@ -6,7 +6,7 @@ GUI::UI::UI(sf::RenderWindow &_window) : window(_window)
 {
   sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
 
-  float canvasWidth = (desktopMode.width * 0.9f) * 0.8f;
+  float canvasWidth = (desktopMode.width * 0.9f);
   float canvasHeight = (desktopMode.height * 0.9f);
 
   this->controller = new GUI::Controller(canvasWidth, canvasHeight);
@@ -118,9 +118,6 @@ void GUI::UI::render()
   ImGui::SetNextWindowSize(ImVec2(ImGui::GetWindowSize().x * 0.8f, ImGui::GetWindowSize().y));
   ImGui::Begin("viewport", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
-  // std::cout << "Content Region: " << ImGui::GetContentRegionAvail().x << " " << ImGui::GetContentRegionAvail().y << std::endl;
-  // std::cout << "Window Size: " << ImGui::GetWindowSize().x << " " << ImGui::GetWindowSize().y << std::endl;
-
   this->controller->updateScene();
   this->viewport(this->controller->getScene());
 
@@ -144,8 +141,5 @@ void GUI::UI::handleEvents(const sf::Event &event, sf::RenderWindow &window)
 {
   ImGui::SFML::ProcessEvent(window, event);
 
-  // ImGuiIO &io = ImGui::GetIO();
-
-  // std::cout << "Mouse Pos: " << io.MousePos.x << " " << io.MousePos.y << std::endl;
   this->controller->handleEvents(event, window, this->deltaClock.getElapsedTime());
 }
