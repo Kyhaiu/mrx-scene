@@ -373,8 +373,8 @@ namespace models
 
   void Scene::initializeBuffers()
   {
-    int width = this->getMaxViewport().x;
-    int height = this->getMaxViewport().y;
+    int width = static_cast<int>(this->getMaxViewport().x);
+    int height = static_cast<int>(this->getMaxViewport().y);
 
     this->z_buffer = std::vector<float>(width * height);
     this->color_buffer = std::vector<sf::Color>(width * height);

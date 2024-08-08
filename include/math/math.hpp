@@ -74,7 +74,7 @@ namespace math
 // Defines and macros
 //----------------------------------------------------------------------------------
 #ifndef PI
-#define PI 3.14159265358979323846
+#define PI 3.14159265358979323846f
 #endif
 
 #ifndef EPSILON

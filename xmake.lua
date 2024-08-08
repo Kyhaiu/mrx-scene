@@ -1,14 +1,21 @@
 set_languages("c++20")
-set_toolchains("clang")
-set_toolset("cc", "clang")
-set_toolset("cxx", "clang")
 
-add_rules("mode.debug", "mode.release")
+if is_plat("windows") then
+  set_toolchains("msvc")
+  add_cxflags("/std:c++20", "/wd4267", { force = true })
+  add_links("opengl32") -- Link against OpenGL on Windows
+else
+  set_toolchains("clang")
+  set_toolset("cc", "clang")
+  set_toolset("cxx", "clang")
+  add_cxflags("-std=c++20", { force = true })
+  add_links("GL")
+end
 
 set_warnings("all", "error")
+add_rules("mode.debug", "mode.release")
 
 set_optimize("fastest")
-add_cxflags("-std=c++20", { force = true })
 
 add_includedirs("include")
 
@@ -43,16 +50,7 @@ target("gui/imgui-sfml")
   add_deps("gui/imgui")
   add_files("include/gui/imgui-sfml/*.cpp")
   add_packages(table.unpack(project_libs))
-  add_links("GL")
   set_targetdir("./app")
-
-  
--- target("gui/imguizmo")
---   set_kind("static")
---   add_cxflags("-Wno-unused-function", "-Wno-unused-variable")
---   add_files("include/gui/imguizmo/*.cpp")
---   add_packages(table.unpack(project_libs))
---   set_targetdir("./app")
 
 target("gui/view")
   set_kind("static")
@@ -88,7 +86,6 @@ target("app")
   add_deps("models")
   add_deps("gui/imgui")
   add_deps("gui/imgui-sfml")
-  -- add_deps("gui/imguizmo")
   add_deps("gui/view")
   add_deps("shapes")
   add_deps("utils")
@@ -106,71 +103,36 @@ target("app_test")
   add_deps("utils")
   set_targetdir("./app")
 
---
 -- If you want to known more usage about xmake, please see https://xmake.io
---
--- ## FAQ
---
+
+-- FAQ
 -- You can enter the project directory firstly before building project.
---
---   $ cd projectdir
---
+-- $ cd projectdir
 -- 1. How to build project?
---
---   $ xmake
---
+-- $ xmake
 -- 2. How to configure project?
---
---   $ xmake f -p [macosx|linux|iphoneos ..] -a [x86_64|i386|arm64 ..] -m [debug|release]
---
+-- $ xmake f -p [macosx|linux|iphoneos ..] -a [x86_64|i386|arm64 ..] -m [debug|release]
 -- 3. Where is the build output directory?
---
---   The default output directory is `./build` and you can configure the output directory.
---
---   $ xmake f -o outputdir
---   $ xmake
---
+-- The default output directory is `./build` and you can configure the output directory.
+-- $ xmake f -o outputdir
+-- $ xmake
 -- 4. How to run and debug target after building project?
---
---   $ xmake run [targetname]
---   $ xmake run -d [targetname]
---
+-- $ xmake run [targetname]
+-- $ xmake run -d [targetname]
 -- 5. How to install target to the system directory or other output directory?
---
---   $ xmake install
---   $ xmake install -o installdir
---
+-- $ xmake install
+-- $ xmake install -o installdir
 -- 6. Add some frequently-used compilation flags in xmake.lua
---
 -- @code
---    -- add debug and release modes
---    add_rules("mode.debug", "mode.release")
---
---    -- add macro defination
---    add_defines("NDEBUG", "_GNU_SOURCE=1")
---
---    -- set warning all as error
---    set_warnings("all", "error")
---
---    -- set language: c99, c++11
---    set_languages("c99", "c++11")
---
---    -- set optimization: none, faster, fastest, smallest
---    set_optimize("fastest")
---
---    -- add include search directories
---    add_includedirs("/usr/include", "/usr/local/include")
---
---    -- add link libraries and search directories
---    add_links("tbox")
---    add_linkdirs("/usr/local/lib", "/usr/lib")
---
---    -- add system link libraries
---    add_syslinks("z", "pthread")
---
---    -- add compilation and link flags
---    add_cxflags("-stdnolib", "-fno-strict-aliasing")
---    add_ldflags("-L/usr/local/lib", "-lpthread", {force = true})
---
+-- add_rules("mode.debug", "mode.release")
+-- add_defines("NDEBUG", "_GNU_SOURCE=1")
+-- set_warnings("all", "error")
+-- set_languages("c99", "c++11")
+-- set_optimize("fastest")
+-- add_includedirs("/usr/include", "/usr/local/include")
+-- add_links("tbox")
+-- add_linkdirs("/usr/local/lib", "/usr/lib")
+-- add_syslinks("z", "pthread")
+-- add_cxflags("-stdnolib", "-fno-strict-aliasing")
+-- add_ldflags("-L/usr/local/lib", "-lpthread", {force = true})
 -- @endcode
---

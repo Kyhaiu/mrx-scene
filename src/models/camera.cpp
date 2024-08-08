@@ -331,7 +331,7 @@ namespace models
     float theta = acosf(camera.y / r);
 
     if (camera.x < 0)
-      phi += M_PI;
+      phi += PI;
 
     result.x = r;
     result.y = phi;

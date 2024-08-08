@@ -64,7 +64,7 @@ namespace utils
    */
   void setPixel(int x, int y, float z, const sf::Color &color, std::vector<float> &z_buffer, std::vector<sf::Color> &color_buffer, core::Vector2 window_size)
   {
-    int index = y * window_size.x + x;
+    int index = y * static_cast<int>(window_size.x) + x;
 
     if (z < z_buffer[index])
     {
@@ -83,13 +83,16 @@ namespace utils
    */
   void DrawBuffer(ImDrawList *draw_list, const std::vector<float> &z_buffer, const std::vector<sf::Color> &color_buffer, core::Vector2 window_size)
   {
-    for (int y = 0; y < window_size.y; y++)
-    {
-      for (int x = 0; x < window_size.x; x++)
-      {
-        int index = y * window_size.x + x;
+    int width = static_cast<int>(window_size.x);
+    int height = static_cast<int>(window_size.y);
 
-        draw_list->AddRectFilled({(float)x, (float)y}, {(float)x + 1, (float)y + 1}, color_buffer[index].toInteger());
+    for (int y = 0; y < height; y++)
+    {
+      for (int x = 0; x < width; x++)
+      {
+        int index = y * width + x;
+
+        draw_list->AddRectFilled({static_cast<float>(x), static_cast<float>(y)}, {static_cast<float>(x + 1), static_cast<float>(y + 1)}, color_buffer[index].toInteger());
       }
     }
   }
@@ -106,9 +109,9 @@ namespace utils
    */
   void DrawVertexBuffer(ImDrawList *draw_list, const core::Vertex &vertex, const sf::Color &color, std::vector<float> &z_buffer, std::vector<sf::Color> &color_buffer, core::Vector2 window_size)
   {
-    int x = vertex.getX(true);
-    int y = vertex.getY(true);
-    int index = y * window_size.x + x;
+    int x = static_cast<int>(vertex.getX(true));
+    int y = static_cast<int>(vertex.getY(true));
+    int index = y * static_cast<int>(window_size.x) + x;
 
     if (vertex.getZ() < z_buffer[index])
     {
@@ -140,10 +143,10 @@ namespace utils
       // Se o vértice for válido
       if (vertexes[i].x != -1 && vertexes[i + 1].x != -1)
       {
-        int x0 = vertexes[i].x;
-        int y0 = vertexes[i].y;
-        int x1 = vertexes[i + 1].x;
-        int y1 = vertexes[i + 1].y;
+        int x0 = static_cast<int>(vertexes[i].x);
+        int y0 = static_cast<int>(vertexes[i].y);
+        int x1 = static_cast<int>(vertexes[i + 1].x);
+        int y1 = static_cast<int>(vertexes[i + 1].y);
 
         int dx = abs(x1 - x0);
         int dy = abs(y1 - y0);

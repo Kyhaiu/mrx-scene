@@ -84,7 +84,7 @@ void GUI::Controller::handleEvents(const sf::Event &event, sf::RenderWindow &win
   }
   else if (event.type == sf::Event::Resized)
   {
-    sf::FloatRect visibleArea(0, 0, event.size.width, event.size.height);
+    sf::FloatRect visibleArea(0.0f, 0.0f, static_cast<float>(event.size.width), static_cast<float>(event.size.height));
     window.setView(sf::View(visibleArea));
   }
   else if (event.type == sf::Event::MouseButtonPressed)
@@ -116,8 +116,8 @@ void GUI::Controller::handleEvents(const sf::Event &event, sf::RenderWindow &win
       this->mousePosition = sf::Mouse::getPosition(window);
 
       // Get the deltas that describe how much the mouse got moved between frames
-      float deltaAngleX = ((2 * M_PI) / this->scene->getMaxViewport().x); // a movement from left to right = 2*PI = 360 deg
-      float deltaAngleY = (M_PI / this->scene->getMaxViewport().y);       // a movement from top to bottom = PI = 180 deg
+      float deltaAngleX = ((2 * PI) / this->scene->getMaxViewport().x); // a movement from left to right = 2*PI = 360 deg
+      float deltaAngleY = (PI / this->scene->getMaxViewport().y);       // a movement from top to bottom = PI = 180 deg
       float dx = (this->lastMousePosition.x - this->mousePosition.x) * deltaAngleX;
       float dy = (this->lastMousePosition.y - this->mousePosition.y) * deltaAngleY;
 
@@ -131,8 +131,8 @@ void GUI::Controller::handleEvents(const sf::Event &event, sf::RenderWindow &win
       this->mousePosition = sf::Mouse::getPosition(window);
 
       // Get the deltas that describe how much the mouse got moved between frames
-      float dx = (this->lastMousePosition.x - this->mousePosition.x);
-      float dy = (this->lastMousePosition.y - this->mousePosition.y);
+      float dx = static_cast<float>(this->lastMousePosition.x - this->mousePosition.x);
+      float dy = static_cast<float>(this->lastMousePosition.y - this->mousePosition.y);
 
       this->scene->translateObject({-dx, -dy, 0});
 

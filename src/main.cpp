@@ -21,7 +21,7 @@ int main()
 
   sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
 
-  sf::RenderWindow window(sf::VideoMode(desktopMode.width * 0.90, desktopMode.height * 0.90), "ImGui + SFML = <3", sf::Style::Default);
+  sf::RenderWindow window(sf::VideoMode(static_cast<int>(desktopMode.width * 0.90), static_cast<int>(desktopMode.height * 0.90)), "ImGui + SFML = <3", sf::Style::Default);
   GUI::UI *ui = new GUI::UI(window);
 
   while (window.isOpen())
