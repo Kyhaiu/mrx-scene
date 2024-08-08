@@ -81,6 +81,9 @@ namespace GUI
 
         ImGui::SliderAngle("Angulo de rotação", &controller->camera_rotation_sensitivity, 0.0f, 360.0f);
 
+        // show the fps
+        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+
         // models::CameraYaw(scene->getCamera(), *f * 3.14159, false);
         ImGui::EndTabItem();
       }
@@ -102,7 +105,8 @@ namespace GUI
 
     core::Vector2 min_viewport = scene->getMinViewport();
     core::Vector2 max_viewport = scene->getMaxViewport();
-    core::Vector4 clipped_vertex = {0};
+    std::pair<core::Vector3, core::Vector3> clipped_vertex;
+    scene->initializeBuffers();
 
     for (auto object : scene->getObjects())
     {
@@ -122,12 +126,11 @@ namespace GUI
         {
 
           clipped_vertex = math::clip_line(he->getOrigin()->getVectorScreen(), he->getNext()->getOrigin()->getVectorScreen(), min_viewport, max_viewport);
-          // x, y = Origin
-          face->clipped_vertex.push_back({clipped_vertex.x, clipped_vertex.y});
-          // z, w = Next
-          face->clipped_vertex.push_back({clipped_vertex.z, clipped_vertex.w});
+          face->clipped_vertex.push_back(clipped_vertex.first);
+          face->clipped_vertex.push_back(clipped_vertex.second);
 
-          utils::DrawVertex(draw_list, *he->getOrigin());
+          // utils::DrawVertex(draw_list, *he->getOrigin());
+          utils::DrawVertexBuffer(draw_list, *he->getOrigin(), sf::Color::White, scene->z_buffer, scene->color_buffer, max_viewport);
 
           he = he->getNext();
           if (he == face->getHalfEdge())
@@ -135,12 +138,16 @@ namespace GUI
         }
 
         object->isSelected()
-            ? utils::DrawLine(draw_list, face->clipped_vertex, sf::Color::Red)
-            : utils::DrawLine(draw_list, face->clipped_vertex, sf::Color::White);
+            // ? utils::DrawLine(draw_list, face->clipped_vertex, sf::Color::Red)
+            // : utils::DrawLine(draw_list, face->clipped_vertex, sf::Color::White);
+            ? utils::DrawLineBuffer(draw_list, face->clipped_vertex, sf::Color::Red, scene->z_buffer, scene->color_buffer, max_viewport)
+            : utils::DrawLineBuffer(draw_list, face->clipped_vertex, sf::Color::White, scene->z_buffer, scene->color_buffer, max_viewport);
 
         draw_list->AddText(ImVec2(face->getFaceCentroid(true).x, face->getFaceCentroid(true).y), sf::Color::Red.toInteger(), face->getId().c_str());
       }
     }
+
+    utils::DrawBuffer(draw_list, scene->z_buffer, scene->color_buffer, max_viewport);
   }
 
   //-----------------------------------------------------------------------------------------------

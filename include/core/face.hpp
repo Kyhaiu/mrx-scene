@@ -98,7 +98,7 @@ namespace core
      * @note O clipping é feito em coordenadas de tela
      * @note A ordem no sentido anti-horário é preservada neste vetor
      */
-    std::vector<core::Vector2> clipped_vertex;
+    std::vector<core::Vector3> clipped_vertex;
 
     // Constructors and destructors
     Face();

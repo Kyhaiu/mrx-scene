@@ -30,7 +30,7 @@ namespace utils
    * @param vertexes Vetor de vértices que compõem a face
    * @param color Cor da linha
    */
-  void DrawLine(ImDrawList *draw_list, const std::vector<core::Vector2> vertexes, const sf::Color &color)
+  void DrawLine(ImDrawList *draw_list, const std::vector<core::Vector3> vertexes, const sf::Color &color)
   {
     int vertex_length = vertexes.size();
     for (size_t i = 0; i < vertex_length - 1; i++)
@@ -50,4 +50,128 @@ namespace utils
       }
     }
   }
+
+  /**
+   * @brief Desenha um pixel na janela
+   *
+   * @param x Coordenada x do pixel
+   * @param y Coordenada y do pixel
+   * @param z Coordenada z do pixel
+   * @param color Cor do pixel
+   * @param z_buffer Buffer de profundidade
+   * @param color_buffer Buffer de cores
+   * @param window_size Tamanho da janela
+   */
+  void setPixel(int x, int y, float z, const sf::Color &color, std::vector<float> &z_buffer, std::vector<sf::Color> &color_buffer, core::Vector2 window_size)
+  {
+    int index = y * window_size.x + x;
+
+    if (z < z_buffer[index])
+    {
+      z_buffer[index] = z;
+      color_buffer[index] = color;
+    }
+  }
+
+  /**
+   * @brief Desenha um buffer na janela
+   *
+   * @param draw_list Referência para a janela onde o buffer será desenhado
+   * @param z_buffer Buffer de profundidade
+   * @param color_buffer Buffer de cores
+   * @param window_size Tamanho da janela
+   */
+  void DrawBuffer(ImDrawList *draw_list, const std::vector<float> &z_buffer, const std::vector<sf::Color> &color_buffer, core::Vector2 window_size)
+  {
+    for (int y = 0; y < window_size.y; y++)
+    {
+      for (int x = 0; x < window_size.x; x++)
+      {
+        int index = y * window_size.x + x;
+
+        draw_list->AddRectFilled({(float)x, (float)y}, {(float)x + 1, (float)y + 1}, color_buffer[index].toInteger());
+      }
+    }
+  }
+
+  /**
+   * @brief Desenha um vértice no buffer
+   *
+   * @param draw_list Referência para a janela onde o buffer será desenhado
+   * @param vertex Vértice a ser desenhado
+   * @param color Cor do vértice
+   * @param z_buffer Buffer de profundidade
+   * @param color_buffer Buffer de cores
+   * @param window_size Tamanho da janela
+   */
+  void DrawVertexBuffer(ImDrawList *draw_list, const core::Vertex &vertex, const sf::Color &color, std::vector<float> &z_buffer, std::vector<sf::Color> &color_buffer, core::Vector2 window_size)
+  {
+    int x = vertex.getX(true);
+    int y = vertex.getY(true);
+    int index = y * window_size.x + x;
+
+    if (vertex.getZ() < z_buffer[index])
+    {
+      for (int i = -2; i < 3; i++)
+      {
+        for (int j = -2; j < 3; j++)
+        {
+          setPixel(x + i, y + j, vertex.getZ(), color, z_buffer, color_buffer, window_size);
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief Desenha uma linha no buffer
+   *
+   * @param draw_list Referência para a janela onde o buffer será desenhado
+   * @param vertexes Vetor de vértices que compõem a linha
+   * @param color Cor da linha
+   * @param z_buffer Buffer de profundidade
+   * @param color_buffer Buffer de cores
+   * @param window_size Tamanho da janela
+   */
+  void DrawLineBuffer(ImDrawList *draw_list, const std::vector<core::Vector3> &vertexes, const sf::Color &color, std::vector<float> &z_buffer, std::vector<sf::Color> &color_buffer, core::Vector2 window_size)
+  {
+    int vertex_length = vertexes.size();
+    for (size_t i = 0; i < vertex_length - 1; i++)
+    {
+      // Se o vértice for válido
+      if (vertexes[i].x != -1 && vertexes[i + 1].x != -1)
+      {
+        int x0 = vertexes[i].x;
+        int y0 = vertexes[i].y;
+        int x1 = vertexes[i + 1].x;
+        int y1 = vertexes[i + 1].y;
+
+        int dx = abs(x1 - x0);
+        int dy = abs(y1 - y0);
+        int sx = (x0 < x1) ? 1 : -1;
+        int sy = (y0 < y1) ? 1 : -1;
+        int err = dx - dy;
+
+        while (true)
+        {
+          setPixel(x0, y0, 0, color, z_buffer, color_buffer, window_size);
+
+          if (x0 == x1 && y0 == y1)
+            break;
+
+          int e2 = 2 * err;
+          if (e2 > -dy)
+          {
+            err -= dy;
+            x0 += sx;
+          }
+          if (e2 < dx)
+          {
+            err += dx;
+            y0 += sy;
+          }
+        }
+      }
+    }
+  }
+
 } // namespace utils

@@ -49,6 +49,8 @@
 #include <math/math.hpp>
 #include <core/vector.hpp>
 
+#include <tuple>
+
 namespace math
 {
   // Funções do Pipeline de Visualização 3D	- Adair Santa Catarina
@@ -64,5 +66,5 @@ namespace math
 #define TOP 0b1000    // 1000
 
   int compute_outcode(core::Vector3 p, core::Vector2 min, core::Vector2 max);
-  core::Vector4 clip_line(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max);
+  std::pair<core::Vector3, core::Vector3> clip_line(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max);
 } // namespace math

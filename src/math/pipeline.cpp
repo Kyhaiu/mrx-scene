@@ -201,14 +201,14 @@ namespace math
    * @param min Canto inferior esquerdo da janela de recorte
    * @param max Canto superior direito da janela de recorte
    *
-   * @return Vetor 4D com os pontos recortados x, y = P1 e z, w = P2
+   * @return Par de pontos que representam a linha recortada
    *
    * @note A função recorta uma linha em relação a uma janela de recorte.
    * @note A função modifica os pontos p1 e p2 para que a linha seja recortada.
    * @note O algoritmo utilizado é o de Cohen-Sutherland.
    * @note Se a linha estiver inteiramente fora da janela, os pontos são modificados para (-1, -1).
    */
-  core::Vector4 clip_line(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max)
+  std::pair<core::Vector3, core::Vector3> clip_line(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max)
   {
     // Computa os códigos das extremidades da linha
     int P = compute_outcode(p1, min, max);
@@ -275,6 +275,6 @@ namespace math
       }
     }
 
-    return {p1.x, p1.y, p2.x, p2.y};
+    return std::make_pair(p1, p2);
   }
 } // namespace math

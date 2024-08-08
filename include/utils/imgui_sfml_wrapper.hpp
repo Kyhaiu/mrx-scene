@@ -51,6 +51,13 @@
 
 namespace utils
 {
+  // Funções para desenhar vértices e linhas
   void DrawVertex(ImDrawList *draw_list, const core::Vertex &vertex);
-  void DrawLine(ImDrawList *draw_list, const std::vector<core::Vector2> vertexes, const sf::Color &color);
+  void DrawLine(ImDrawList *draw_list, const std::vector<core::Vector3> vertexes, const sf::Color &color);
+
+  // Funções para desenhar pixels
+  void setPixel(int x, int y, float z, const sf::Color &color, std::vector<float> &z_buffer, std::vector<sf::Color> &color_buffer, core::Vector2 window_size);
+  void DrawBuffer(ImDrawList *draw_list, const std::vector<float> &z_buffer, const std::vector<sf::Color> &color_buffer, core::Vector2 window_size);
+  void DrawVertexBuffer(ImDrawList *draw_list, const core::Vertex &vertex, const sf::Color &color, std::vector<float> &z_buffer, std::vector<sf::Color> &color_buffer, core::Vector2 window_size);
+  void DrawLineBuffer(ImDrawList *draw_list, const std::vector<core::Vector3> &vertexes, const sf::Color &color, std::vector<float> &z_buffer, std::vector<sf::Color> &color_buffer, core::Vector2 window_size);
 }

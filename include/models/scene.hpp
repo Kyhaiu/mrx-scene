@@ -43,9 +43,13 @@
  **********************************************************************************************/
 #pragma once
 
+#include <SFML/Graphics/Color.hpp>
+
 #include <models/mesh.hpp>
 #include <models/camera.hpp>
 #include <math/pipeline.hpp>
+
+#include <limits>
 
 #include <vector>
 #include <iostream>
@@ -93,6 +97,15 @@ namespace models
     bool processed = false;
 
   public:
+    /**
+     * @brief Buffer de profundidade
+     */
+    std::vector<float> z_buffer;
+    /**
+     * @brief Buffer de cores
+     */
+    std::vector<sf::Color> color_buffer;
+
     // Construtor and Destrutor
     Scene();
     Scene(models::Camera3D *camera, std::vector<models::Mesh *> objects, core::Vector2 min_viewport, core::Vector2 max_viewport, core::Vector2 min_window, core::Vector2 max_window);
@@ -125,5 +138,12 @@ namespace models
     void selectObject(int x, int y);
     void deselectObject();
     void moveCamera(int x, int y);
+
+    void initializeBuffers();
+
+    // Individual Object Transformations
+    void translateObject(core::Vector3 translation);
+    void scaleObject(core::Vector3 scale);
+    void rotateObject(core::Vector2 rotation);
   };
 } // namespace models

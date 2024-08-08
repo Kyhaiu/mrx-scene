@@ -370,4 +370,42 @@ namespace models
   void Scene::moveCamera(int x, int y)
   {
   }
+
+  void Scene::initializeBuffers()
+  {
+    int width = this->getMaxViewport().x;
+    int height = this->getMaxViewport().y;
+
+    this->z_buffer = std::vector<float>(width * height);
+    this->color_buffer = std::vector<sf::Color>(width * height);
+
+    std::fill(this->z_buffer.begin(), this->z_buffer.end(), std::numeric_limits<float>::infinity());
+    std::fill(this->color_buffer.begin(), this->color_buffer.end(), sf::Color::Black);
+  }
+
+  //------------------------------------------------------------------------------------------------
+  // Individual Object Transformations
+  //------------------------------------------------------------------------------------------------
+
+  void Scene::translateObject(core::Vector3 translation)
+  {
+    if (this->selected_object == nullptr) // Nada a fazer
+      return;
+
+    core::Matrix viewportInv = math::MatrixInvert(math::src_to_srt(
+        this->getMinWindow(),
+        this->getMinViewport(),
+        this->getMaxWindow(),
+        this->getMaxViewport(),
+        true));
+
+    core::Vector3 transformedTranslation = math::Vector3Transform({translation}, viewportInv);
+
+    for (auto vertex : this->selected_object->getVertices())
+    {
+      vertex->setVector({vertex->getX() + transformedTranslation.x,
+                         vertex->getY() + transformedTranslation.y,
+                         vertex->getZ(), 1.0f});
+    }
+  }
 } // namespace models

@@ -108,7 +108,9 @@ void GUI::Controller::handleEvents(const sf::Event &event, sf::RenderWindow &win
   }
   else if (event.type == sf::Event::MouseMoved)
   {
-    if (this->isMouseHeld)
+    // TODO - Arrumar a ação de mover o objeto para somente mover quando o mouse estiver dentro do objeto, caso contrário rotacionar a camera
+    // Se o mouse está pressionado e não há objeto selecionado, então rotaciona a camera
+    if (this->isMouseHeld && this->scene->getSelectedObject() == nullptr)
     {
       // Update the mouse position
       this->mousePosition = sf::Mouse::getPosition(window);
@@ -120,6 +122,20 @@ void GUI::Controller::handleEvents(const sf::Event &event, sf::RenderWindow &win
       float dy = (this->lastMousePosition.y - this->mousePosition.y) * deltaAngleY;
 
       models::CameraArcball(this->scene->getCamera(), dx, dy);
+      // Optionally reset start position to allow continuous rotation
+      this->lastMousePosition = this->mousePosition;
+    }
+    else if (this->isMouseHeld && this->scene->getSelectedObject() != nullptr)
+    {
+      // Update the mouse position
+      this->mousePosition = sf::Mouse::getPosition(window);
+
+      // Get the deltas that describe how much the mouse got moved between frames
+      float dx = (this->lastMousePosition.x - this->mousePosition.x);
+      float dy = (this->lastMousePosition.y - this->mousePosition.y);
+
+      this->scene->translateObject({-dx, -dy, 0});
+
       // Optionally reset start position to allow continuous rotation
       this->lastMousePosition = this->mousePosition;
     }
@@ -140,11 +156,11 @@ void GUI::Controller::handleEvents(const sf::Event &event, sf::RenderWindow &win
     }
     else if (event.key.code == sf::Keyboard::A)
     {
-      models::CameraMoveRight(this->scene->getCamera(), -0.09f, true);
+      models::CameraMoveRight(this->scene->getCamera(), 0.09f, true);
     }
     else if (event.key.code == sf::Keyboard::D)
     {
-      models::CameraMoveRight(this->scene->getCamera(), 0.09f, true);
+      models::CameraMoveRight(this->scene->getCamera(), -0.09f, true);
     }
   }
 }
