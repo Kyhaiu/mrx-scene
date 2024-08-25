@@ -21,10 +21,10 @@ namespace models
   Scene::Scene()
   {
     this->camera = models::CreateCamera3D(
-        {0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 20.0f},
         {0.0f, 0.0f, 0.0f},
         {0.0f, 1.0f, 0.0f},
-        1.0f);
+        2.0f);
     this->objects = std::vector<models::Mesh *>();
     this->min_viewport = {-3.0f, -3.0f};
     this->max_viewport = {3.0f, 3.0f};
@@ -376,11 +376,9 @@ namespace models
     int width = static_cast<int>(this->getMaxViewport().x);
     int height = static_cast<int>(this->getMaxViewport().y);
 
-    this->z_buffer = std::vector<float>(width * height);
-    this->color_buffer = std::vector<sf::Color>(width * height);
-
-    std::fill(this->z_buffer.begin(), this->z_buffer.end(), std::numeric_limits<float>::infinity());
-    std::fill(this->color_buffer.begin(), this->color_buffer.end(), sf::Color::Black);
+    // Resize and initialize the z-buffer and color buffer
+    this->z_buffer = std::vector<std::vector<float>>(width, std::vector<float>(height, std::numeric_limits<float>::infinity()));
+    this->color_buffer = std::vector<std::vector<SDL_Color>>(width, std::vector<SDL_Color>(height, {0, 0, 0, 0}));
   }
 
   //------------------------------------------------------------------------------------------------
@@ -405,7 +403,7 @@ namespace models
     {
       vertex->setVector({vertex->getX() + transformedTranslation.x,
                          vertex->getY() + transformedTranslation.y,
-                         vertex->getZ(), 1.0f});
+                         vertex->getZ() + transformedTranslation.z, 1.0f});
     }
   }
 } // namespace models

@@ -4,7 +4,7 @@
 GUI::Controller::Controller(float canvasWidth, float canvasHeight)
 {
   this->scene = new models::Scene(
-      models::CreateCamera3D({10, 10, 20}, {1, 1, 2}, {0, 1, 0}, 18),
+      models::CreateCamera3D({10, 10, 20}, {0, 0, 0}, {0, 1, 0}, 20),
       {},
       // The canvas don't start at the left corner
       // If the layout changes it will be necessary to change this values
@@ -76,92 +76,117 @@ void GUI::Controller::addObject(models::Mesh *object)
  * @param window Janela da aplicação
  * @param deltaTime Tempo entre frames
  */
-void GUI::Controller::handleEvents(const sf::Event &event, sf::RenderWindow &window, sf::Time deltaTime)
+void GUI::Controller::handleEvents(const SDL_Event &event, SDL_Window *window, float deltaTime)
 {
-  if (event.type == sf::Event::Closed)
+
+  switch (event.type)
   {
-    window.close();
-  }
-  else if (event.type == sf::Event::Resized)
-  {
-    sf::FloatRect visibleArea(0.0f, 0.0f, static_cast<float>(event.size.width), static_cast<float>(event.size.height));
-    window.setView(sf::View(visibleArea));
-  }
-  else if (event.type == sf::Event::MouseButtonPressed)
-  {
-    if (event.mouseButton.button == sf::Mouse::Left)
+  case SDL_QUIT:
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+    exit(0);
+    break;
+
+  case SDL_WINDOWEVENT:
+    if (event.window.event == SDL_WINDOWEVENT_RESIZED)
     {
-      this->isMouseHeld = true;                                 // Mouse button is held down
-      this->lastMousePosition = sf::Mouse::getPosition(window); // Get the initial position of the mouse
+      // Update the viewport
+      int width = event.window.data1;
+      int height = event.window.data2;
+      SDL_RenderSetViewport(SDL_GetRenderer(window), NULL);
+    }
+    break;
+
+  case SDL_MOUSEBUTTONDOWN:
+    if (event.button.button == SDL_BUTTON_LEFT)
+    {
+      this->isMouseHeld = true;
+      SDL_GetMouseState(&this->lastMousePosition.x, &this->lastMousePosition.y);
+
       if (this->scene->getSelectedObject() == nullptr)
       {
-        this->scene->selectObject(event.mouseButton.x, event.mouseButton.y);
+        this->scene->selectObject(event.button.x, event.button.y);
       }
     }
-  }
-  else if (event.type == sf::Event::MouseButtonReleased)
-  {
-    if (event.mouseButton.button == sf::Mouse::Left)
+    break;
+
+  case SDL_MOUSEBUTTONUP:
+    if (event.button.button == SDL_BUTTON_LEFT)
     {
-      this->isMouseHeld = false; // Mouse button is released
+      this->isMouseHeld = false;
     }
-  }
-  else if (event.type == sf::Event::MouseMoved)
-  {
-    // TODO - Arrumar a ação de mover o objeto para somente mover quando o mouse estiver dentro do objeto, caso contrário rotacionar a camera
-    // Se o mouse está pressionado e não há objeto selecionado, então rotaciona a camera
+    break;
+
+  case SDL_MOUSEMOTION:
     if (this->isMouseHeld && this->scene->getSelectedObject() == nullptr)
     {
-      // Update the mouse position
-      this->mousePosition = sf::Mouse::getPosition(window);
+      SDL_GetMouseState(&this->mousePosition.x, &this->mousePosition.y);
 
-      // Get the deltas that describe how much the mouse got moved between frames
-      float deltaAngleX = ((2 * PI) / this->scene->getMaxViewport().x); // a movement from left to right = 2*PI = 360 deg
-      float deltaAngleY = (PI / this->scene->getMaxViewport().y);       // a movement from top to bottom = PI = 180 deg
+      float deltaAngleX = (2 * PI) / this->scene->getMaxViewport().x;
+      float deltaAngleY = PI / this->scene->getMaxViewport().y;
       float dx = (this->lastMousePosition.x - this->mousePosition.x) * deltaAngleX;
       float dy = (this->lastMousePosition.y - this->mousePosition.y) * deltaAngleY;
 
+      float cosAngle = math::Vector3DotProduct(this->scene->getCamera()->target, this->scene->getCamera()->up);
+      if (cosAngle * ((deltaAngleY > 0) - (deltaAngleY < 0)) > 0.0f)
+        dy = 0;
+
       models::CameraArcball(this->scene->getCamera(), dx, dy);
-      // Optionally reset start position to allow continuous rotation
       this->lastMousePosition = this->mousePosition;
     }
     else if (this->isMouseHeld && this->scene->getSelectedObject() != nullptr)
     {
-      // Update the mouse position
-      this->mousePosition = sf::Mouse::getPosition(window);
+      SDL_GetMouseState(&this->mousePosition.x, &this->mousePosition.y);
 
-      // Get the deltas that describe how much the mouse got moved between frames
       float dx = static_cast<float>(this->lastMousePosition.x - this->mousePosition.x);
       float dy = static_cast<float>(this->lastMousePosition.y - this->mousePosition.y);
 
-      this->scene->translateObject({-dx, -dy, 0});
+      if (SDL_GetModState() & KMOD_CTRL)
+        this->scene->translateObject({-dx, 0, -dy});
+      else
+        this->scene->translateObject({-dx, -dy, 0});
 
-      // Optionally reset start position to allow continuous rotation
       this->lastMousePosition = this->mousePosition;
     }
-  }
-  else if (event.type == sf::Event::KeyPressed)
-  {
-    if (event.key.code == sf::Keyboard::D && (event.key.control))
+    break;
+
+  case SDL_KEYDOWN:
+    switch (event.key.keysym.sym)
     {
-      this->scene->deselectObject();
-    }
-    else if (event.key.code == sf::Keyboard::W)
-    {
+    case SDLK_d:
+      if (event.key.keysym.mod & KMOD_CTRL)
+      {
+        this->scene->deselectObject();
+      }
+      else
+      {
+        models::CameraMoveRight(this->scene->getCamera(), -0.09f, true);
+      }
+      break;
+    case SDLK_w:
       models::CameraMoveForward(this->scene->getCamera(), 0.09f, true);
-    }
-    else if (event.key.code == sf::Keyboard::S)
-    {
+      break;
+    case SDLK_s:
       models::CameraMoveForward(this->scene->getCamera(), -0.09f, true);
-    }
-    else if (event.key.code == sf::Keyboard::A)
-    {
+      break;
+    case SDLK_a:
       models::CameraMoveRight(this->scene->getCamera(), 0.09f, true);
+      break;
     }
-    else if (event.key.code == sf::Keyboard::D)
+    break;
+
+  case SDL_MOUSEWHEEL:
+    if (event.wheel.y > 0) // scroll up
     {
-      models::CameraMoveRight(this->scene->getCamera(), -0.09f, true);
+      models::Camera3D *camera = this->scene->getCamera();
+      camera->d -= 0.1f;
     }
+    else if (event.wheel.y < 0) // scroll down
+    {
+      models::Camera3D *camera = this->scene->getCamera();
+      camera->d += 0.1f;
+    }
+    break;
   }
 }
 

@@ -39,9 +39,11 @@
  **********************************************************************************************/
 #pragma once
 
-#include <SFML/Graphics.hpp>
 #include <gui/imgui/imgui.h>
-#include <gui/imgui-sfml/imgui-SFML.h>
+
+#include <gui/imgui-sdl2/imgui_impl_sdl2.h>
+#include <gui/imgui-sdl2/imgui_impl_sdlrenderer2.h>
+#include <SDL.h>
 
 #include <gui/controller/controller.hpp>
 #include <gui/view/components/components.hpp>
@@ -54,17 +56,9 @@ namespace GUI
   {
   private:
     /**
-     * @brief Referência para a janela da aplicação
-     */
-    sf::RenderWindow &window;
-    /**
      * @brief Controlador da aplicação
      */
     Controller *controller;
-    /**
-     * @brief Ícone de movimento
-     */
-    sf::Texture move_icon;
     /**
      * @brief Referencia para o componente Visualizador de hierarquia
      */
@@ -72,15 +66,20 @@ namespace GUI
 
   public:
     /**
+     * @brief Referência para a janela da aplicação
+     */
+    SDL_Window *window;
+    /**
+     * @brief Referência para o renderizador da aplicação
+     */
+    SDL_Renderer *renderer;
+    /**
      * @brief Relógio para controlar o tempo de execução
      */
-    sf::Clock deltaClock;
+    float delta_time;
 
-    UI(sf::RenderWindow &_window);
+    UI(SDL_Window *window, SDL_Renderer *renderer);
     ~UI();
-
-    // Getters
-    sf::RenderWindow &getWindow();
 
     // Components
     void menu();
@@ -92,6 +91,6 @@ namespace GUI
 
     // Methods
     void render();
-    void handleEvents(const sf::Event &event, sf::RenderWindow &window);
+    void handleEvents(const SDL_Event &event, SDL_Window *window, SDL_Renderer *renderer);
   };
 } // namespace GUI

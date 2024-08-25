@@ -2,44 +2,44 @@
 
 #include <iostream>
 
-GUI::UI::UI(sf::RenderWindow &_window) : window(_window)
+GUI::UI::UI(SDL_Window *window, SDL_Renderer *renderer)
+    : window(window), renderer(renderer)
 {
-  sf::VideoMode desktopMode = sf::VideoMode::getDesktopMode();
 
-  float canvasWidth = (desktopMode.width * 0.9f);
-  float canvasHeight = (desktopMode.height * 0.9f);
+  // Setup Dear ImGui style
+  ImGui::StyleColorsDark();
 
-  this->controller = new GUI::Controller(canvasWidth, canvasHeight);
+  // Setup Platform/Renderer bindings
+  ImGui_ImplSDL2_InitForSDLRenderer(this->window, this->renderer);
+  ImGui_ImplSDLRenderer2_Init(this->renderer);
+
+  // Get the window size SDL2
+  SDL_DisplayMode dm;
+  SDL_GetCurrentDisplayMode(0, &dm);
+  float window_width = dm.w * 0.9f;
+  float window_height = dm.h * 0.9f;
+
+  // Setup controller
+  this->controller = new GUI::Controller(window_width, window_height);
 
   this->hierarchyViewer = new GUI::components::HierarchyViewer(this->controller);
 
   this->controller->updateScene();
-
-  this->window.setFramerateLimit(0);
-  this->window.setVerticalSyncEnabled(false); // Disable VSync
-  if (!ImGui::SFML::Init(window))
-    return;
-
-  // TODO: Arrumar o jeito de carregar os assets
-  if (!this->move_icon.loadFromFile("assets/icons/move_icon.png"))
-  {
-    std::cerr << "Error loading move icon" << std::endl;
-  }
-}
-
-GUI::UI::~UI()
-{
-  ImGui::SFML::Shutdown();
 }
 
 /**
- * @brief Retorna a janela da aplicação
- *
- * @return sf::RenderWindow&
+ * @brief Destrutor da classe UI
  */
-sf::RenderWindow &GUI::UI::getWindow()
+GUI::UI::~UI()
 {
-  return this->window;
+  // Cleanup
+  ImGui_ImplSDLRenderer2_Shutdown();
+  ImGui_ImplSDL2_Shutdown();
+  ImGui::DestroyContext();
+
+  SDL_DestroyRenderer(renderer);
+  SDL_DestroyWindow(window);
+  SDL_Quit();
 }
 
 /**
@@ -95,19 +95,32 @@ void GUI::UI::object_properties()
   GUI::components::object_inspector(this->controller);
 }
 
+/**
+ * @brief Renderiza a interface gráfica
+ *
+ * @note A interface gráfica é responsável por renderizar todos os componentes
+ * da aplicação
+ */
 void GUI::UI::render()
 {
-  this->menu();
+  // Start the Dear ImGui frame
+  ImGui_ImplSDL2_NewFrame();
+  ImGui_ImplSDLRenderer2_NewFrame();
+  ImGui::NewFrame();
 
+  this->menu();
   ImGui::SetNextWindowPos(ImVec2(0, 20));
   ImGui::SetNextWindowSize(ImVec2(ImGui::GetWindowSize().x * 0.2f, ImGui::GetWindowSize().y));
-  ImGui::Begin("left-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+  ImGui::Begin("left-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar);
 
   ImGui::SetNextWindowPos(ImVec2(0, 20));
+  ImGui::SetNextWindowSize(ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y / 2));
   ImGui::BeginChild("hierarchy", ImVec2(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y / 2), false);
   this->hierarchy(this->controller->getScene());
   ImGui::EndChild();
 
+  ImGui::SetNextWindowPos(ImVec2(0, 20 + ImGui::GetWindowSize().y / 2));
+  ImGui::SetNextWindowSize(ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y / 2));
   ImGui::BeginChild("actions", ImVec2(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y / 2), false);
   this->object_properties();
   ImGui::EndChild();
@@ -123,12 +136,12 @@ void GUI::UI::render()
 
   ImGui::End();
 
-  // ImGui::SetNextWindowPos(ImVec2((windowSize.x / 2) - 100, windowSize.y * 0.85f));
-  // this->objectActions();
-
-  // // ImGui::SetNextWindowPos(ImVec2(0, 20 + canvasHeight));
-  // // ImGui::SetNextWindowSize(ImVec2(windowWidth, terminalHeight));
-  // // this->terminal();
+  // Rendering
+  ImGui::Render();
+  SDL_SetRenderDrawColor(this->renderer, 114, 144, 154, 255);
+  SDL_RenderClear(this->renderer);
+  ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), this->renderer);
+  SDL_RenderPresent(this->renderer);
 }
 
 /**
@@ -136,10 +149,17 @@ void GUI::UI::render()
  *
  * @param event Evento do mouse ou do teclado
  * @param window Janela da aplicação
+ * @param renderer Renderizador da aplicação
  */
-void GUI::UI::handleEvents(const sf::Event &event, sf::RenderWindow &window)
+void GUI::UI::handleEvents(const SDL_Event &event, SDL_Window *window, SDL_Renderer *renderer)
 {
-  ImGui::SFML::ProcessEvent(window, event);
+  // Process ImGui events using SDL2
+  ImGui_ImplSDL2_ProcessEvent(&event);
 
-  this->controller->handleEvents(event, window, this->deltaClock.getElapsedTime());
+  // Convert SDL time to seconds (as it would be in SFML)
+  Uint32 currentTicks = SDL_GetTicks();
+  float deltaTime = static_cast<float>(currentTicks) / 1000.0f;
+
+  // Pass the event and time to your controller
+  this->controller->handleEvents(event, window, deltaTime);
 }

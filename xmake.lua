@@ -20,7 +20,7 @@ set_optimize("fastest")
 add_includedirs("include")
 
 -- add libraries
-local project_libs = { "cxxopts", "fmt", "sfml", "opengl" }
+local project_libs = { "cxxopts", "fmt", "opengl", "libsdl" }
 local test_libs = { "gtest" }
 
 add_requires(table.unpack(project_libs))
@@ -45,10 +45,10 @@ target("gui/imgui")
   add_packages(table.unpack(project_libs))
   set_targetdir("./app")
 
-target("gui/imgui-sfml")
+target("gui/imgui-sdl2")
   set_kind("static")
   add_deps("gui/imgui")
-  add_files("include/gui/imgui-sfml/*.cpp")
+  add_files("include/gui/imgui-sdl2/*.cpp")
   add_packages(table.unpack(project_libs))
   set_targetdir("./app")
 
@@ -85,7 +85,7 @@ target("app")
   add_deps("math")
   add_deps("models")
   add_deps("gui/imgui")
-  add_deps("gui/imgui-sfml")
+  add_deps("gui/imgui-sdl2")
   add_deps("gui/view")
   add_deps("shapes")
   add_deps("utils")

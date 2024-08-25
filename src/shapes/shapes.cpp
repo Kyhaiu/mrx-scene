@@ -10,21 +10,21 @@
 models::Mesh *shapes::cube()
 {
   // Bottom-left-back
-  core::Vertex *v0 = new core::Vertex(-1.0, -1.0, -1.0, 1.0, nullptr, "v0");
+  core::Vertex *v0 = new core::Vertex(-1.0f, -1.0f, -1.0f, 1.0f, nullptr, "v0");
   // Bottom-right-back
-  core::Vertex *v1 = new core::Vertex(1.0, -1.0, -1.0, 1.0, nullptr, "v1");
+  core::Vertex *v1 = new core::Vertex(1.0f, -1.0f, -1.0f, 1.0f, nullptr, "v1");
   // Bottom-right-front
-  core::Vertex *v2 = new core::Vertex(1.0, -1.0, 1.0, 1.0, nullptr, "v2");
+  core::Vertex *v2 = new core::Vertex(1.0f, -1.0f, 1.0f, 1.0f, nullptr, "v2");
   // Bottom-left-front
-  core::Vertex *v3 = new core::Vertex(-1.0, -1.0, 1.0, 1.0, nullptr, "v3");
+  core::Vertex *v3 = new core::Vertex(-1.0f, -1.0f, 1.0f, 1.0f, nullptr, "v3");
   // Top-left-back
-  core::Vertex *v4 = new core::Vertex(-1.0, 1.0, -1.0, 1.0, nullptr, "v4");
+  core::Vertex *v4 = new core::Vertex(-1.0f, 1.0f, -1.0f, 1.0f, nullptr, "v4");
   // Top-right-back
-  core::Vertex *v5 = new core::Vertex(1.0, 1.0, -1.0, 1.0, nullptr, "v5");
+  core::Vertex *v5 = new core::Vertex(1.0f, 1.0f, -1.0f, 1.0f, nullptr, "v5");
   // Top-right-front
-  core::Vertex *v6 = new core::Vertex(1.0, 1.0, 1.0, 1.0, nullptr, "v6");
+  core::Vertex *v6 = new core::Vertex(1.0f, 1.0f, 1.0f, 1.0f, nullptr, "v6");
   // Top-left-front
-  core::Vertex *v7 = new core::Vertex(-1.0, 1.0, 1.0, 1.0, nullptr, "v7");
+  core::Vertex *v7 = new core::Vertex(-1.0f, 1.0f, 1.0f, 1.0f, nullptr, "v7");
 
   std::vector<std::vector<int>> edges = {
       // Back Face

@@ -39,11 +39,9 @@
  **********************************************************************************************/
 #pragma once
 
-#include <SFML/Graphics.hpp>
 #include <gui/imgui/imgui.h>
-#include <gui/imgui-sfml/imgui-SFML.h>
 
-#include <utils/imgui_sfml_wrapper.hpp>
+#include <utils/utils.hpp>
 #include <gui/controller/controller.hpp>
 #include <models/scene.hpp>
 #include <shapes/shapes.hpp>

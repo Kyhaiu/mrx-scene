@@ -50,6 +50,8 @@
 #include <core/vector.hpp>
 
 #include <tuple>
+#include <vector>
+#include <algorithm>
 
 namespace math
 {
@@ -67,4 +69,6 @@ namespace math
 
   int compute_outcode(core::Vector3 p, core::Vector2 min, core::Vector2 max);
   std::pair<core::Vector3, core::Vector3> clip_line(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max);
+
+  std::vector<std::vector<core::Vector3>> fill_polygon(std::vector<core::Vector3> vertexes);
 } // namespace math

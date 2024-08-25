@@ -43,7 +43,7 @@
  **********************************************************************************************/
 #pragma once
 
-#include <SFML/Graphics/Color.hpp>
+#include <SDL2/SDL_pixels.h>
 
 #include <models/mesh.hpp>
 #include <models/camera.hpp>
@@ -100,11 +100,11 @@ namespace models
     /**
      * @brief Buffer de profundidade
      */
-    std::vector<float> z_buffer;
+    std::vector<std::vector<float>> z_buffer;
     /**
      * @brief Buffer de cores
      */
-    std::vector<sf::Color> color_buffer;
+    std::vector<std::vector<SDL_Color>> color_buffer;
 
     // Construtor and Destrutor
     Scene();

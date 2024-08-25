@@ -1,12 +1,25 @@
 #pragma once
 
-#include <SFML/Graphics.hpp>
+#include <gui/imgui-sdl2/imgui_impl_sdl2.h>
+#include <gui/imgui-sdl2/imgui_impl_sdlrenderer2.h>
+#include <SDL.h>
 
 #include <models/scene.hpp>
 #include <models/camera.hpp>
 
 namespace GUI
 {
+
+  /**
+   * @brief Estrutura que representa a posição do mouse
+   *
+   */
+  typedef struct
+  {
+    int x;
+    int y;
+  } mouse_position;
+
   class Controller
   {
   private:
@@ -27,11 +40,11 @@ namespace GUI
     /**
      * @brief Posição atual do mouse
      */
-    sf::Vector2i mousePosition;
+    mouse_position mousePosition;
     /**
      * @brief Posição do mouse no frame anterior
      */
-    sf::Vector2i lastMousePosition;
+    mouse_position lastMousePosition;
     /**
      * @brief Flag que indica se o mouse está pressionado
      */
@@ -59,6 +72,6 @@ namespace GUI
 
     // Events
     void on_hierarchy_item_selected(int index);
-    void handleEvents(const sf::Event &event, sf::RenderWindow &window, sf::Time deltaTime);
+    void handleEvents(const SDL_Event &event, SDL_Window *window, float deltaTime);
   };
 }

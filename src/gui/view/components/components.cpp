@@ -65,7 +65,7 @@ namespace GUI
   void GUI::components::object_inspector(GUI::Controller *controller)
   {
 
-    ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetContentRegionAvail().y + 15));
+    ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetContentRegionAvail().y + 16));
     ImGui::SetNextWindowSize(ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y));
     ImGui::Begin("object-properties-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
@@ -84,6 +84,8 @@ namespace GUI
         // show the fps
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 
+        ImGui::InputFloat("D", reinterpret_cast<float *>(&camera->d));
+
         // models::CameraYaw(scene->getCamera(), *f * 3.14159, false);
         ImGui::EndTabItem();
       }
@@ -94,9 +96,8 @@ namespace GUI
 
   void GUI::components::viewport(models::Scene *scene)
   {
-    // ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetFrameHeight()));
-    // ImGui::SetNextWindowSize(ImVec2(windowSize.x, windowSize.y - ImGui::GetFrameHeight()));
-    ImDrawList *draw_list = ImGui::GetWindowDrawList();
+
+    ImDrawList *draw_list = ImGui::GetForegroundDrawList();
 
     // this can be used to get the position of the window
     // ImVec2 window_pos = ImGui::GetWindowPos();
@@ -105,11 +106,15 @@ namespace GUI
 
     core::Vector2 min_viewport = scene->getMinViewport();
     core::Vector2 max_viewport = scene->getMaxViewport();
+
     std::pair<core::Vector3, core::Vector3> clipped_vertex;
     scene->initializeBuffers();
 
+    std::vector<SDL_Color> face_colors = {{255, 30, 150, 255}, {40, 255, 80, 255}, {90, 40, 255, 255}};
+
     for (auto object : scene->getObjects())
     {
+      int color_picking = 0;
       for (auto face : object->getFaces())
       {
 
@@ -122,6 +127,8 @@ namespace GUI
         // TODO: Descobrir uma maneira de não precisar limpar o vetor se não houver mudanças
         face->clipped_vertex.clear();
 
+        std::vector<core::Vector3> face_vertexes;
+
         while (true)
         {
 
@@ -129,8 +136,9 @@ namespace GUI
           face->clipped_vertex.push_back(clipped_vertex.first);
           face->clipped_vertex.push_back(clipped_vertex.second);
 
-          // utils::DrawVertex(draw_list, *he->getOrigin());
-          utils::DrawVertexBuffer(draw_list, *he->getOrigin(), sf::Color::White, scene->z_buffer, scene->color_buffer, max_viewport);
+          utils::DrawVertexBuffer(draw_list, *he->getOrigin(), {255, 255, 255, 255}, scene->z_buffer, scene->color_buffer, max_viewport);
+
+          face_vertexes.push_back(he->getOrigin()->getVectorScreen());
 
           he = he->getNext();
           if (he == face->getHalfEdge())
@@ -138,12 +146,14 @@ namespace GUI
         }
 
         object->isSelected()
-            // ? utils::DrawLine(draw_list, face->clipped_vertex, sf::Color::Red)
-            // : utils::DrawLine(draw_list, face->clipped_vertex, sf::Color::White);
-            ? utils::DrawLineBuffer(draw_list, face->clipped_vertex, sf::Color::Red, scene->z_buffer, scene->color_buffer, max_viewport)
-            : utils::DrawLineBuffer(draw_list, face->clipped_vertex, sf::Color::White, scene->z_buffer, scene->color_buffer, max_viewport);
+            ? utils::DrawLineBuffer(draw_list, face->clipped_vertex, {255, 0, 0, 255}, scene->z_buffer, scene->color_buffer, max_viewport)
+            : utils::DrawLineBuffer(draw_list, face->clipped_vertex, {255, 255, 255, 255}, scene->z_buffer, scene->color_buffer, max_viewport);
 
-        draw_list->AddText(ImVec2(face->getFaceCentroid(true).x, face->getFaceCentroid(true).y), sf::Color::Red.toInteger(), face->getId().c_str());
+        color_picking++;
+
+        object->isSelected()
+            ? utils::DrawFaceBuffer(draw_list, face->clipped_vertex, face_colors[color_picking], scene->z_buffer, scene->color_buffer, max_viewport)
+            : utils::DrawFaceBuffer(draw_list, face->clipped_vertex, face_colors[color_picking], scene->z_buffer, scene->color_buffer, max_viewport);
       }
     }
 
@@ -161,6 +171,7 @@ namespace GUI
 
   void GUI::components::HierarchyViewer::render(models::Scene *scene)
   {
+    ImGui::SetNextWindowPos(ImVec2(0, 20));
     ImGui::SetNextWindowSize(ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y));
     ImGui::Begin("hierarchy-component-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
     if (ImGui::TreeNode("Hierarquia da cena"))

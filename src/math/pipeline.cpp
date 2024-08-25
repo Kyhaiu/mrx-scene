@@ -69,6 +69,7 @@ namespace math
    */
   core::Matrix projection(const core::Vector3 &vrp, const core::Vector3 p, const float d)
   {
+
     // This is the definitions of the projection plane.
     core::Vector3 projection_plane = {
         vrp.x + (p.x - vrp.x) * (d / (vrp.z - p.z)),
@@ -76,7 +77,7 @@ namespace math
         vrp.z + (p.z - vrp.z) * (d / (vrp.z - p.z))};
 
     // The distance from the VRP to the projection plane.
-    float dp = math::Vector3Distance(projection_plane, vrp);
+    float dp = d;
     // The distance from the VRP to the focal point.
     float z_vp = -dp;
     // Z coordinate of the point, where the projection lines intersect the projection plane.
@@ -204,9 +205,9 @@ namespace math
    * @return Par de pontos que representam a linha recortada
    *
    * @note A função recorta uma linha em relação a uma janela de recorte.
-   * @note A função modifica os pontos p1 e p2 para que a linha seja recortada.
    * @note O algoritmo utilizado é o de Cohen-Sutherland.
    * @note Se a linha estiver inteiramente fora da janela, os pontos são modificados para (-1, -1).
+   * @note A função retorna um par de pontos que representam a linha recortada.
    */
   std::pair<core::Vector3, core::Vector3> clip_line(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max)
   {
@@ -277,4 +278,89 @@ namespace math
 
     return std::make_pair(p1, p2);
   }
+
+  /**
+   * @brief Algoritmo para interpolar os valores das coordenadas x e z de um polígono.
+   *
+   * @param vertexes Lista de vértices que compõem o polígono (coordenadas de tela)
+   * @return std::vector<std::vector<core::Vector3>>
+   */
+  std::vector<std::vector<core::Vector3>> fill_polygon(std::vector<core::Vector3> vertexes)
+  {
+    // encontra o y_min e y_max
+    int y_max = static_cast<int>(std::max_element(vertexes.begin(),
+                                                  vertexes.end(),
+                                                  [](const core::Vector3 &a, const core::Vector3 &b)
+                                                  { return a.y < b.y; })
+                                     ->y);
+    int y_min = static_cast<int>(std::min_element(vertexes.begin(),
+                                                  vertexes.end(),
+                                                  [](const core::Vector3 &a, const core::Vector3 &b)
+                                                  { return a.y < b.y; })
+                                     ->y);
+
+    int number_of_lines = y_max - y_min;
+
+    // Vetor que contem as arestas do polígono
+    std::vector<std::vector<core::Vector3>> edges;
+
+    // O vetor de vertices é percorrido de 2 em 2
+    // Pois cada par de vértices representa uma aresta
+    for (int i = 0; i < vertexes.size(); i = i + 2)
+    {
+      edges.push_back({vertexes[i], vertexes[i + 1]});
+    }
+
+    // Cria um vetor de interseções
+    std::vector<std::vector<core::Vector3>> intersections(number_of_lines - 1);
+
+    // Calcula as interseções
+    for (int y = y_min; y < y_max; y++)
+    {
+      for (auto edge : edges)
+      {
+        int x0 = static_cast<int>(edge[0].x);
+        int y0 = static_cast<int>(edge[0].y);
+        float z0 = edge[0].z;
+        int x1 = static_cast<int>(edge[1].x);
+        int y1 = static_cast<int>(edge[1].y);
+        float z1 = edge[1].z;
+
+        int dx = abs(x1 - x0);
+        int dy = abs(y1 - y0);
+        float dz = abs(z1 - z0);
+        int sx = (x0 < x1) ? 1 : -1;
+        int sy = (y0 < y1) ? 1 : -1;
+        int err = dx - dy;
+
+        while (true)
+        {
+          if (y0 == y)
+          {
+            float z = z0 + dz * (y - y0) / dy;
+            core::Vector3 intersection = {static_cast<float>(x0), static_cast<float>(y), z};
+            intersections[y - y_min].push_back(intersection);
+          }
+
+          if (x0 == x1 && y0 == y1)
+            break;
+
+          int e2 = 2 * err;
+          if (e2 > -dy)
+          {
+            err = err - dy;
+            x0 = x0 + sx;
+          }
+          if (e2 < dx)
+          {
+            err = err + dx;
+            y0 = y0 + sy;
+          }
+        }
+      }
+    }
+
+    return intersections;
+  }
+
 } // namespace math
