@@ -60,17 +60,20 @@ namespace utils
    *
    * @todo Refatorar para colocar o z_buffer e color_buffer como funções do pipeline
    */
-  void setPixel(int x, int y, float z, const SDL_Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 window_size)
+  void setPixel(float x, float y, float z, const SDL_Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 window_size)
   {
     // Check if the coordinates are within the bounds of the window
-    if (x < 0 || x >= static_cast<int>(window_size.x) || y < 0 || y >= static_cast<int>(window_size.y))
+    if (x < 0 || x >= window_size.x || y < 0 || y >= window_size.y)
       return;
 
+    int x_int = static_cast<int>(std::roundf(x));
+    int y_int = static_cast<int>(std::roundf(y));
+
     // Update the pixel only if the current pixel is closer (has a lower z value)
-    if (z <= z_buffer[x][y])
+    if (z <= z_buffer[x_int][y_int])
     {
-      z_buffer[x][y] = z;
-      color_buffer[x][y] = color;
+      z_buffer[x_int][y_int] = z;
+      color_buffer[x_int][y_int] = color;
     }
   }
 
@@ -107,18 +110,18 @@ namespace utils
    * @param color_buffer Buffer de cores
    * @param window_size Tamanho da janela
    */
-  void DrawVertexBuffer(ImDrawList *draw_list, const core::Vertex &vertex, const SDL_Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 window_size)
+  void DrawVertexBuffer(ImDrawList *draw_list, const core::Vector3 point, const SDL_Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 window_size)
   {
-    int x = static_cast<int>(vertex.getX(true));
-    int y = static_cast<int>(vertex.getY(true));
+    int x = static_cast<int>(point.x);
+    int y = static_cast<int>(point.y);
 
     if (x < 0 || y < 0 || x >= window_size.x || y >= window_size.y)
       // Caso o vértice esteja fora da janela, não desenha
       return;
 
-    for (int i = -2; i < 3; i++)
+    for (float i = -2; i < 3; i++)
     {
-      for (int j = -2; j < 3; j++)
+      for (float j = -2; j < 3; j++)
       {
         setPixel(x + i, y + j, -9999, color, z_buffer, color_buffer, window_size);
       }
@@ -149,7 +152,7 @@ namespace utils
 
         for (auto vertex : line)
         {
-          setPixel(static_cast<int>(vertex.x), static_cast<int>(vertex.y), vertex.z, color, z_buffer, color_buffer, window_size);
+          setPixel(vertex.x, vertex.y, vertex.z, color, z_buffer, color_buffer, window_size);
         }
       }
     }
@@ -166,7 +169,7 @@ namespace utils
    *
    * @todo Arrumar bug de preenchimento
    */
-  void DrawFaceBuffer(ImDrawList *draw_list, const std::vector<core::Vector3> vertexes, const SDL_Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 window_size)
+  void DrawFaceBuffer(ImDrawList *draw_list, const std::vector<core::Vector3> vertexes, const SDL_Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 min_window_size, core::Vector2 max_window_size)
   {
     int y_min = std::numeric_limits<int>::max();
     int y_max = std::numeric_limits<int>::min();
@@ -195,12 +198,28 @@ namespace utils
         std::swap(start, end);
       }
 
+      float m = (end.x - start.x) / (end.y - start.y);
+      float mz = (end.z - start.z) / (end.y - start.y);
+
+      float x = start.x;
+      float z = start.z;
+
       for (int y = static_cast<int>(start.y); y <= static_cast<int>(end.y); y++)
       {
-        float t = (y - start.y) / (end.y - start.y);
-        float x = start.x + t * (end.x - start.x);
-        float z = start.z + t * (end.z - start.z);
-        scanlines[y - y_min].push_back({x, static_cast<float>(y), z});
+
+        if (x < min_window_size.x)
+          // Se o x for menor que o tamanho da janela, ele é colocado no primeiro pixel da janela
+          scanlines[y - y_min].push_back({min_window_size.x, static_cast<float>(y), z});
+        else if (x > max_window_size.x)
+          // Se o x for maior que o tamanho da janela, ele é colocado no último pixel da janela
+          // o -1 é para indexação dos buffers (z e color)
+          scanlines[y - y_min].push_back({max_window_size.x - 1, static_cast<float>(y), z});
+        else
+          // Caso contrário, ele é colocado no pixel correspondente
+          scanlines[y - y_min].push_back({x, static_cast<float>(y), z});
+
+        x += m;
+        z += mz;
       }
     }
 
@@ -216,9 +235,14 @@ namespace utils
         core::Vector3 start = scanline[i];
         core::Vector3 end = scanline[i + 1];
 
-        for (int x = static_cast<int>(start.x); x <= static_cast<int>(end.x); x++)
+        float tx = 1.0f / (end.x - start.x);
+        float mz = (end.z - start.z) * tx;
+        float z = start.z;
+
+        for (float x = start.x; x <= static_cast<int>(end.x); x++)
         {
-          setPixel(x, static_cast<int>(start.y), start.z + (end.z - start.z) * (x - start.x) / (end.x - start.x), color, z_buffer, color_buffer, window_size);
+          setPixel(x, start.y, z, color, z_buffer, color_buffer, max_window_size);
+          z += mz;
         }
       }
     }

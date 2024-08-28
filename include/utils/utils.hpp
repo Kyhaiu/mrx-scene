@@ -92,11 +92,11 @@ namespace utils
   std::vector<core::Vector3> BresenhamLine(core::Vector3 start, core::Vector3 end);
 
   // Funções para desenhar pixels
-  void setPixel(int x, int y, float z, const SDL_Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 window_size);
+  void setPixel(float x, float y, float z, const SDL_Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 window_size);
   void DrawBuffer(ImDrawList *draw_list, const std::vector<std::vector<float>> &z_buffer, const std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 window_size);
-  void DrawVertexBuffer(ImDrawList *draw_list, const core::Vertex &vertex, const SDL_Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 window_size);
+  void DrawVertexBuffer(ImDrawList *draw_list, const core::Vector3 point, const SDL_Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 window_size);
   void DrawLineBuffer(ImDrawList *draw_list, const std::vector<core::Vector3> &vertexes, const SDL_Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 window_size);
 
   // Funções para desenhar faces
-  void DrawFaceBuffer(ImDrawList *draw_list, std::vector<core::Vector3> vertexes, const SDL_Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 window_size);
+  void DrawFaceBuffer(ImDrawList *draw_list, std::vector<core::Vector3> vertexes, const SDL_Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<SDL_Color>> &color_buffer, core::Vector2 min_window_size, core::Vector2 max_window_size);
 }

@@ -110,7 +110,7 @@ namespace GUI
     std::pair<core::Vector3, core::Vector3> clipped_vertex;
     scene->initializeBuffers();
 
-    std::vector<SDL_Color> face_colors = {{255, 30, 150, 255}, {40, 255, 80, 255}, {90, 40, 255, 255}};
+    std::vector<SDL_Color> face_colors = {{255, 0, 0, 255}, {0, 255, 0, 255}, {0, 0, 255, 255}};
 
     for (auto object : scene->getObjects())
     {
@@ -127,6 +127,7 @@ namespace GUI
         // TODO: Descobrir uma maneira de não precisar limpar o vetor se não houver mudanças
         face->clipped_vertex.clear();
 
+        // Vetor auxiliar para realizar o preenchimento da face (e evitar o problema de preenchimento)
         std::vector<core::Vector3> face_vertexes;
 
         while (true)
@@ -136,24 +137,24 @@ namespace GUI
           face->clipped_vertex.push_back(clipped_vertex.first);
           face->clipped_vertex.push_back(clipped_vertex.second);
 
-          utils::DrawVertexBuffer(draw_list, *he->getOrigin(), {255, 255, 255, 255}, scene->z_buffer, scene->color_buffer, max_viewport);
-
           face_vertexes.push_back(he->getOrigin()->getVectorScreen());
+          face_vertexes.push_back(he->getNext()->getOrigin()->getVectorScreen());
+
+          std::cout << "vertex " << he->getOrigin()->getId() << ": " << he->getOrigin()->getVectorScreen() << std::endl;
 
           he = he->getNext();
           if (he == face->getHalfEdge())
             break;
         }
 
-        object->isSelected()
-            ? utils::DrawLineBuffer(draw_list, face->clipped_vertex, {255, 0, 0, 255}, scene->z_buffer, scene->color_buffer, max_viewport)
-            : utils::DrawLineBuffer(draw_list, face->clipped_vertex, {255, 255, 255, 255}, scene->z_buffer, scene->color_buffer, max_viewport);
+        // object->isSelected()
+        //     ? utils::DrawLineBuffer(draw_list, face->clipped_vertex, {255, 0, 0, 255}, scene->z_buffer, scene->color_buffer, max_viewport)
+        //     : utils::DrawLineBuffer(draw_list, face->clipped_vertex, {255, 255, 255, 255}, scene->z_buffer, scene->color_buffer, max_viewport);
 
+        object->isSelected()
+            ? utils::DrawFaceBuffer(draw_list, face_vertexes, face_colors[color_picking], scene->z_buffer, scene->color_buffer, min_viewport, max_viewport)
+            : utils::DrawFaceBuffer(draw_list, face_vertexes, face_colors[color_picking], scene->z_buffer, scene->color_buffer, min_viewport, max_viewport);
         color_picking++;
-
-        object->isSelected()
-            ? utils::DrawFaceBuffer(draw_list, face->clipped_vertex, face_colors[color_picking], scene->z_buffer, scene->color_buffer, max_viewport)
-            : utils::DrawFaceBuffer(draw_list, face->clipped_vertex, face_colors[color_picking], scene->z_buffer, scene->color_buffer, max_viewport);
       }
     }
 
