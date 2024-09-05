@@ -64,6 +64,7 @@
 #pragma once
 
 #include <math.h>
+#include <limits.h>
 
 #include <core/vector.hpp>
 

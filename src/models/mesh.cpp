@@ -139,6 +139,16 @@ namespace models
   }
 
   /**
+   * @brief Método que retorna a cor do objeto
+   *
+   * @return Color Cor do objeto
+   */
+  Color Mesh::getColor() const
+  {
+    return this->color;
+  }
+
+  /**
    * @brief Método que define o vetor de vértices da malha
    *
    * @param vertices Vetor de vértices da malha
@@ -196,6 +206,16 @@ namespace models
   void Mesh::setSelected(bool selected)
   {
     this->selected = selected;
+  }
+
+  /**
+   * @brief Método que define a cor do objeto
+   *
+   * @param color Cor do objeto
+   */
+  void Mesh::setColor(const Color &color)
+  {
+    this->color = color;
   }
 
   //------------------------------------------------------------------------------------------------
@@ -315,6 +335,13 @@ namespace models
     this->setVertices(vertexes);
     this->setHalfEdges(mesh);
     this->setFaces(faces);
+
+    // Inicialização dos outros atributos da malha
+    this->setSelected(false);
+    this->material.diffuse = {0.5f, 0.5f, 0.5f};
+    this->material.specular = {0.5f, 0.5f, 0.5f};
+    this->material.shininess = 2.5f;
+    this->setColor(models::RED);
   }
 
   /**

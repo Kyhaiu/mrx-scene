@@ -48,6 +48,7 @@
 
 #include <math/math.hpp>
 #include <core/vector.hpp>
+#include <models/colors.hpp>
 
 #include <tuple>
 #include <vector>
@@ -60,7 +61,9 @@ namespace math
   core::Matrix projection(const core::Vector3 &vrp, const core::Vector3 p, const float d);
   core::Matrix src_to_srt(const core::Vector2 min_window, const core::Vector2 min_viewport, const core::Vector2 max_window, const core::Vector2 max_viewport, bool reflected);
 
-  // Clipagem de Linhas
+  //-------------------------------------------------------------------------------------------------
+  // Funções de Clipping (Clipagem de Linha)
+  //-------------------------------------------------------------------------------------------------
 #define INSIDE 0b0000 // 0000
 #define LEFT 0b0001   // 0001
 #define RIGHT 0b0010  // 0010
@@ -70,5 +73,12 @@ namespace math
   int compute_outcode(core::Vector3 p, core::Vector2 min, core::Vector2 max);
   std::pair<core::Vector3, core::Vector3> clip_line(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max);
 
-  std::vector<std::vector<core::Vector3>> fill_polygon(std::vector<core::Vector3> vertexes);
+  //-------------------------------------------------------------------------------------------------
+  // Funções de Preenchimento de Polígonos e Desenho de Linhas
+  //-------------------------------------------------------------------------------------------------
+
+  std::vector<core::Vector3> BresenhamLine(core::Vector3 start, core::Vector3 end);
+  void fill_polygon(const std::vector<core::Vector3> &vertexes, models::Color color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer, core::Vector2 max_window_size);
+  void z_buffer(const float x, const float y, const float z, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
+
 } // namespace math

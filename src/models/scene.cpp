@@ -51,6 +51,23 @@ namespace models
     this->min_window = min_window;
     this->max_window = max_window;
     this->selected_object = nullptr;
+
+    // TODO: Arruma a construção da luz da cena de um jeito mais elegante
+    models::Light light;
+
+    light.ambient.intensity = models::RED;
+    light.ambient.ka = {0.1f, 0.1f, 0.1f};
+
+    light.color = models::ColorToChannels(models::WHITE);
+
+    this->global_light = light;
+
+    models::Omni omni;
+    omni.position = {100.0f, 100.0f, 100.0f};
+
+    omni.color = models::ColorToChannels(models::WHITE);
+
+    this->omni_lights.push_back(omni);
   }
 
   /**
@@ -322,6 +339,7 @@ namespace models
       for (auto face : object->getFaces())
       {
         face->setVisible(face->isVisible(camera->position));
+        models::FlatShading(this->global_light, this->omni_lights[0], face->getFaceCentroid(), camera->position, object->color, object->material);
       }
     }
   }
@@ -373,12 +391,12 @@ namespace models
 
   void Scene::initializeBuffers()
   {
-    int width = static_cast<int>(this->getMaxViewport().x);
-    int height = static_cast<int>(this->getMaxViewport().y);
+    int width = static_cast<int>(this->max_viewport.x);
+    int height = static_cast<int>(this->max_viewport.y);
 
     // Resize and initialize the z-buffer and color buffer
     this->z_buffer = std::vector<std::vector<float>>(width, std::vector<float>(height, std::numeric_limits<float>::infinity()));
-    this->color_buffer = std::vector<std::vector<SDL_Color>>(width, std::vector<SDL_Color>(height, {0, 0, 0, 0}));
+    this->color_buffer = std::vector<std::vector<models::Color>>(width, std::vector<models::Color>(height, models::TRANSPARENT));
   }
 
   //------------------------------------------------------------------------------------------------

@@ -43,11 +43,11 @@
  **********************************************************************************************/
 #pragma once
 
-#include <SDL2/SDL_pixels.h>
-
 #include <models/mesh.hpp>
 #include <models/camera.hpp>
 #include <math/pipeline.hpp>
+#include <models/colors.hpp>
+#include <models/light.hpp>
 
 #include <limits>
 
@@ -104,7 +104,18 @@ namespace models
     /**
      * @brief Buffer de cores
      */
-    std::vector<std::vector<SDL_Color>> color_buffer;
+    std::vector<std::vector<models::Color>> color_buffer;
+    /**
+     * @brief Luz global da cena
+     *
+     */
+    models::Light global_light;
+    /**
+     * @brief Lampadas omni da cena
+     *
+     * @note Omni refere-se a lampada omnidirecional que tem as mesmas propriedades de cor em todas as direções
+     */
+    std::vector<models::Omni> omni_lights;
 
     // Construtor and Destrutor
     Scene();

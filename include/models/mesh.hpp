@@ -53,12 +53,16 @@
 #include <stdexcept> // Include this for standard exceptions
 #include <limits>    // Include this for std::numeric_limits
 
+#include <models/common.hpp>
+#include <models/colors.hpp>
+
 #include <core/vertex.hpp>
 #include <core/face.hpp>
 #include <core/halfedge.hpp>
 
 namespace models
 {
+
   class Mesh
   {
   private:
@@ -88,6 +92,19 @@ namespace models
     bool selected;
 
   public:
+    // Atributos da malha
+    /**
+     * @brief Material do objeto
+     *
+     * @note Conteúdo do material: Cor difusa, Cor especular e Brilho
+     */
+    models::Material material;
+    /**
+     * @brief Cor do objeto
+     *
+     */
+    models::Color color;
+
     // Constructors and Destructors
     Mesh();
     Mesh(std::vector<core::Vertex *> vertexes, std::vector<std::vector<int>> faces, std::string id);
@@ -106,6 +123,7 @@ namespace models
     int getNumFaces() const;
     std::string getId() const;
     bool isSelected() const;
+    Color getColor() const;
 
     void setVertices(const std::vector<core::Vertex *> vertices);
     void setFaces(const std::vector<core::Face *> faces);
@@ -113,6 +131,7 @@ namespace models
     void setNumFaces(int num_faces);
     void setId(const std::string &id);
     void setSelected(bool selected);
+    void setColor(const Color &color);
 
     // Functions
     void createMesh(std::vector<std::vector<int>> index_faces);

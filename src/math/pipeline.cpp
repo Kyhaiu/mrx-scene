@@ -150,7 +150,7 @@ namespace math
   }
 
   //-------------------------------------------------------------------------------------------------
-  // Clipagem de Linhas
+  // Clipagem de Clipping (Clipagem de Linha)
   //-------------------------------------------------------------------------------------------------
 
   /**
@@ -211,6 +211,7 @@ namespace math
    */
   std::pair<core::Vector3, core::Vector3> clip_line(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max)
   {
+
     // Computa os códigos das extremidades da linha
     int P = compute_outcode(p1, min, max);
     int Q = compute_outcode(p2, min, max);
@@ -223,11 +224,6 @@ namespace math
       }
       else if (P & Q) // Ambos os pontos estão fora da janela
       {
-        // Valores usados para indicar que a linha não está dentro da janela e não precisa ser desenhada
-        p1.x = -1.0f;
-        p1.y = -1.0f;
-        p2.x = -1.0f;
-        p2.y = -1.0f;
         break;
       }
       else
@@ -279,88 +275,175 @@ namespace math
     return std::make_pair(p1, p2);
   }
 
+  //-------------------------------------------------------------------------------------------------
+  // Funções de Preenchimento de Polígonos e Desenho de Linhas
+  //-------------------------------------------------------------------------------------------------
+
   /**
-   * @brief Algoritmo para interpolar os valores das coordenadas x e z de um polígono.
+   * @brief Algoritmo de Bresenham para desenhar uma linha
    *
-   * @param vertexes Lista de vértices que compõem o polígono (coordenadas de tela)
-   * @return std::vector<std::vector<core::Vector3>>
+   * @param start Ponto de início da linha
+   * @param end Ponto de fim da linha
+   *
+   * @todo verificar a interpolação de Z
+   *
+   * @return Vetor de vértices que compõem a linha
    */
-  std::vector<std::vector<core::Vector3>> fill_polygon(std::vector<core::Vector3> vertexes)
+  std::vector<core::Vector3> BresenhamLine(core::Vector3 start, core::Vector3 end)
   {
-    // encontra o y_min e y_max
-    int y_max = static_cast<int>(std::max_element(vertexes.begin(),
-                                                  vertexes.end(),
-                                                  [](const core::Vector3 &a, const core::Vector3 &b)
-                                                  { return a.y < b.y; })
-                                     ->y);
-    int y_min = static_cast<int>(std::min_element(vertexes.begin(),
-                                                  vertexes.end(),
-                                                  [](const core::Vector3 &a, const core::Vector3 &b)
-                                                  { return a.y < b.y; })
-                                     ->y);
-
-    int number_of_lines = y_max - y_min;
-
-    // Vetor que contem as arestas do polígono
-    std::vector<std::vector<core::Vector3>> edges;
-
-    // O vetor de vertices é percorrido de 2 em 2
-    // Pois cada par de vértices representa uma aresta
-    for (int i = 0; i < vertexes.size(); i = i + 2)
+    std::vector<core::Vector3> line;
+    // Se o vértice for válido
+    if (start.x != -1 && end.x != -1)
     {
-      edges.push_back({vertexes[i], vertexes[i + 1]});
-    }
+      int x0 = static_cast<int>(start.x);
+      int y0 = static_cast<int>(start.y);
+      int x1 = static_cast<int>(end.x);
+      int y1 = static_cast<int>(end.y);
 
-    // Cria um vetor de interseções
-    std::vector<std::vector<core::Vector3>> intersections(number_of_lines - 1);
+      float z0 = start.z;
+      float z1 = end.z;
 
-    // Calcula as interseções
-    for (int y = y_min; y < y_max; y++)
-    {
-      for (auto edge : edges)
+      int dx = abs(x1 - x0);
+      int dy = abs(y1 - y0);
+      int sx = (x0 < x1) ? 1 : -1;
+      int sy = (y0 < y1) ? 1 : -1;
+      int err = dx - dy;
+
+      float dz = (z1 - z0) / std::max(dx, dy); // Step size for Z interpolation
+
+      while (true)
       {
-        int x0 = static_cast<int>(edge[0].x);
-        int y0 = static_cast<int>(edge[0].y);
-        float z0 = edge[0].z;
-        int x1 = static_cast<int>(edge[1].x);
-        int y1 = static_cast<int>(edge[1].y);
-        float z1 = edge[1].z;
 
-        int dx = abs(x1 - x0);
-        int dy = abs(y1 - y0);
-        float dz = abs(z1 - z0);
-        int sx = (x0 < x1) ? 1 : -1;
-        int sy = (y0 < y1) ? 1 : -1;
-        int err = dx - dy;
+        line.push_back({static_cast<float>(x0), static_cast<float>(y0), z0});
 
-        while (true)
+        if (x0 == x1 && y0 == y1)
+          break;
+
+        int e2 = 2 * err;
+        if (e2 > -dy)
         {
-          if (y0 == y)
-          {
-            float z = z0 + dz * (y - y0) / dy;
-            core::Vector3 intersection = {static_cast<float>(x0), static_cast<float>(y), z};
-            intersections[y - y_min].push_back(intersection);
-          }
-
-          if (x0 == x1 && y0 == y1)
-            break;
-
-          int e2 = 2 * err;
-          if (e2 > -dy)
-          {
-            err = err - dy;
-            x0 = x0 + sx;
-          }
-          if (e2 < dx)
-          {
-            err = err + dx;
-            y0 = y0 + sy;
-          }
+          err -= dy;
+          x0 += sx;
+          z0 += dz; // Interpolate Z
+        }
+        if (e2 < dx)
+        {
+          err += dx;
+          y0 += sy;
+          z0 += dz; // Interpolate Z
         }
       }
     }
 
-    return intersections;
+    return line;
+  }
+
+  /**
+   * @brief Preenche um polígono
+   *
+   * @param vertexes Vetor de vértices que compõem o polígono
+   * @param window_bounds Limites da janela
+   *
+   * @note window_bounds -> x = x_min, y = y_min, z = x_max, w = y_max
+   *
+   * @return Vetor de vetores de vértices que compõem as linhas do polígono
+   */
+  void fill_polygon(const std::vector<core::Vector3> &vertexes, models::Color color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer, core::Vector2 max_window_size)
+  {
+
+    int y_min = std::numeric_limits<int>::max();
+    int y_max = std::numeric_limits<int>::min();
+
+    for (auto vertex : vertexes)
+    {
+      if (vertex.y < y_min)
+        y_min = static_cast<int>(vertex.y);
+      if (vertex.y > y_max)
+        y_max = static_cast<int>(vertex.y);
+    }
+
+    std::vector<std::vector<core::Vector3>> scanlines(y_max - y_min);
+
+    // Como a lista de vertices é composta pelo inicio e fim da aresta, o incremento é de 2
+    for (int i = 0; i < vertexes.size(); i += 2)
+    {
+      core::Vector3 start = vertexes[i];
+      core::Vector3 end = vertexes[i + 1];
+
+      if (start.y == end.y)
+        continue;
+
+      if (start.y > end.y)
+      {
+        std::swap(start, end);
+      }
+
+      float m_inv = (end.x - start.x) / (end.y - start.y);
+      float mz = (end.z - start.z) / (end.y - start.y);
+
+      float x = start.x;
+      float z = start.z;
+
+      for (int y = static_cast<int>(start.y); y < static_cast<int>(end.y); y++)
+      {
+
+        scanlines[y - y_min].push_back({x, static_cast<float>(y), z});
+
+        x += m_inv;
+        z += mz;
+      }
+    }
+
+    for (auto scanline : scanlines)
+    {
+      std::sort(scanline.begin(), scanline.end(), [](core::Vector3 a, core::Vector3 b)
+                { return a.x < b.x; });
+
+      for (int j = 0; j < scanline.size(); j = j + 2)
+      {
+
+        core::Vector3 start = scanline[j];
+        core::Vector3 end = scanline[j + 1];
+
+        float mz = (end.z - start.z) / (end.x - start.x);
+        float z = start.z + (start.x - ceilf(start.x)) * mz;
+
+        for (float x = ceilf(start.x); x < floorf(end.x); x++)
+        {
+          math::z_buffer(x, start.y, z, color, z_buffer, color_buffer);
+          z += mz;
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief Atualiza o buffer de profundidade
+   *
+   * @param z Profundidade do pixel
+   * @param color Cor do pixel
+   * @param z_buffer Buffer de profundidade
+   * @param color_buffer Buffer de cores
+   * @param window_size Tamanho da janela
+   */
+  void z_buffer(const float x, const float y, const float z, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  {
+    // Arredondamento para o pixel mais próximo
+    int x_int = static_cast<int>(std::roundf(x));
+    int y_int = static_cast<int>(std::roundf(y));
+
+    if (x_int < 0 || x_int >= z_buffer.size() || y_int < 0 || y_int >= z_buffer[0].size())
+    {
+      std::cout << " Buffer de profundidade: " << z_buffer.size() << ", " << z_buffer[0].size() << std::endl;
+      std::cout << "Fora do buffer: " << x_int << ", " << y_int << std::endl;
+    }
+
+    // Se o pixel atual estiver mais distante que o pixel já desenhado, não atualiza os buffers
+    if (z_buffer[x_int][y_int] < z)
+      return;
+
+    z_buffer[x_int][y_int] = z;
+    color_buffer[x_int][y_int] = color;
   }
 
 } // namespace math
