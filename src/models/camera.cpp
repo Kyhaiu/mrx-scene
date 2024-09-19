@@ -256,6 +256,7 @@ namespace models
    * @brief Camera orbital, apenas orbita o objeto
    *
    * @param camera Ponteiro para a câmera
+   * @param orbitalSpeed Velocidade orbital da câmera
    */
   void CameraOrbital(models::Camera3D *camera, float orbitalSpeed)
   {
@@ -280,11 +281,11 @@ namespace models
     core::Vector3 camera_position = camera->position;
     core::Vector3 camera_direction = math::Vector3Subtract(camera_position, camera->target);
 
-    // Rotate the camera around the target
+    // Rotaciona a camera em torno do eixo X
     camera_position = math::Vector3Add(camera->target, math::Vector3Transform(camera_direction, math::MatrixRotate({1, 0, 0}, deltaAngleX)));
     camera_direction = math::Vector3Subtract(camera_position, camera->target);
 
-    // Rotate the camera around the target
+    // Rotaciona a camera em torno do eixo Y
     camera_position = math::Vector3Add(camera->target, math::Vector3Transform(camera_direction, math::MatrixRotate({0, 1, 0}, deltaAngleY)));
 
     camera->position = camera_position;

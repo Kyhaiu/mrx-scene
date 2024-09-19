@@ -89,6 +89,15 @@ namespace models
   }
 
   /**
+   * @brief Método que retorna o vetor de normais dos vértices da malha
+   *
+   */
+  std::vector<core::Vector3> Mesh::getVertexesNormals() const
+  {
+    return this->vertexes_normals;
+  }
+
+  /**
    * @brief Método que retorna o vetor de faces da malha
    *
    * @return std::vector<core::Face> Vetor de faces da malha
@@ -139,16 +148,6 @@ namespace models
   }
 
   /**
-   * @brief Método que retorna a cor do objeto
-   *
-   * @return Color Cor do objeto
-   */
-  Color Mesh::getColor() const
-  {
-    return this->color;
-  }
-
-  /**
    * @brief Método que define o vetor de vértices da malha
    *
    * @param vertices Vetor de vértices da malha
@@ -156,6 +155,16 @@ namespace models
   void Mesh::setVertices(const std::vector<core::Vertex *> vertices)
   {
     this->vertices = vertices;
+  }
+
+  /**
+   * @brief Método que define o vetor de normais dos vértices da malha
+   *
+   * @param vertexes_normals Vetor de normais dos vértices da malha
+   */
+  void Mesh::setVertexesNormals(const std::vector<core::Vector3> vertexes_normals)
+  {
+    this->vertexes_normals = vertexes_normals;
   }
 
   /**
@@ -206,16 +215,6 @@ namespace models
   void Mesh::setSelected(bool selected)
   {
     this->selected = selected;
-  }
-
-  /**
-   * @brief Método que define a cor do objeto
-   *
-   * @param color Cor do objeto
-   */
-  void Mesh::setColor(const Color &color)
-  {
-    this->color = color;
   }
 
   //------------------------------------------------------------------------------------------------
@@ -338,10 +337,10 @@ namespace models
 
     // Inicialização dos outros atributos da malha
     this->setSelected(false);
+    this->material.ambient = {0.5f, 0.5f, 0.5f};
     this->material.diffuse = {0.5f, 0.5f, 0.5f};
-    this->material.specular = {0.5f, 0.5f, 0.5f};
-    this->material.shininess = 2.5f;
-    this->setColor(models::RED);
+    this->material.specular = {1.0f, 1.0f, 1.0f};
+    this->material.shininess = 3.0f;
   }
 
   /**
@@ -387,5 +386,43 @@ namespace models
     core::Vector4 result = {min_x, min_y, max_x, max_y};
 
     return result;
+  }
+
+  /**
+   * @brief Método que calcula as normais dos vértices da malha
+   *
+   */
+  void Mesh::determineNormals()
+  {
+    for (auto v : this->getVertices())
+    {
+      core::HalfEdge *start_he = v->getHalfEdge();
+      core::HalfEdge *he = start_he;
+
+      core::Vector3 normal = {0.0f, 0.0f, 0.0f};
+
+      std::cout << "====================" << std::endl;
+
+      std::cout << "Vertex: " << v->getId() << std::endl;
+
+      while (true)
+      {
+        std::cout << he->getFace()->getId() << " ";
+        core::Vector3 face_normal = he->getFace()->getNormal();
+
+        normal.x += face_normal.x;
+        normal.y += face_normal.y;
+        normal.z += face_normal.z;
+
+        he = he->getTwin()->getNext();
+
+        if (he == start_he)
+          break;
+      }
+
+      std::cout << std::endl;
+
+      this->vertexes_normals.push_back(math::Vector3Normalize(normal));
+    }
   }
 } // namespace models

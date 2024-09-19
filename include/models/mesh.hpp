@@ -71,6 +71,10 @@ namespace models
      */
     std::vector<core::Vertex *> vertices;
     /**
+     * @brief Vector que contem todas as normais dos vértices da malha
+     */
+    std::vector<core::Vector3> vertexes_normals;
+    /**
      * @brief Vector que contem todas as faces da malha
      */
     std::vector<core::Face *> faces;
@@ -99,11 +103,6 @@ namespace models
      * @note Conteúdo do material: Cor difusa, Cor especular e Brilho
      */
     models::Material material;
-    /**
-     * @brief Cor do objeto
-     *
-     */
-    models::Color color;
 
     // Constructors and Destructors
     Mesh();
@@ -118,25 +117,26 @@ namespace models
 
     // Getters and Setters
     std::vector<core::Vertex *> getVertices() const;
+    std::vector<core::Vector3> getVertexesNormals() const;
     std::vector<core::Face *> getFaces() const;
     std::vector<core::HalfEdge *> getHalfEdges() const;
     int getNumFaces() const;
     std::string getId() const;
     bool isSelected() const;
-    Color getColor() const;
 
     void setVertices(const std::vector<core::Vertex *> vertices);
+    void setVertexesNormals(const std::vector<core::Vector3> vertexes_normals);
     void setFaces(const std::vector<core::Face *> faces);
     void setHalfEdges(const std::vector<core::HalfEdge *> half_edges);
     void setNumFaces(int num_faces);
     void setId(const std::string &id);
     void setSelected(bool selected);
-    void setColor(const Color &color);
 
     // Functions
     void createMesh(std::vector<std::vector<int>> index_faces);
     void createMesh(const std::string &filename);
     void createMesh(const std::vector<core::Vertex> &vertices, std::vector<std::vector<int>> index_faces);
     core::Vector4 getBox(bool screen_coordinates); // x = min_x, y = min_y, z = max_x, w = max_y
+    void determineNormals();
   };
 } // namespace models

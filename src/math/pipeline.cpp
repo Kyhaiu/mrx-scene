@@ -339,17 +339,24 @@ namespace math
   }
 
   /**
-   * @brief Preenche um polígono
+   * @brief Preenche um polígono com sombreamento flat
    *
-   * @param vertexes Vetor de vértices que compõem o polígono
-   * @param window_bounds Limites da janela
+   * @param vertexes Vertices da face do polígono
+   * @param color Cor do polígono
+   * @param global_light Luz global
+   * @param omni_lights Luzes omni
+   * @param eye Posição do observador
+   * @param face_centroid Centroide da face
+   * @param face_normal Vetor normal da face
+   * @param object_material Material do objeto
+   * @param z_buffer Buffer de profundidade
+   * @param color_buffer Buffer de cores
+   * @param max_window_size Tamanho máximo da janela
    *
-   * @note window_bounds -> x = x_min, y = y_min, z = x_max, w = y_max
-   *
-   * @return Vetor de vetores de vértices que compõem as linhas do polígono
    */
-  void fill_polygon(const std::vector<core::Vector3> &vertexes, models::Color color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer, core::Vector2 max_window_size)
+  void fill_polygon_flat_shading(const std::vector<core::Vector3> &vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const core::Vector3 &face_centroid, const core::Vector3 &face_normal, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer, core::Vector2 max_window_size)
   {
+    models::Color color = models::FlatShading(global_light, omni_lights, face_centroid, face_normal, eye, object_material);
 
     int y_min = std::numeric_limits<int>::max();
     int y_max = std::numeric_limits<int>::min();
@@ -408,10 +415,129 @@ namespace math
         float mz = (end.z - start.z) / (end.x - start.x);
         float z = start.z + (start.x - ceilf(start.x)) * mz;
 
-        for (float x = ceilf(start.x); x < floorf(end.x); x++)
+        for (float x = ceilf(start.x); x < end.x; x++)
         {
           math::z_buffer(x, start.y, z, color, z_buffer, color_buffer);
           z += mz;
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief Preenche um polígono com sombreamento de Gourand
+   *
+   * @param vertexes Vertices da face do polígono
+   * @param vertexes_normal Vetores normais dos vértices
+   * @param global_light Luz global
+   * @param omni_lights Luzes omni
+   * @param eye Posição do observador
+   * @param face_centroid Centroide da face
+   * @param object_material Material do objeto
+   * @param z_buffer Buffer de profundidade
+   * @param color_buffer Buffer de cores
+   *
+   */
+  void fill_polygon_gourand(const std::vector<core::Vector3> &vertexes, const std::vector<core::Vector3> &vertexes_normal, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const core::Vector3 &face_normal, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  {
+    std::vector<models::Color> colors = models::GouraudShading(global_light, omni_lights, face_normal, vertexes_normal, eye, object_material);
+
+    int y_min = std::numeric_limits<int>::max();
+    int y_max = std::numeric_limits<int>::min();
+
+    for (auto vertex : vertexes)
+    {
+      if (vertex.y < y_min)
+        y_min = static_cast<int>(vertex.y);
+      if (vertex.y > y_max)
+        y_max = static_cast<int>(vertex.y);
+    }
+
+    std::vector<std::vector<std::pair<core::Vector3, models::Color>>> scanlines(y_max - y_min);
+
+    // Como a lista de vertices é composta pelo inicio e fim da aresta, o incremento é de 2
+    for (int i = 0; i < vertexes.size(); i += 2)
+    {
+      core::Vector3 start = vertexes[i];
+      core::Vector3 end = vertexes[i + 1];
+
+      models::Color start_color = colors[i];
+      models::Color end_color = colors[i + 1];
+
+      if (start.y == end.y)
+        continue;
+
+      if (start.y > end.y)
+      {
+        std::swap(start, end);
+        std::swap(start_color, end_color);
+      }
+
+      float m_inv = (end.x - start.x) / (end.y - start.y);
+      float dz = (end.z - start.z) / (end.y - start.y);
+
+      float dr = (end_color.r - start_color.r) / (end.y - start.y);
+      float dg = (end_color.g - start_color.g) / (end.y - start.y);
+      float db = (end_color.b - start_color.b) / (end.y - start.y);
+
+      float x = start.x;
+      float z = start.z;
+
+      float r = start_color.r;
+      float g = start_color.g;
+      float b = start_color.b;
+
+      for (int y = static_cast<int>(start.y); y < static_cast<int>(end.y); y++)
+      {
+
+        scanlines[y - y_min].push_back(std::make_pair<core::Vector3, models::Color>({x, static_cast<float>(y), z}, {static_cast<models::Uint8>(r), static_cast<models::Uint8>(g), static_cast<models::Uint8>(b)}));
+        x += m_inv;
+        z += dz;
+
+        r += dr;
+        g += dg;
+        b += db;
+      }
+    }
+
+    for (int i = 0; i < scanlines.size(); i++)
+    {
+      std::sort(scanlines[i].begin(), scanlines[i].end(),
+                [](std::pair<core::Vector3, models::Color> a, std::pair<core::Vector3, models::Color> b)
+                { return a.first.x < b.first.x; });
+
+      for (int j = 0; j < scanlines[i].size(); j = j + 2)
+      {
+
+        core::Vector3 start = scanlines[i][j].first;
+        core::Vector3 end = scanlines[i][j + 1].first;
+
+        models::Color start_color = scanlines[i][j].second;
+        models::Color end_color = scanlines[i][j + 1].second;
+
+        float mz = (end.z - start.z) / (end.x - start.x);
+        float z = start.z + (start.x - ceilf(start.x)) * mz;
+
+        float dr = (end_color.r - start_color.r) / (end.x - start.x);
+        float dg = (end_color.g - start_color.g) / (end.x - start.x);
+        float db = (end_color.b - start_color.b) / (end.x - start.x);
+
+        float r = start_color.r + (start.x - ceilf(start.x)) * dr;
+        float g = start_color.g + (start.x - ceilf(start.x)) * dg;
+        float b = start_color.b + (start.x - ceilf(start.x)) * db;
+
+        for (float x = ceilf(start.x); x < end.x; x++)
+        {
+          models::Color current_color = {
+              static_cast<models::Uint8>(r),
+              static_cast<models::Uint8>(g),
+              static_cast<models::Uint8>(b), 255};
+
+          math::z_buffer(x, start.y, z, current_color, z_buffer, color_buffer);
+          z += mz;
+          r += dr;
+          g += dg;
+          b += db;
         }
       }
     }

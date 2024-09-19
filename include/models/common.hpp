@@ -74,11 +74,13 @@ namespace models
   /**
    * @brief Propriedades de um material
    *
+   * @param ambient Cor ambiente (separa por canal)
    * @param diffuse Cor difusa (separa por canal)
    * @param specular Cor especular (separa por canal)
    */
   typedef struct
   {
+    ColorChannels ambient;
     ColorChannels diffuse;
     ColorChannels specular;
     float shininess;

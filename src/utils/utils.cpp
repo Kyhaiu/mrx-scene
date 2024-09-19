@@ -102,17 +102,40 @@ namespace utils
   /**
    * @brief Desenha uma face no buffer
    *
-   * @param draw_list Referência para a janela onde o buffer será desenhado
    * @param vertexes Vetor de vértices que compõem a face
-   * @param color Cor da face
+   * @param eye Posição do observador
+   * @param face_centroid Centroide da face
+   * @param face_normal Vetor normal da face
+   * @param object_material Material do objeto
+   * @param global_light Luz global
+   * @param omni_lights Vetor de luzes omni
    * @param z_buffer Buffer de profundidade
    * @param color_buffer Buffer de cores
    *
    * @todo Arrumar bug de preenchimento
    */
-  void DrawFaceBuffer(const std::vector<core::Vector3> &vertexes, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  void DrawFaceBufferFlatShading(const std::vector<core::Vector3> &vertexes, const core::Vector3 &eye, const core::Vector3 &face_centroid, const core::Vector3 &face_normal, const models::Material &object_material, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
   {
-    math::fill_polygon(vertexes, color, z_buffer, color_buffer, {static_cast<float>(color_buffer.size()), static_cast<float>(color_buffer[0].size())});
+    math::fill_polygon_flat_shading(vertexes, global_light, omni_lights, eye, face_centroid, face_normal, object_material, z_buffer, color_buffer, {static_cast<float>(color_buffer.size()), static_cast<float>(color_buffer[0].size())});
   }
 
+  /**
+   * @brief Desenha uma face no buffer
+   *
+   * @param vertexes Vetor de vértices que compõem a face
+   * @param normals Vetor de normais dos vértices da face
+   * @param eye Posição do observador
+   * @param face_centroid Centroide da face
+   * @param face_normal Vetor normal da face
+   * @param object_material Material do objeto
+   * @param global_light Luz global
+   * @param omni_lights Vetor de luzes omni
+   * @param z_buffer Buffer de profundidade
+   * @param color_buffer Buffer de cores
+   *
+   */
+  void DrawFaceBufferGouraudShading(const std::vector<core::Vector3> &vertexes, const std::vector<core::Vector3> &normals, const core::Vector3 &eye, const core::Vector3 &face_centroid, const core::Vector3 &face_normal, const models::Material &object_material, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  {
+    math::fill_polygon_gourand(vertexes, normals, global_light, omni_lights, eye, face_normal, object_material, z_buffer, color_buffer);
+  }
 } // namespace utils

@@ -55,17 +55,14 @@ namespace models
     // TODO: Arruma a construção da luz da cena de um jeito mais elegante
     models::Light light;
 
-    light.ambient.intensity = models::RED;
-    light.ambient.ka = {0.1f, 0.1f, 0.1f};
-
-    light.color = models::ColorToChannels(models::WHITE);
+    light.intensity = models::RED;
 
     this->global_light = light;
 
     models::Omni omni;
-    omni.position = {100.0f, 100.0f, 100.0f};
+    omni.position = {50.0f, 50.0f, 50.0f};
 
-    omni.color = models::ColorToChannels(models::WHITE);
+    omni.intensity = models::ColorToChannels(models::RED);
 
     this->omni_lights.push_back(omni);
   }
@@ -309,6 +306,8 @@ namespace models
   {
     models::Camera3D *camera = this->getCamera();
 
+    // LightOrbital(this->omni_lights[0], 0.01f);
+
     core::Matrix sru_src_matrix = math::sru_to_src(camera->position, camera->target);
     core::Matrix projection_matrix = math::projection(
         camera->position,
@@ -339,8 +338,9 @@ namespace models
       for (auto face : object->getFaces())
       {
         face->setVisible(face->isVisible(camera->position));
-        models::FlatShading(this->global_light, this->omni_lights[0], face->getFaceCentroid(), camera->position, object->color, object->material);
       }
+
+      object->determineNormals();
     }
   }
 

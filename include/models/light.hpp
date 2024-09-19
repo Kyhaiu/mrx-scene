@@ -44,25 +44,13 @@
 #include <models/colors.hpp>
 #include <math/math.hpp>
 
+#include <vector>
+
 namespace models
 {
   //-------------------------------------------------------------------------------------------------
   // Estruturas
   //-------------------------------------------------------------------------------------------------
-
-  /**
-   * @brief Luz Ambiente
-   *
-   * @param intensity Intensidade das cores da Luz Ambiente
-   * @param ka Coeficiente de reflexão ambiente
-   */
-  typedef struct
-  {
-    // Intensidade da Luz Ambiente
-    models::Color intensity;
-    // Coeficiente de reflexão ambiente
-    models::ColorChannels ka;
-  } AmbientLight;
 
   /**
    * @brief Lampada Omnidirecional
@@ -76,8 +64,8 @@ namespace models
   {
     // Posição da Luz
     Position position;
-    // Intensidade da Luz da Lampada
-    ColorChannels color;
+    // Intensidade da Luz da Lampada (Cor)
+    ColorChannels intensity;
   } Omni;
 
   /**
@@ -88,16 +76,20 @@ namespace models
    */
   typedef struct
   {
-    // Componentes da Luz Ambiente
-    AmbientLight ambient;
-    // Light Color
-    ColorChannels color;
+    // Intensidade da Luz Ambiente
+    models::Color intensity;
   } Light;
+
+#define FLAT_SHADING 0
+#define GOURAUD_SHADING 1
+#define PHONG_SHADING 2
 
   //-------------------------------------------------------------------------------------------------
   // Funções
   //-------------------------------------------------------------------------------------------------
 
-  void FlatShading(const models::Light &light, const models::Omni &omni, const core::Vector3 &normal, const core::Vector3 &eye, models::Color &color, const models::Material &material);
+  void LightOrbital(models::Omni &omni, float orbitalSpeed);
 
+  models::Color FlatShading(const models::Light &light, const std::vector<models::Omni> &omni, const core::Vector3 &centroid, const core::Vector3 &face_normal, const core::Vector3 &eye, const models::Material &material);
+  std::vector<models::Color> GouraudShading(const models::Light &light, const std::vector<models::Omni> &omni, const core::Vector3 &face_normal, const std::vector<core::Vector3> &vertexes_normals, const core::Vector3 &eye, const models::Material &material);
 } // namespace models

@@ -127,11 +127,12 @@ void GUI::Controller::handleEvents(const SDL_Event &event, SDL_Window *window, f
       float dx = (this->lastMousePosition.x - this->mousePosition.x) * deltaAngleX;
       float dy = (this->lastMousePosition.y - this->mousePosition.y) * deltaAngleY;
 
+      // Previne a hiper-rotação da câmera
       float cosAngle = math::Vector3DotProduct(this->scene->getCamera()->target, this->scene->getCamera()->up);
       if (cosAngle * ((deltaAngleY > 0) - (deltaAngleY < 0)) > 0.0f)
         dy = 0;
 
-      models::CameraArcball(this->scene->getCamera(), dx, dy);
+      models::CameraArcball(this->scene->getCamera(), dy, dx);
       this->lastMousePosition = this->mousePosition;
     }
     else if (this->isMouseHeld && this->scene->getSelectedObject() != nullptr)

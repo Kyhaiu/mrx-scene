@@ -144,6 +144,15 @@ namespace core
   }
 
   /**
+   * @brief Método get do vetor normal da face
+   *
+   */
+  core::Vector3 Face::getNormal() const
+  {
+    return this->normal;
+  }
+
+  /**
    * @brief Método set da flag de buraco da face
    *
    * @param is_hole

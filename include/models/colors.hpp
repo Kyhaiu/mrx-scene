@@ -70,6 +70,12 @@ namespace models
           static_cast<Uint8>(b + color.b),
           static_cast<Uint8>(a + color.a)};
     }
+
+    friend std::ostream &operator<<(std::ostream &os, const Color &color)
+    {
+      os << "R: " << static_cast<int>(color.r) << " G: " << static_cast<int>(color.g) << " B: " << static_cast<int>(color.b) << " A: " << static_cast<int>(color.a);
+      return os;
+    }
   } Color;
 
 #define MIN_COLOR_VALUE 0
@@ -123,7 +129,7 @@ namespace models
         static_cast<Uint8>(color1.a + t * (color2.a - color1.a))};
   }
 
-    /**
+  /**
    * @brief Compara duas cores
    *
    * @param color1 Cor 1

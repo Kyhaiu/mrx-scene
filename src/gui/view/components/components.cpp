@@ -81,6 +81,8 @@ namespace GUI
 
         ImGui::SliderAngle("Angulo de rotação", &controller->camera_rotation_sensitivity, 0.0f, 360.0f);
 
+        ImGui::SliderFloat3("Posição da Luz", reinterpret_cast<float *>(&controller->getScene()->omni_lights[0]), -100.0f, 100.0f);
+
         // show the fps
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 
@@ -142,9 +144,9 @@ namespace GUI
             break;
         }
 
-        object->isSelected()
-            ? utils::DrawFaceBuffer(face_vertexes, object->getColor(), scene->z_buffer, scene->color_buffer)
-            : utils::DrawFaceBuffer(face_vertexes, object->getColor(), scene->z_buffer, scene->color_buffer);
+        // O vetor normal da face é calculado na ocultação de faces
+        // utils::DrawFaceBufferFlatShading(face_vertexes, scene->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
+        utils::DrawFaceBufferGouraudShading(face_vertexes, object->getVertexesNormals(), scene->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
       }
     }
 

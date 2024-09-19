@@ -128,6 +128,8 @@ namespace core
     std::string getId() const;
     void setId(const std::string &id);
 
+    core::Vector3 getNormal() const;
+
     // Methods
     bool isHole();
     bool isConterClockwise(core::Vector3 a, core::Vector3 b);
