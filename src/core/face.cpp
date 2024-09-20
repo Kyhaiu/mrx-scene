@@ -233,11 +233,15 @@ namespace core
    * @return bool - Retorna true se o sentido dos vértices for anti-horário e false se for horário
    * @note O produto vetorial dos vetores A e B fornece a área do paralelogramo. Logo, metade disso é a área do triângulo.
    *
-   * @note Se o valor da área for positivo, a face é orientada no sentido anti-horário. Caso contrário, é orientada no sentido horário.
+   * @note Se o valor da área for positivo, a face é orientada no sentido anti-horário. Caso contrário, é orientada no sentido horário, se o valor for nulo os vertices são colineares.
+   * @note Como a modelagem garante que os vertices sempre serão passados no sentido anti-horário, a função se torna desnecessária (estando implementada para fins de documentação)
    */
   bool Face::isConterClockwise(core::Vector3 a, core::Vector3 b)
   {
-    return (0.5 * math::MatrixDeterminant({1, 1, 1, a.x, a.y, 0, b.x, b.y, 0})) > 0;
+    //     | 1  1  1 |
+    // det | Ax Ay 0 | * 0.5 = Área do triângulo
+    //     | Bx By 0 |
+    return ((0.5 * (a.x * b.y - b.x * a.y)) > 0);
   }
 
   /**
@@ -281,15 +285,16 @@ namespace core
     core::Vector3 b = {p3.x - p2.x, p3.y - p2.y, p3.z - p2.z};
 
     // Vetor normal da face = B x A
-    this->normal = math::Vector3Normalize(math::Vector3CrossProduct(a, b));
+    this->normal = math::Vector3Normalize(math::Vector3CrossProduct(b, a));
 
-    // Se a face não estiver orientada no sentido anti-horário, inverte o vetor normal
-    if (!this->isConterClockwise(a, b))
-    {
-      this->normal.x *= -1;
-      this->normal.y *= -1;
-      this->normal.z *= -1;
-    }
+    // // Se a modelagem não garante que os vértices estão no sentido anti-horário, descomente o trecho abaixo
+    // // Se a face não estiver orientada no sentido anti-horário, inverte o vetor normal
+    // if (!this->isConterClockwise(a, b))
+    // {
+    //   this->normal.x *= -1;
+    //   this->normal.y *= -1;
+    //   this->normal.z *= -1;
+    // }
   }
 
   /**

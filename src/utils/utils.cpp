@@ -56,7 +56,7 @@ namespace utils
 
    * @todo Ajustar o calculo do z_buffer para esta função
    */
-  void DrawVertexBuffer(ImDrawList *draw_list, const core::Vector3 point, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  void DrawVertexBuffer(const core::Vector3 point, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
   {
     int x = static_cast<int>(point.x);
     int y = static_cast<int>(point.y);

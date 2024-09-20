@@ -52,6 +52,7 @@
 #include <string>
 #include <stdexcept> // Include this for standard exceptions
 #include <limits>    // Include this for std::numeric_limits
+#include <map>       // Include this for std::map
 
 #include <models/common.hpp>
 #include <models/colors.hpp>
@@ -94,6 +95,12 @@ namespace models
      * @brief Flag para indicar se o objeto esta selecionado
      */
     bool selected;
+    /**
+     * @brief Mapa de vértices da malha
+     *
+     * @note Usado apenas na criação da malha
+     */
+    std::map<std::string, core::HalfEdge *> half_edges_map;
 
   public:
     // Atributos da malha
@@ -138,5 +145,11 @@ namespace models
     void createMesh(const std::vector<core::Vertex> &vertices, std::vector<std::vector<int>> index_faces);
     core::Vector4 getBox(bool screen_coordinates); // x = min_x, y = min_y, z = max_x, w = max_y
     void determineNormals();
+
+    void clearMesh();
+    core::HalfEdge *addEdge(core::Vertex *vertex1, core::Vertex *vertex2);
+    core::Face *addFaceByHalfEdges(std::vector<core::HalfEdge *> half_edges);
+    core::Face *addFaceByVertices(std::vector<core::Vertex *> vertexes);
+    core::HalfEdge *findEdge(core::Vertex *vertex1, core::Vertex *vertex2);
   };
 } // namespace models

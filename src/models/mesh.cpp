@@ -240,100 +240,53 @@ namespace models
       return;
     }
 
-    std::vector<core::Vertex *> vertexes;
-    std::vector<core::Face *> faces;
-    std::vector<core::HalfEdge *> mesh;
+    std::vector<core::Vertex *> vertices = this->getVertices();
 
-    // create vertexes of the mesh
-    for (auto &v : this->getVertices())
+    // Cria as faces da malha
+    for (auto face : index_faces)
     {
-      vertexes.push_back(v);
-    }
-
-    // create faces of the mesh
-    for (int i = 0; i < index_faces.size(); i++)
-    {
-      faces.push_back(new core::Face());
-      faces[i]->setId("f" + std::to_string(i));
-    }
-
-    // variable to store the index of the half edge (just for the id)
-    int k = 0;
-    // create half edges of the mesh
-    for (int i = 0; i < index_faces.size(); i++)
-    {
-      // get the number of vertices of the face
-      int num_vertices = index_faces[i].size();
-
-      // vector to store the half edges of the face
-      std::vector<core::HalfEdge *> face_half_edges = {};
-
-      // create the half edges of the face
-      for (int j = 0; j < num_vertices; j++)
+      std::vector<core::Vertex *> face_vertices;
+      for (auto index : face)
       {
-        core::HalfEdge *he = new core::HalfEdge();
-        he->setId("he" + std::to_string(k));
-        mesh.push_back(he);
-        face_half_edges.push_back(he);
-        k++;
+        face_vertices.push_back(vertices[index]);
       }
 
-      // set the half edges of the face
-      for (int j = 0; j < num_vertices; j++)
-      {
-        core::HalfEdge *he = face_half_edges[j];
-        he->setOrigin(vertexes[index_faces[i][j]]);
+      core::Face *f = this->addFaceByVertices(face_vertices);
 
-        if (he->getOrigin()->getHalfEdge() == nullptr)
+      f->setVertex(face_vertices);
+    }
+
+    for (auto edge : this->half_edges)
+    {
+      if (edge->getTwin() == nullptr)
+      {
+        core::Vertex *v1 = edge->getOrigin();
+        core::Vertex *v2 = edge->getNext()->getOrigin();
+
+        core::HalfEdge *twin = this->findEdge(v2, v1);
+        if (twin != nullptr)
         {
-          // associate the vertex with the half edge
-          he->getOrigin()->setHalfEdge(he);
-        }
-
-        he->setNext(face_half_edges[(j + 1) % num_vertices]);
-        he->setPrev(face_half_edges[(j - 1 + num_vertices) % num_vertices]);
-        he->setFace(faces[i]);
-      }
-
-      faces[i]->setHalfEdge(face_half_edges[0]);
-      // faces[i]->setEdges(face_half_edges);
-      // print the face_half_edges
-
-      std::vector<core::Vertex *> vertices_face = {};
-
-      for (int l = 0; l < face_half_edges.size(); l++)
-      {
-        vertices_face.push_back(face_half_edges[l]->getOrigin());
-      }
-
-      faces[i]->setVertex(vertices_face);
-    }
-
-    // set the twin of the half edges
-    for (int i = 0; i < mesh.size(); i++)
-    {
-      core::HalfEdge *he = mesh[i];
-
-      if (he->getTwin() == nullptr)
-      {
-        for (int j = i + 1; j < mesh.size(); j++)
-        {
-          core::HalfEdge *twin = mesh[j];
-
-          if (he->getOrigin() == twin->getNext()->getOrigin() && he->getNext()->getOrigin() == twin->getOrigin())
-          {
-            he->setTwin(twin);
-            twin->setTwin(he);
-            break;
-          }
+          edge->setTwin(twin);
+          twin->setTwin(edge);
         }
       }
     }
 
-    // set the half edges of the vertexes
-    this->setVertices(vertexes);
-    this->setHalfEdges(mesh);
-    this->setFaces(faces);
+    for (auto edge : this->half_edges)
+    {
+      if (edge->getFace() == nullptr)
+      {
+        core::HalfEdge *next = edge->getTwin();
+
+        do
+        {
+          next = next->getPrev()->getTwin();
+        } while (next->getFace() != nullptr);
+
+        edge->setNext(next);
+        next->setPrev(edge);
+      }
+    }
 
     // Inicialização dos outros atributos da malha
     this->setSelected(false);
@@ -341,6 +294,8 @@ namespace models
     this->material.diffuse = {0.5f, 0.5f, 0.5f};
     this->material.specular = {1.0f, 1.0f, 1.0f};
     this->material.shininess = 3.0f;
+
+    this->setNumFaces(this->faces.size());
   }
 
   /**
@@ -401,13 +356,12 @@ namespace models
 
       core::Vector3 normal = {0.0f, 0.0f, 0.0f};
 
-      std::cout << "====================" << std::endl;
+      // std::cout << "====================" << std::endl;
 
-      std::cout << "Vertex: " << v->getId() << std::endl;
+      // std::cout << "Vertex: " << v->getId() << std::endl;
 
       while (true)
       {
-        std::cout << he->getFace()->getId() << " ";
         core::Vector3 face_normal = he->getFace()->getNormal();
 
         normal.x += face_normal.x;
@@ -420,9 +374,104 @@ namespace models
           break;
       }
 
-      std::cout << std::endl;
+      // std::cout << std::endl;
 
       this->vertexes_normals.push_back(math::Vector3Normalize(normal));
     }
+  }
+
+  core::HalfEdge *Mesh::addEdge(core::Vertex *vertex1, core::Vertex *vertex2)
+  {
+    core::HalfEdge *he = new core::HalfEdge();
+    he->setId("e" + std::to_string(this->half_edges.size()));
+
+    std::string id = "e" + vertex1->getId() + "-" + vertex2->getId();
+    this->half_edges_map.insert(std::pair<std::string, core::HalfEdge *>(id, he));
+    this->half_edges.push_back(he);
+
+    he->setOrigin(vertex1);
+    if (vertex1->getHalfEdge() == nullptr)
+      vertex1->setHalfEdge(he);
+
+    // Associação da aresta com o seu par, se ele existir
+    core::HalfEdge *twin_he = this->findEdge(vertex2, vertex1);
+    if (twin_he != nullptr)
+    {
+      he->setTwin(twin_he);
+      twin_he->setTwin(he);
+    }
+
+    return he;
+  }
+
+  /**
+   * @brief Método que adiciona uma face à malha a partir de um vetor de arestas
+   *
+   * @param half_edges Vetor de ponteiros para objetos da classe HalfEdge
+   * @return core::Face* Ponteiro para a face criada
+   */
+  core::Face *Mesh::addFaceByHalfEdges(std::vector<core::HalfEdge *> half_edges)
+  {
+    core::Face *face = new core::Face();
+    face->setId("f" + std::to_string(this->faces.size()));
+    // Adiciona a face a malha
+    this->faces.push_back(face);
+
+    // Associa as meias arestas a face
+    for (int i = 0; i < half_edges.size(); i++)
+    {
+      half_edges[i]->setFace(face);
+    }
+
+    // Associa a primeira meia aresta a face
+    face->setHalfEdge(half_edges[0]);
+
+    // Conecta as meias arestas ao redor da face
+    int len = half_edges.size();
+    for (int i = 0; i < half_edges.size(); i++)
+    {
+      half_edges[i]->setNext(half_edges[(i + 1) % len]);
+      half_edges[i]->setPrev(half_edges[(i - 1 + len) % len]);
+    }
+
+    return face;
+  }
+
+  core::Face *Mesh::addFaceByVertices(std::vector<core::Vertex *> vertices)
+  {
+    std::vector<core::HalfEdge *> half_edges;
+    int len = vertices.size();
+    for (int i = 0; i < len; i++)
+    {
+      core::Vertex *v1 = vertices[i];
+      core::Vertex *v2 = vertices[(i + 1) % len];
+
+      core::HalfEdge *he = this->findEdge(v1, v2);
+      // Se a aresta não existir, cria uma nova
+      if (he == nullptr)
+        he = this->addEdge(v1, v2);
+
+      half_edges.push_back(he);
+    }
+
+    return this->addFaceByHalfEdges(half_edges);
+  }
+
+  /**
+   * @brief Método que busca uma aresta no mapa de arestas da malha
+   *
+   * @param vertex1 Vértice 1
+   * @param vertex2 Vértice 2
+   * @return core::HalfEdge* Ponteiro para a aresta encontrada
+   *
+   * @note Se a aresta não for encontrada, retorna nullptr
+   */
+  core::HalfEdge *Mesh::findEdge(core::Vertex *vertex1, core::Vertex *vertex2)
+  {
+    std::string key = "e" + vertex1->getId() + "-" + vertex2->getId();
+    if (this->half_edges_map.find(key) != this->half_edges_map.end())
+      return this->half_edges_map[key];
+
+    return nullptr;
   }
 } // namespace models

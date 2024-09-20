@@ -57,7 +57,7 @@ namespace utils
 
   // Funções para desenhar pixel-a-pixel
   void setPixel(const float x, const float y, const float z, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
-  void DrawVertexBuffer(ImDrawList *draw_list, const core::Vector3 point, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer, core::Vector2 window_size);
+  void DrawVertexBuffer(const core::Vector3 point, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
   void DrawLineBuffer(ImDrawList *draw_list, const std::vector<core::Vector3> &vertexes, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
 
   void DrawFaceBufferFlatShading(const std::vector<core::Vector3> &vertexes, const core::Vector3 &eye, const core::Vector3 &face_centroid, const core::Vector3 &face_normal, const models::Material &object_material, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);

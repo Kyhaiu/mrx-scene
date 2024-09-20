@@ -415,7 +415,7 @@ namespace math
         float mz = (end.z - start.z) / (end.x - start.x);
         float z = start.z + (start.x - ceilf(start.x)) * mz;
 
-        for (float x = ceilf(start.x); x < end.x; x++)
+        for (float x = ceilf(start.x); x <= floorf(end.x); x++)
         {
           math::z_buffer(x, start.y, z, color, z_buffer, color_buffer);
           z += mz;
@@ -526,7 +526,7 @@ namespace math
         float g = start_color.g + (start.x - ceilf(start.x)) * dg;
         float b = start_color.b + (start.x - ceilf(start.x)) * db;
 
-        for (float x = ceilf(start.x); x < end.x; x++)
+        for (float x = ceilf(start.x); x <= floorf(end.x); x++)
         {
           models::Color current_color = {
               static_cast<models::Uint8>(r),
