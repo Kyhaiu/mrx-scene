@@ -91,6 +91,11 @@ namespace core
     float x;
     float y;
     float z;
+
+    bool operator==(const Vector3 &v) const
+    {
+      return x == v.x && y == v.y && z == v.z;
+    }
   } Vector3;
 
   std::ostream &operator<<(std::ostream &os, const Vector3 &v);
@@ -190,5 +195,4 @@ namespace core
   Matrix MatrixIdentity(void);
   Matrix MatrixTranspose(Matrix mat);
   float16 MatrixToFloat16(const Matrix m);
-
 }

@@ -15,14 +15,14 @@ namespace models
    * @note A luz rotaciona em torno do eixo Y
    * @note A luz rotaciona em torno do centro da cena (0, 0, 0)
    */
-  void LightOrbital(models::Omni &omni, float orbitalSpeed)
+  void LightOrbital(models::Omni *omni, float orbitalSpeed)
   {
     // (0, 1, 0) é o vetor up (eixo de rotação)
-    core::Matrix rotation = math::MatrixRotate(math::Vector3Normalize({1, 1, 1}), orbitalSpeed);
+    core::Matrix rotation = math::MatrixRotate(math::Vector3Normalize({1, 0, 0}), orbitalSpeed);
     // (0, 0, 0) é o centro da cena já que a luz não possui ponto focal (raio de visão)
-    core::Vector3 view = math::Vector3Subtract(omni.position, {0, 0, 0});
+    core::Vector3 view = math::Vector3Subtract(omni->position, {0, 0, 0});
     view = math::Vector3Transform(view, rotation);
-    omni.position = math::Vector3Add({0, 0, 0}, view);
+    omni->position = math::Vector3Add({0, 0, 0}, view);
   }
 
   /**
@@ -99,19 +99,17 @@ namespace models
    *
    * @param light Luz ambiente da cena
    * @param omni Vetor de Lampa omnidirecionais
-   * @param face_vertexes Vértices da face
+   * @param vertexes Vértices da face
    * @param eye Posição do observador (câmera)
    * @param material Material do objeto
    */
-  std::vector<models::Color> GouraudShading(const models::Light &light, const std::vector<models::Omni> &omni, const core::Vector3 &face_normal, const std::vector<core::Vector3> &vertexes_normals, const core::Vector3 &eye, const models::Material &material)
+  std::vector<models::Color> GouraudShading(const models::Light &light, const std::vector<models::Omni> &omni, const std::vector<std::pair<core::Vector3, core::Vector3>> &vertexes, const core::Vector3 &eye, const models::Material &material)
   {
-    std::vector<models::Color> colors;
+    std::vector<models::Color> colors = {};
 
-    for (auto vertex : vertexes_normals)
+    for (int i = 0; i < vertexes.size(); i++)
     {
-      // Calcula a iluminação de cada vértice aplicando a função de iluminação básica
-      // Calcular o vetor normal dos vertices da face
-      colors.push_back(FlatShading(light, omni, vertex, face_normal, eye, material));
+      colors.push_back(FlatShading(light, omni, vertexes[i].first, vertexes[i].second, eye, material));
     }
 
     return colors;

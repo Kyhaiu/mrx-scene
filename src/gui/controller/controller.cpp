@@ -3,6 +3,9 @@
 
 GUI::Controller::Controller(float canvasWidth, float canvasHeight)
 {
+  this->windowHeight = static_cast<int>(canvasHeight);
+  this->windowWidth = static_cast<int>(canvasWidth);
+
   this->scene = new models::Scene(
       models::CreateCamera3D({10, 10, 20}, {0, 0, 0}, {0, 1, 0}, 20),
       {},
@@ -12,6 +15,8 @@ GUI::Controller::Controller(float canvasWidth, float canvasHeight)
       {canvasWidth, canvasHeight},
       {-3, -3},
       {3, 3});
+
+  this->insertionOptions = {1, 1.0f, 1.0f, 10, 10};
 }
 
 /**
@@ -93,6 +98,8 @@ void GUI::Controller::handleEvents(const SDL_Event &event, SDL_Window *window, f
       // Update the viewport
       int width = event.window.data1;
       int height = event.window.data2;
+      this->windowHeight = height;
+      this->windowWidth = width;
       SDL_RenderSetViewport(SDL_GetRenderer(window), NULL);
     }
     break;
@@ -118,6 +125,7 @@ void GUI::Controller::handleEvents(const SDL_Event &event, SDL_Window *window, f
     break;
 
   case SDL_MOUSEMOTION:
+
     if (this->isMouseHeld && this->scene->getSelectedObject() == nullptr)
     {
       SDL_GetMouseState(&this->mousePosition.x, &this->mousePosition.y);

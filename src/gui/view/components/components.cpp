@@ -45,6 +45,53 @@ namespace GUI
       {
         if (ImGui::MenuItem("Cubo"))
           controller->addObject(shapes::cube());
+        if (ImGui::MenuItem("Pirâmide"))
+          controller->addObject(shapes::pyramid());
+        if (ImGui::BeginMenu("Esfera"))
+        {
+          if (ImGui::BeginMenu("Esfera"))
+          {
+            ImGui::SliderFloat("Raio", &controller->insertionOptions.radius, 0.1f, 3.0f);
+            ImGui::SliderInt("Segmentos", &controller->insertionOptions.segments, 3, 100);
+            ImGui::SliderInt("Anéis", &controller->insertionOptions.rings, 3, 100);
+
+            if (ImGui::Button("Criar Esfera"))
+            {
+              controller->addObject(shapes::sphere(controller->insertionOptions.radius, controller->insertionOptions.rings, controller->insertionOptions.segments));
+            }
+
+            ImGui::EndMenu();
+          }
+
+          if (ImGui::BeginMenu("Icosfera"))
+          {
+            ImGui::SliderFloat("Raio", &controller->insertionOptions.radius, 0.1f, 3.0f);
+            ImGui::SliderInt("Subdivisões", &controller->insertionOptions.subdivisions, 1, 5);
+
+            if (ImGui::Button("Criar"))
+            {
+              controller->addObject(shapes::icosphere(controller->insertionOptions.radius, controller->insertionOptions.subdivisions));
+            }
+            ImGui::EndMenu();
+          }
+
+          ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Cone"))
+        {
+
+          ImGui::SliderFloat("Raio", &controller->insertionOptions.radius, 0.1f, 3.0f);
+          ImGui::SliderFloat("Altura", &controller->insertionOptions.height, 0.1f, 3.0f);
+          ImGui::SliderInt("Segmentos", &controller->insertionOptions.segments, 3, 100);
+
+          if (ImGui::Button("Criar"))
+          {
+            controller->addObject(shapes::cone(controller->insertionOptions.radius, controller->insertionOptions.height, controller->insertionOptions.segments));
+          }
+
+          ImGui::EndMenu();
+        }
         ImGui::EndMenu();
       }
       if (ImGui::BeginMenu("Editar"))
@@ -76,12 +123,25 @@ namespace GUI
 
         auto camera = controller->getScene()->getCamera();
 
+        auto min_window = controller->getScene()->getMinWindow();
+        auto max_window = controller->getScene()->getMaxWindow();
+        auto min_viewport = controller->getScene()->getMinViewport();
+        auto max_viewport = controller->getScene()->getMaxViewport();
+
+        ImGui::InputFloat2("Min Janela", reinterpret_cast<float *>(&min_window));
+        ImGui::InputFloat2("Max Janela", reinterpret_cast<float *>(&max_window));
+
+        ImGui::InputFloat2("Min Viewport", reinterpret_cast<float *>(&min_viewport));
+        ImGui::InputFloat2("Max Viewport", reinterpret_cast<float *>(&max_viewport));
+
         ImGui::InputFloat3("Posição", reinterpret_cast<float *>(&camera->position));
         ImGui::InputFloat3("Alvo", reinterpret_cast<float *>(&camera->target));
 
         ImGui::SliderAngle("Angulo de rotação", &controller->camera_rotation_sensitivity, 0.0f, 360.0f);
 
-        ImGui::SliderFloat3("Posição da Luz", reinterpret_cast<float *>(&controller->getScene()->omni_lights[0]), -100.0f, 100.0f);
+        ImGui::InputFloat3("Posição da luz", reinterpret_cast<float *>(&controller->getScene()->omni_lights[0].position));
+
+        // ImGui::SliderFloat3("Posição da Luz", reinterpret_cast<float *>(&controller->getScene()->omni_lights[0]), -100.0f, 100.0f);
 
         // show the fps
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
@@ -99,6 +159,10 @@ namespace GUI
   void GUI::components::viewport(models::Scene *scene)
   {
 
+    // Não existe objetos para desenhar
+    if (scene->getObjects().size() == 0)
+      return;
+
     ImDrawList *draw_list = ImGui::GetForegroundDrawList();
 
     // this can be used to get the position of the window
@@ -108,6 +172,10 @@ namespace GUI
 
     core::Vector2 min_viewport = scene->getMinViewport();
     core::Vector2 max_viewport = scene->getMaxViewport();
+
+    // Evitar que durante a rasterização o programa tente acessar uma posição inválida
+    max_viewport.x = max_viewport.x - 1;
+    max_viewport.y = max_viewport.y - 1;
 
     std::pair<core::Vector3, core::Vector3> clipped_vertex;
     scene->initializeBuffers();
@@ -126,8 +194,8 @@ namespace GUI
         // TODO: Descobrir uma maneira de não precisar limpar o vetor se não houver mudanças
         face->clipped_vertex.clear();
 
-        // Vetor auxiliar para realizar o preenchimento da face (e evitar o problema de preenchimento)
-        std::vector<core::Vector3> face_vertexes;
+        // Vetor que armazena os vetores normais médios dos vértices da face
+        std::vector<std::pair<core::Vector3, core::Vector3>> vertexes;
 
         while (true)
         {
@@ -136,8 +204,13 @@ namespace GUI
           face->clipped_vertex.push_back(clipped_vertex.first);
           face->clipped_vertex.push_back(clipped_vertex.second);
 
-          face_vertexes.push_back(he->getOrigin()->getVectorScreen());
-          face_vertexes.push_back(he->getNext()->getOrigin()->getVectorScreen());
+          vertexes.push_back({he->getOrigin()->getVectorScreen(), he->getOrigin()->getNormal()});
+          vertexes.push_back({he->getNext()->getOrigin()->getVectorScreen(), he->getNext()->getOrigin()->getNormal()});
+
+          // utils::DrawVertexBuffer(clipped_vertex.first, models::WHITE, scene->z_buffer, scene->color_buffer, 5);
+          // utils::DrawString(he->getOrigin()->getId().c_str(), clipped_vertex.first, models::WHITE);
+
+          // utils::DrawLineBuffer({clipped_vertex.first, clipped_vertex.second}, models::WHITE, scene->z_buffer, scene->color_buffer);
 
           he = he->getNext();
           if (he == face->getHalfEdge())
@@ -145,10 +218,18 @@ namespace GUI
         }
 
         // O vetor normal da face é calculado na ocultação de faces
-        // utils::DrawFaceBufferFlatShading(face_vertexes, scene->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
-        utils::DrawFaceBufferGouraudShading(face_vertexes, object->getVertexesNormals(), scene->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
+        // utils::DrawFaceBufferFlatShading(face->clipped_vertex, scene->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
+        utils::DrawFaceBufferGouraudShading(vertexes, scene->getCamera()->position, face->getNormal(), object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
+
+        // utils::DrawString(face->getId().c_str(), face->getFaceCentroid(true), models::WHITE);
+
+        // Limpa o vetor de vetores normais dos vértices da face
+        vertexes.clear();
       }
     }
+
+    // Desenha no buffer a luz omni
+    utils::DrawVertexBuffer(scene->omni_lights[0].screen_position, models::ChannelsToColor(scene->omni_lights[0].intensity), scene->z_buffer, scene->color_buffer, 20);
 
     utils::DrawBuffer(draw_list, scene->z_buffer, scene->color_buffer, min_viewport);
   }

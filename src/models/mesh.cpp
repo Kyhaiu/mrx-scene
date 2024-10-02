@@ -89,15 +89,6 @@ namespace models
   }
 
   /**
-   * @brief Método que retorna o vetor de normais dos vértices da malha
-   *
-   */
-  std::vector<core::Vector3> Mesh::getVertexesNormals() const
-  {
-    return this->vertexes_normals;
-  }
-
-  /**
    * @brief Método que retorna o vetor de faces da malha
    *
    * @return std::vector<core::Face> Vetor de faces da malha
@@ -155,16 +146,6 @@ namespace models
   void Mesh::setVertices(const std::vector<core::Vertex *> vertices)
   {
     this->vertices = vertices;
-  }
-
-  /**
-   * @brief Método que define o vetor de normais dos vértices da malha
-   *
-   * @param vertexes_normals Vetor de normais dos vértices da malha
-   */
-  void Mesh::setVertexesNormals(const std::vector<core::Vector3> vertexes_normals)
-  {
-    this->vertexes_normals = vertexes_normals;
   }
 
   /**
@@ -290,9 +271,9 @@ namespace models
 
     // Inicialização dos outros atributos da malha
     this->setSelected(false);
-    this->material.ambient = {0.5f, 0.5f, 0.5f};
-    this->material.diffuse = {0.5f, 0.5f, 0.5f};
-    this->material.specular = {1.0f, 1.0f, 1.0f};
+    this->material.ambient = {0.5f, 0.0f, 0.0f};
+    this->material.diffuse = {0.8f, 0.0f, 0.0f};
+    this->material.specular = {1.0f, 0.0f, 0.0f};
     this->material.shininess = 3.0f;
 
     this->setNumFaces(this->faces.size());
@@ -349,6 +330,7 @@ namespace models
    */
   void Mesh::determineNormals()
   {
+
     for (auto v : this->getVertices())
     {
       core::HalfEdge *start_he = v->getHalfEdge();
@@ -356,13 +338,16 @@ namespace models
 
       core::Vector3 normal = {0.0f, 0.0f, 0.0f};
 
-      // std::cout << "====================" << std::endl;
-
-      // std::cout << "Vertex: " << v->getId() << std::endl;
+      // std::cout << "Determinando a normal do vertice: " << v->getId() << std::endl;
+      // std::cout << "As faces que compõem o vertice são: " << std::endl;
 
       while (true)
       {
+
         core::Vector3 face_normal = he->getFace()->getNormal();
+
+        // std::cout << he->getFace()->getId() << " ";
+        // std::cout << "Normal da face: " << face_normal.x << " " << face_normal.y << " " << face_normal.z << std::endl;
 
         normal.x += face_normal.x;
         normal.y += face_normal.y;
@@ -374,9 +359,18 @@ namespace models
           break;
       }
 
-      // std::cout << std::endl;
+      float length = sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
 
-      this->vertexes_normals.push_back(math::Vector3Normalize(normal));
+      // std::cout << "Normal do vertice: " << normal.x << " " << normal.y << " " << normal.z << std::endl;
+      // std::cout << "Comprimento da normal: " << length << std::endl;
+
+      normal.x /= length;
+      normal.y /= length;
+      normal.z /= length;
+
+      // std::cout << "Normal do vertice normalizada: " << normal.x << " " << normal.y << " " << normal.z << std::endl;
+
+      v->setNormal(normal);
     }
   }
 

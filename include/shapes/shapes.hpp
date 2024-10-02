@@ -49,9 +49,18 @@
 #include <core/vertex.hpp>
 
 #include <vector>
+#include <map>
+#include <math.h>
+#include <unordered_map>
+#include <cmath>
+#include <algorithm>
 
 namespace shapes
 {
   models::Mesh *cube();
-
+  models::Mesh *pyramid(float base = 3.0f, float height = 3.0f);
+  models::Mesh *sphere(float radius, int rings = 30, int segments = 30);
+  models::Mesh *icosphere(float radius, int subdivisions = 3);
+  models::Mesh *polygon(int sides, float radius);
+  models::Mesh *cone(float radius, float height, int segments = 30);
 }

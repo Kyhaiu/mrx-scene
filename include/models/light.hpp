@@ -45,6 +45,7 @@
 #include <math/math.hpp>
 
 #include <vector>
+#include <tuple>
 
 namespace models
 {
@@ -64,6 +65,8 @@ namespace models
   {
     // Posição da Luz
     Position position;
+    // Posição da Luz em coordenadas da tela
+    Position screen_position;
     // Intensidade da Luz da Lampada (Cor)
     ColorChannels intensity;
   } Omni;
@@ -88,8 +91,8 @@ namespace models
   // Funções
   //-------------------------------------------------------------------------------------------------
 
-  void LightOrbital(models::Omni &omni, float orbitalSpeed);
+  void LightOrbital(models::Omni *omni, float orbitalSpeed);
 
   models::Color FlatShading(const models::Light &light, const std::vector<models::Omni> &omni, const core::Vector3 &centroid, const core::Vector3 &face_normal, const core::Vector3 &eye, const models::Material &material);
-  std::vector<models::Color> GouraudShading(const models::Light &light, const std::vector<models::Omni> &omni, const core::Vector3 &face_normal, const std::vector<core::Vector3> &vertexes_normals, const core::Vector3 &eye, const models::Material &material);
+  std::vector<models::Color> GouraudShading(const models::Light &light, const std::vector<models::Omni> &omni, const std::vector<std::pair<core::Vector3, core::Vector3>> &vertexes, const core::Vector3 &eye, const models::Material &material);
 } // namespace models

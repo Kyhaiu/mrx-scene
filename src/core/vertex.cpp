@@ -19,6 +19,7 @@ namespace core
   {
     this->setVector(core::Vector4Zero());
     this->setId("");
+    this->setNormal(core::Vector3Zero());
   }
 
   /**
@@ -38,6 +39,7 @@ namespace core
     this->setVectorScreen({1.17549e-38f, 1.17549e-38f, 1.17549e-38f});
     this->setId(id);
     this->setHalfEdge(half_edge);
+    this->setNormal(core::Vector3Zero());
   }
 
   /**
@@ -287,6 +289,26 @@ namespace core
   void Vertex::setHalfEdge(core::HalfEdge *half_edge)
   {
     this->half_edge = half_edge;
+  }
+
+  /**
+   * @brief Método get do vetor normal da classe Vertex
+   *
+   * @return MRX_VECTOR3_TYPE
+   */
+  MRX_VECTOR3_TYPE Vertex::getNormal() const
+  {
+    return this->normal;
+  }
+
+  /**
+   * @brief Método set do vetor normal da classe Vertex
+   *
+   * @param normal Vetor normal a ser atribuído ao vértice
+   */
+  void Vertex::setNormal(const MRX_VECTOR3_TYPE &normal)
+  {
+    this->normal = normal;
   }
 
   // ------------------------------------------------------------------------------------------

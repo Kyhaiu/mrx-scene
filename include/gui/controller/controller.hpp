@@ -20,6 +20,26 @@ namespace GUI
     int y;
   } mouse_position;
 
+  /**
+   * @brief Estrutura que contém os parâmetros de inserção de objetos
+   *
+   * @param subdivisions int - Número de subdivisões (para esferas)
+   * @param radius float - Raio (para esferas e cones)
+   * @param height  float - Altura (para cones)
+   * @param segments int - Segmentos (para cilindros)
+   * @param rings int - Anéis (para esferas)
+   *
+   * @note Utilizado no menu de inserção de objetos
+   */
+  typedef struct
+  {
+    int subdivisions;
+    float radius;
+    float height;
+    int segments;
+    int rings;
+  } insertion_options_parameters;
+
   class Controller
   {
   private:
@@ -29,6 +49,17 @@ namespace GUI
     models::Scene *scene;
 
   public:
+    // Properties
+    /**
+     * @brief Largura da janela
+     *
+     */
+    int windowWidth;
+    /**
+     * @brief Altura da janela
+     *
+     */
+    int windowHeight;
     /**
      * @brief Controla a visibilidade da barra lateral
      */
@@ -57,6 +88,11 @@ namespace GUI
      * @brief Sensibilidade da rotação da camera
      */
     float camera_rotation_sensitivity = 0.01667f;
+    /**
+     * @brief Parâmetros de inserção de objetos
+     *
+     */
+    insertion_options_parameters insertionOptions;
 
     // Constructor and Destructor
     Controller(float canvasWidth, float canvasHeight);

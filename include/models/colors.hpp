@@ -166,4 +166,17 @@ namespace models
     return {static_cast<float>(color.r), static_cast<float>(color.g), static_cast<float>(color.b)};
   }
 
+  /**
+   * @brief Converte o valor models::ColorChannels para um valor models::Color
+   *
+   * @param channels Canais de cor
+   * @return Color Cor
+   *
+   * @note a função apenas converte os valores de float para Uint8
+   */
+  constexpr Color ChannelsToColor(const ColorChannels &channels)
+  {
+    return {static_cast<Uint8>(channels.r), static_cast<Uint8>(channels.g), static_cast<Uint8>(channels.b), 255};
+  }
+
 } // namespace models

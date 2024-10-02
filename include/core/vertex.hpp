@@ -98,6 +98,14 @@ namespace core
      */
     std::string id;
 
+    /**
+     * @brief Vetor normal médio do vértice
+     *
+     * @note Este vetor é calculado a partir das normais das faces que compartilham o vértice
+     * @note O vetor já está em sua forma normalizada
+     */
+    MRX_VECTOR3_TYPE normal;
+
   public:
     // Constructors and destructors
     Vertex();
@@ -137,6 +145,9 @@ namespace core
 
     std::string getId() const;
     void setId(const std::string &id);
+
+    MRX_VECTOR3_TYPE getNormal() const;
+    void setNormal(const MRX_VECTOR3_TYPE &normal);
 
     // Methods
     MRX_VECTOR4_TYPE normalize() const;

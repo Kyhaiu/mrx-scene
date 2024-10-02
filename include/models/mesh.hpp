@@ -72,10 +72,6 @@ namespace models
      */
     std::vector<core::Vertex *> vertices;
     /**
-     * @brief Vector que contem todas as normais dos vértices da malha
-     */
-    std::vector<core::Vector3> vertexes_normals;
-    /**
      * @brief Vector que contem todas as faces da malha
      */
     std::vector<core::Face *> faces;
@@ -124,7 +120,6 @@ namespace models
 
     // Getters and Setters
     std::vector<core::Vertex *> getVertices() const;
-    std::vector<core::Vector3> getVertexesNormals() const;
     std::vector<core::Face *> getFaces() const;
     std::vector<core::HalfEdge *> getHalfEdges() const;
     int getNumFaces() const;
@@ -132,7 +127,6 @@ namespace models
     bool isSelected() const;
 
     void setVertices(const std::vector<core::Vertex *> vertices);
-    void setVertexesNormals(const std::vector<core::Vector3> vertexes_normals);
     void setFaces(const std::vector<core::Face *> faces);
     void setHalfEdges(const std::vector<core::HalfEdge *> half_edges);
     void setNumFaces(int num_faces);

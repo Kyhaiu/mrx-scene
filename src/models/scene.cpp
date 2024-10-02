@@ -55,14 +55,14 @@ namespace models
     // TODO: Arruma a construção da luz da cena de um jeito mais elegante
     models::Light light;
 
-    light.intensity = models::RED;
+    light.intensity = models::WHITE;
 
     this->global_light = light;
 
     models::Omni omni;
-    omni.position = {50.0f, 50.0f, 50.0f};
+    omni.position = {2.0f, 2.0f, 2.0f};
 
-    omni.intensity = models::ColorToChannels(models::RED);
+    omni.intensity = models::ColorToChannels(models::WHITE);
 
     this->omni_lights.push_back(omni);
   }
@@ -304,10 +304,12 @@ namespace models
    */
   void Scene::rasterize()
   {
+    for (int i = 0; i < this->omni_lights.size(); i++)
+      LightOrbital(&this->omni_lights[i], 0.02f);
+
     models::Camera3D *camera = this->getCamera();
 
-    // LightOrbital(this->omni_lights[0], 0.01f);
-
+    // Obtém as matrizes de transformação
     core::Matrix sru_src_matrix = math::sru_to_src(camera->position, camera->target);
     core::Matrix projection_matrix = math::projection(
         camera->position,
@@ -320,12 +322,13 @@ namespace models
         this->getMaxViewport(),
         true);
 
+    // Multiplica as matrizes
     core::Matrix result = math::MatrixMultiply(viewport_matrix, projection_matrix);
-
     result = math::MatrixMultiply(result, sru_src_matrix);
 
     core::Vector4 vectorResult = {0.0f, 0.0f, 0.0f, 0.0f};
 
+    // Rasteriza todos os objetos da cena
     for (auto object : this->objects)
     {
       for (auto vertex : object->getVertices())
@@ -342,6 +345,12 @@ namespace models
 
       object->determineNormals();
     }
+
+    // Rasteriza a luz
+    core::Vector3 Light_position = this->omni_lights[0].position;
+    core::Vector4 light = math::MatrixMultiplyVector(result, {Light_position.x, Light_position.y, Light_position.z, 1.0f});
+
+    this->omni_lights[0].screen_position = {light.x / light.w, light.y / light.w, light.z};
   }
 
   /**

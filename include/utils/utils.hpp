@@ -57,11 +57,12 @@ namespace utils
 
   // Funções para desenhar pixel-a-pixel
   void setPixel(const float x, const float y, const float z, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
-  void DrawVertexBuffer(const core::Vector3 point, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
-  void DrawLineBuffer(ImDrawList *draw_list, const std::vector<core::Vector3> &vertexes, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
+  void DrawVertexBuffer(const core::Vector3 point, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer, const int size);
+  void DrawLineBuffer(const std::vector<core::Vector3> &vertexes, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
 
   void DrawFaceBufferFlatShading(const std::vector<core::Vector3> &vertexes, const core::Vector3 &eye, const core::Vector3 &face_centroid, const core::Vector3 &face_normal, const models::Material &object_material, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
-  void DrawFaceBufferGouraudShading(const std::vector<core::Vector3> &vertexes, const std::vector<core::Vector3> &normals, const core::Vector3 &eye, const core::Vector3 &face_centroid, const core::Vector3 &face_normal, const models::Material &object_material, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
-
+  void DrawFaceBufferGouraudShading(const std::vector<std::pair<core::Vector3, core::Vector3>> &vertexes, const core::Vector3 &eye, const core::Vector3 &face_normal, const models::Material &object_material, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
   void DrawBuffer(ImDrawList *draw_list, const std::vector<std::vector<float>> &z_buffer, const std::vector<std::vector<models::Color>> &color_buffer, core::Vector2 min_window_size);
+
+  void DrawString(const char *text, const core::Vector3 &position, const models::Color &color);
 }

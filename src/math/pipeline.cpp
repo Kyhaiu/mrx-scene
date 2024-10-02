@@ -206,7 +206,6 @@ namespace math
    *
    * @note A função recorta uma linha em relação a uma janela de recorte.
    * @note O algoritmo utilizado é o de Cohen-Sutherland.
-   * @note Se a linha estiver inteiramente fora da janela, os pontos são modificados para (-1, -1).
    * @note A função retorna um par de pontos que representam a linha recortada.
    */
   std::pair<core::Vector3, core::Vector3> clip_line(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max)
@@ -224,6 +223,25 @@ namespace math
       }
       else if (P & Q) // Ambos os pontos estão fora da janela
       {
+        // Como a função de recorte retorna um par de pontos, é necessário retornar um par de pontos válidos (dentro do buffer)
+        if (p1.x < 0)
+          p1.x = min.x;
+        if (p1.x > max.x)
+          p1.x = max.x;
+        if (p1.y < 0)
+          p1.y = min.y;
+        if (p1.y > max.y)
+          p1.y = max.y;
+
+        if (p2.x < 0)
+          p2.x = min.x;
+        if (p2.x > max.x)
+          p2.x = max.x;
+        if (p2.y < 0)
+          p2.y = min.y;
+        if (p2.y > max.y)
+          p2.y = max.y;
+
         break;
       }
       else
@@ -438,19 +456,20 @@ namespace math
    * @param color_buffer Buffer de cores
    *
    */
-  void fill_polygon_gourand(const std::vector<core::Vector3> &vertexes, const std::vector<core::Vector3> &vertexes_normal, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const core::Vector3 &face_normal, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  void fill_polygon_gourand(const std::vector<std::pair<core::Vector3, core::Vector3>> &vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const core::Vector3 &face_normal, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
   {
-    std::vector<models::Color> colors = models::GouraudShading(global_light, omni_lights, face_normal, vertexes_normal, eye, object_material);
+    // Ao inv'es de utilizar face_normal, utiliza os vertexes_normal e utiliza as coordenadas do vertices
+    std::vector<models::Color> colors = models::GouraudShading(global_light, omni_lights, vertexes, eye, object_material);
 
     int y_min = std::numeric_limits<int>::max();
     int y_max = std::numeric_limits<int>::min();
 
     for (auto vertex : vertexes)
     {
-      if (vertex.y < y_min)
-        y_min = static_cast<int>(vertex.y);
-      if (vertex.y > y_max)
-        y_max = static_cast<int>(vertex.y);
+      if (vertex.first.y < y_min)
+        y_min = static_cast<int>(vertex.first.y);
+      if (vertex.first.y > y_max)
+        y_max = static_cast<int>(vertex.first.y);
     }
 
     std::vector<std::vector<std::pair<core::Vector3, models::Color>>> scanlines(y_max - y_min);
@@ -458,12 +477,13 @@ namespace math
     // Como a lista de vertices é composta pelo inicio e fim da aresta, o incremento é de 2
     for (int i = 0; i < vertexes.size(); i += 2)
     {
-      core::Vector3 start = vertexes[i];
-      core::Vector3 end = vertexes[i + 1];
+      core::Vector3 start = vertexes[i].first;
+      core::Vector3 end = vertexes[i + 1].first;
 
-      models::Color start_color = colors[i];
-      models::Color end_color = colors[i + 1];
+      models::Color start_color = colors[i % colors.size()];
+      models::Color end_color = colors[(i + 1) % colors.size()];
 
+      // Se a linha for horizontal, não faz nada
       if (start.y == end.y)
         continue;
 
@@ -473,12 +493,14 @@ namespace math
         std::swap(start_color, end_color);
       }
 
-      float m_inv = (end.x - start.x) / (end.y - start.y);
-      float dz = (end.z - start.z) / (end.y - start.y);
+      float dy = end.y - start.y;
 
-      float dr = (end_color.r - start_color.r) / (end.y - start.y);
-      float dg = (end_color.g - start_color.g) / (end.y - start.y);
-      float db = (end_color.b - start_color.b) / (end.y - start.y);
+      float m_inv = (end.x - start.x) / dy;
+      float dz = (end.z - start.z) / dy;
+
+      float dr = (end_color.r - start_color.r) / dy;
+      float dg = (end_color.g - start_color.g) / dy;
+      float db = (end_color.b - start_color.b) / dy;
 
       float x = start.x;
       float z = start.z;
@@ -490,7 +512,7 @@ namespace math
       for (int y = static_cast<int>(start.y); y < static_cast<int>(end.y); y++)
       {
 
-        scanlines[y - y_min].push_back(std::make_pair<core::Vector3, models::Color>({x, static_cast<float>(y), z}, {static_cast<models::Uint8>(r), static_cast<models::Uint8>(g), static_cast<models::Uint8>(b)}));
+        scanlines[y - y_min].push_back(std::make_pair<core::Vector3, models::Color>({x, static_cast<float>(y), z}, {models::ChannelsToColor({r, g, b})}));
         x += m_inv;
         z += dz;
 
@@ -515,12 +537,14 @@ namespace math
         models::Color start_color = scanlines[i][j].second;
         models::Color end_color = scanlines[i][j + 1].second;
 
-        float mz = (end.z - start.z) / (end.x - start.x);
-        float z = start.z + (start.x - ceilf(start.x)) * mz;
+        float dx = end.x - start.x;
 
-        float dr = (end_color.r - start_color.r) / (end.x - start.x);
-        float dg = (end_color.g - start_color.g) / (end.x - start.x);
-        float db = (end_color.b - start_color.b) / (end.x - start.x);
+        float dz = (end.z - start.z) / dx;
+        float z = start.z + (start.x - ceilf(start.x)) * dz;
+
+        float dr = (end_color.r - start_color.r) / dx;
+        float dg = (end_color.g - start_color.g) / dx;
+        float db = (end_color.b - start_color.b) / dx;
 
         float r = start_color.r + (start.x - ceilf(start.x)) * dr;
         float g = start_color.g + (start.x - ceilf(start.x)) * dg;
@@ -528,13 +552,10 @@ namespace math
 
         for (float x = ceilf(start.x); x <= floorf(end.x); x++)
         {
-          models::Color current_color = {
-              static_cast<models::Uint8>(r),
-              static_cast<models::Uint8>(g),
-              static_cast<models::Uint8>(b), 255};
+          models::Color current_color = models::ChannelsToColor({r, g, b});
 
           math::z_buffer(x, start.y, z, current_color, z_buffer, color_buffer);
-          z += mz;
+          z += dz;
           r += dr;
           g += dg;
           b += db;
@@ -560,8 +581,9 @@ namespace math
 
     if (x_int < 0 || x_int >= z_buffer.size() || y_int < 0 || y_int >= z_buffer[0].size())
     {
-      std::cout << " Buffer de profundidade: " << z_buffer.size() << ", " << z_buffer[0].size() << std::endl;
-      std::cout << "Fora do buffer: " << x_int << ", " << y_int << std::endl;
+      // std::cout << " Buffer de profundidade: " << z_buffer.size() << ", " << z_buffer[0].size() << std::endl;
+      // std::cout << "Fora do buffer: " << x_int << ", " << y_int << std::endl;
+      return;
     }
 
     // Se o pixel atual estiver mais distante que o pixel já desenhado, não atualiza os buffers

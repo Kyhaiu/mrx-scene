@@ -311,9 +311,18 @@ namespace core
 
     for (auto vertex : this->getVertex())
     {
-      centroid.x += vertex->getVector().x;
-      centroid.y += vertex->getVector().y;
-      centroid.z += vertex->getVector().z;
+      if (!screen_coords)
+      {
+        centroid.x += vertex->getVector().x;
+        centroid.y += vertex->getVector().y;
+        centroid.z += vertex->getVector().z;
+      }
+      else
+      {
+        centroid.x += vertex->getVectorScreen().x;
+        centroid.y += vertex->getVectorScreen().y;
+        centroid.z += vertex->getVectorScreen().z;
+      }
     }
 
     int size = this->getVertex().size();

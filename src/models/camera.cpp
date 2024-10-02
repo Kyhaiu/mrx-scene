@@ -260,7 +260,6 @@ namespace models
    */
   void CameraOrbital(models::Camera3D *camera, float orbitalSpeed)
   {
-
     core::Matrix rotation = math::MatrixRotate(math::Vector3Normalize({0, 1, 0}), orbitalSpeed);
     core::Vector3 view = math::Vector3Subtract(camera->position, camera->target);
     view = math::Vector3Transform(view, rotation);
