@@ -219,7 +219,8 @@ namespace GUI
 
         // utils::DrawFaceBufferFlatShading(face->clipped_vertex, scene->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
         // O vetor normal da face é calculado na ocultação de faces
-        utils::DrawFaceBufferGouraudShading(vertexes, scene->getCamera()->position, face->getNormal(), object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
+        // utils::DrawFaceBufferGouraudShading(vertexes, scene->getCamera()->position, object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
+        utils::DrawFaceBufferPhongShading(vertexes, scene->getCamera()->position, object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
 
         // utils::DrawString(face->getId().c_str(), face->getFaceCentroid(true), models::WHITE);
 

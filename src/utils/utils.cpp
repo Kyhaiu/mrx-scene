@@ -125,7 +125,7 @@ namespace utils
   }
 
   /**
-   * @brief Desenha uma face no buffer
+   * @brief Desenha uma face no buffer utilizando Gouraud Shading
    *
    * @param vertexes Vetor de vértices e normais dos vertices que compõem a face
    * @param eye Posição do observador
@@ -137,10 +137,26 @@ namespace utils
    * @param color_buffer Buffer de cores
    *
    */
-  void DrawFaceBufferGouraudShading(const std::vector<std::pair<core::Vector3, core::Vector3>> &vertexes, const core::Vector3 &eye, const core::Vector3 &face_normal, const models::Material &object_material, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  void DrawFaceBufferGouraudShading(const std::vector<std::pair<core::Vector3, core::Vector3>> &vertexes, const core::Vector3 &eye, const models::Material &object_material, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
   {
 
-    math::fill_polygon_gourand(vertexes, global_light, omni_lights, eye, face_normal, object_material, z_buffer, color_buffer);
+    math::fill_polygon_gourand(vertexes, global_light, omni_lights, eye, object_material, z_buffer, color_buffer);
+  }
+
+  /**
+   * @brief Desenha uma face no buffer utilizando Phong Shading
+   *
+   * @param vertexes Vetor de vértices e normais dos vertices que compõem a face
+   * @param eye Posição do observador
+   * @param object_material Material do objeto
+   * @param global_light Luz global
+   * @param omni_lights Vetor de luzes omni
+   * @param z_buffer Buffer de profundidade
+   * @param color_buffer Buffer de cores
+   */
+  void DrawFaceBufferPhongShading(const std::vector<std::pair<core::Vector3, core::Vector3>> &vertexes, const core::Vector3 &eye, const models::Material &object_material, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  {
+    math::fill_polygon_phong(vertexes, global_light, omni_lights, eye, object_material, z_buffer, color_buffer);
   }
 
   /**

@@ -456,9 +456,8 @@ namespace math
    * @param color_buffer Buffer de cores
    *
    */
-  void fill_polygon_gourand(const std::vector<std::pair<core::Vector3, core::Vector3>> &_vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const core::Vector3 &face_normal, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  void fill_polygon_gourand(const std::vector<std::pair<core::Vector3, core::Vector3>> &_vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
   {
-
     // Usando para associar cada vértice com sua cor calculada
     std::vector<std::pair<core::Vector3, models::Color>> vertexes;
 
@@ -566,6 +565,134 @@ namespace math
           r += dr;
           g += dg;
           b += db;
+        }
+      }
+    }
+  }
+
+  /**
+   * @brief Preenche um polígono com sombreamento de Phong
+   *
+   * @param vertexes Lista de vertices e normais dos vertices
+   * @param global_light Luz ambiente global
+   * @param omni_lights Lista de luzes omnidirecionais
+   * @param eye Posição do observador
+   * @param object_material Material do objeto
+   * @param z_buffer Buffer de profundidade
+   * @param color_buffer Buffer de cores
+   */
+  void fill_polygon_phong(const std::vector<std::pair<core::Vector3, core::Vector3>> &_vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  {
+    // Usando para associar cada vértice com sua cor calculada
+    std::vector<std::tuple<core::Vector3, core::Vector3, models::Color>> vertexes;
+
+    for (auto vertex : _vertexes)
+    {
+      models::Color color = models::PhongShading(global_light, omni_lights, vertex, eye, object_material);
+      vertexes.push_back(std::make_tuple(vertex.first, vertex.second, color));
+    }
+
+    int y_min = std::numeric_limits<int>::max();
+    int y_max = std::numeric_limits<int>::min();
+
+    for (auto vertex : vertexes)
+    {
+      if (std::get<0>(vertex).y < y_min)
+        y_min = static_cast<int>(std::get<0>(vertex).y);
+      if (std::get<0>(vertex).y > y_max)
+        y_max = static_cast<int>(std::get<0>(vertex).y);
+    }
+
+    std::vector<std::vector<std::tuple<core::Vector3, core::Vector3, models::Color>>> scanlines(y_max - y_min);
+
+    // Como a lista de vertices é composta pelo inicio e fim da aresta, o incremento é de 2
+    for (int i = 0; i < vertexes.size(); i += 2)
+    {
+      // pixeis
+      core::Vector3 start = std::get<0>(vertexes[i]);
+      core::Vector3 end = std::get<0>(vertexes[i + 1]);
+      // normais dos pixeis
+      core::Vector3 start_normal = std::get<1>(vertexes[i]);
+      core::Vector3 end_normal = std::get<1>(vertexes[(i + 1) % vertexes.size()]);
+      // cores dos pixeis
+      models::Color start_color = std::get<2>(vertexes[i % vertexes.size()]);
+      models::Color end_color = std::get<2>(vertexes[(i + 1) % vertexes.size()]);
+
+      // Se a linha for horizontal, não faz nada
+      if (start.y == end.y)
+        continue;
+
+      if (start.y > end.y)
+      {
+        std::swap(start, end);
+        std::swap(start_normal, end_normal);
+        // std::swap(start_color, end_color);
+      }
+
+      float dy = end.y - start.y;
+
+      float m_inv = (end.x - start.x) / dy;
+      float dz = (end.z - start.z) / dy;
+
+      float x = start.x;
+      float z = start.z;
+
+      models::Color current_color = start_color;
+
+      core::Vector3 n = start_normal;
+
+      for (int y = static_cast<int>(start.y); y < static_cast<int>(end.y); y++)
+      {
+
+        scanlines[y - y_min].push_back(std::make_tuple(core::Vector3{x, static_cast<float>(y), z}, n, current_color));
+        x += m_inv;
+        z += dz;
+
+        // Interpolação do vetor normal pixel a pixel
+        n.x = ((y - end.y) / (start.y - end.y)) * start_normal.x + ((start.y - y) / (start.y - end.y)) * end_normal.x;
+        n.y = ((y - end.y) / (start.y - end.y)) * start_normal.y + ((start.y - y) / (start.y - end.y)) * end_normal.y;
+        n.z = ((y - end.y) / (start.y - end.y)) * start_normal.z + ((start.y - y) / (start.y - end.y)) * end_normal.z;
+
+        current_color = models::PhongShading(global_light, omni_lights, std::make_pair(core::Vector3{x, static_cast<float>(y), z}, n), eye, object_material);
+      }
+    }
+
+    for (int i = 0; i < scanlines.size(); i++)
+    {
+      std::sort(scanlines[i].begin(), scanlines[i].end(),
+                [](std::tuple<core::Vector3, core::Vector3, models::Color> a, std::tuple<core::Vector3, core::Vector3, models::Color> b)
+                { return std::get<0>(a).x < std::get<0>(b).x; });
+
+      for (int j = 0; j < scanlines[i].size(); j = j + 2)
+      {
+
+        core::Vector3 start = std::get<0>(scanlines[i][j]);
+        core::Vector3 end = std::get<0>(scanlines[i][j + 1]);
+
+        core::Vector3 start_normal = std::get<1>(scanlines[i][j]);
+        core::Vector3 end_normal = std::get<1>(scanlines[i][j + 1]);
+
+        models::Color start_color = std::get<2>(scanlines[i][j]);
+        models::Color end_color = std::get<2>(scanlines[i][j + 1]);
+
+        float dx = end.x - start.x;
+
+        float dz = (end.z - start.z) / dx;
+        float z = start.z + (start.x - ceilf(start.x)) * dz;
+
+        models::Color current_color = start_color;
+        core::Vector3 n = start_normal;
+
+        for (float x = ceilf(start.x); x <= floorf(end.x); x++)
+        {
+          math::z_buffer(x, start.y, z, current_color, z_buffer, color_buffer);
+          z += dz;
+
+          n.x = ((x - end.x) / (start.x - end.x)) * start_normal.x + ((start.x - x) / (start.x - end.x)) * end_normal.x;
+          n.y = ((x - end.x) / (start.x - end.x)) * start_normal.y + ((start.x - x) / (start.x - end.x)) * end_normal.y;
+          n.z = ((x - end.x) / (start.x - end.x)) * start_normal.z + ((start.x - x) / (start.x - end.x)) * end_normal.z;
+
+          current_color = models::PhongShading(global_light, omni_lights, std::make_pair(core::Vector3{x, static_cast<float>(start.y), z}, n), eye, object_material);
         }
       }
     }

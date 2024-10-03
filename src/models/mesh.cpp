@@ -272,8 +272,8 @@ namespace models
     // Inicialização dos outros atributos da malha
     this->setSelected(false);
     this->material.ambient = {0.5f, 0.0f, 0.0f};
-    this->material.diffuse = {0.8f, 0.0f, 0.0f};
-    this->material.specular = {1.0f, 0.0f, 0.0f};
+    this->material.diffuse = {0.5f, 0.0f, 0.0f};
+    this->material.specular = {0.9f, 0.9f, 0.9f};
     this->material.shininess = 3.0f;
 
     this->setNumFaces(this->faces.size());

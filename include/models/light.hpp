@@ -95,4 +95,6 @@ namespace models
 
   models::Color FlatShading(const models::Light &light, const std::vector<models::Omni> &omni, const core::Vector3 &centroid, const core::Vector3 &face_normal, const core::Vector3 &eye, const models::Material &material);
   models::Color GouraudShading(const models::Light &light, const std::vector<models::Omni> &omni, const std::pair<core::Vector3, core::Vector3> &vertex, const core::Vector3 &eye, const models::Material &material);
+  models::Color PhongIllumination(const models::Light &light, const std::vector<models::Omni> &omni, const core::Vector3 &pixel, const core::Vector3 &pixel_normal, const core::Vector3 &eye, const models::Material &material);
+  models::Color PhongShading(const models::Light &light, const std::vector<models::Omni> &omni, const std::pair<core::Vector3, core::Vector3> &vertex, const core::Vector3 &eye, const models::Material &material);
 } // namespace models
