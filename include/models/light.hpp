@@ -94,5 +94,5 @@ namespace models
   void LightOrbital(models::Omni *omni, float orbitalSpeed);
 
   models::Color FlatShading(const models::Light &light, const std::vector<models::Omni> &omni, const core::Vector3 &centroid, const core::Vector3 &face_normal, const core::Vector3 &eye, const models::Material &material);
-  std::vector<models::Color> GouraudShading(const models::Light &light, const std::vector<models::Omni> &omni, const std::vector<std::pair<core::Vector3, core::Vector3>> &vertexes, const core::Vector3 &eye, const models::Material &material);
+  models::Color GouraudShading(const models::Light &light, const std::vector<models::Omni> &omni, const std::pair<core::Vector3, core::Vector3> &vertex, const core::Vector3 &eye, const models::Material &material);
 } // namespace models

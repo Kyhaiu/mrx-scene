@@ -456,10 +456,17 @@ namespace math
    * @param color_buffer Buffer de cores
    *
    */
-  void fill_polygon_gourand(const std::vector<std::pair<core::Vector3, core::Vector3>> &vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const core::Vector3 &face_normal, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  void fill_polygon_gourand(const std::vector<std::pair<core::Vector3, core::Vector3>> &_vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const core::Vector3 &face_normal, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
   {
-    // Ao inv'es de utilizar face_normal, utiliza os vertexes_normal e utiliza as coordenadas do vertices
-    std::vector<models::Color> colors = models::GouraudShading(global_light, omni_lights, vertexes, eye, object_material);
+
+    // Usando para associar cada vértice com sua cor calculada
+    std::vector<std::pair<core::Vector3, models::Color>> vertexes;
+
+    for (auto vertex : _vertexes)
+    {
+      models::Color color = models::GouraudShading(global_light, omni_lights, vertex, eye, object_material);
+      vertexes.push_back(std::make_pair(vertex.first, color));
+    }
 
     int y_min = std::numeric_limits<int>::max();
     int y_max = std::numeric_limits<int>::min();
@@ -480,8 +487,8 @@ namespace math
       core::Vector3 start = vertexes[i].first;
       core::Vector3 end = vertexes[i + 1].first;
 
-      models::Color start_color = colors[i % colors.size()];
-      models::Color end_color = colors[(i + 1) % colors.size()];
+      models::Color start_color = vertexes[i % vertexes.size()].second;
+      models::Color end_color = vertexes[(i + 1) % vertexes.size()].second;
 
       // Se a linha for horizontal, não faz nada
       if (start.y == end.y)

@@ -18,7 +18,7 @@ namespace models
   void LightOrbital(models::Omni *omni, float orbitalSpeed)
   {
     // (0, 1, 0) é o vetor up (eixo de rotação)
-    core::Matrix rotation = math::MatrixRotate(math::Vector3Normalize({1, 0, 0}), orbitalSpeed);
+    core::Matrix rotation = math::MatrixRotate(math::Vector3Normalize({0, 1, 0}), orbitalSpeed);
     // (0, 0, 0) é o centro da cena já que a luz não possui ponto focal (raio de visão)
     core::Vector3 view = math::Vector3Subtract(omni->position, {0, 0, 0});
     view = math::Vector3Transform(view, rotation);
@@ -99,19 +99,14 @@ namespace models
    *
    * @param light Luz ambiente da cena
    * @param omni Vetor de Lampa omnidirecionais
-   * @param vertexes Vértices da face
+   * @param vertexes Vértice da face e Normal médio do vértice
    * @param eye Posição do observador (câmera)
    * @param material Material do objeto
+   *
+   * @return models::Color Cor do vértice
    */
-  std::vector<models::Color> GouraudShading(const models::Light &light, const std::vector<models::Omni> &omni, const std::vector<std::pair<core::Vector3, core::Vector3>> &vertexes, const core::Vector3 &eye, const models::Material &material)
+  models::Color GouraudShading(const models::Light &light, const std::vector<models::Omni> &omni, const std::pair<core::Vector3, core::Vector3> &vertex, const core::Vector3 &eye, const models::Material &material)
   {
-    std::vector<models::Color> colors = {};
-
-    for (int i = 0; i < vertexes.size(); i++)
-    {
-      colors.push_back(FlatShading(light, omni, vertexes[i].first, vertexes[i].second, eye, material));
-    }
-
-    return colors;
+    return FlatShading(light, omni, vertex.first, vertex.second, eye, material);
   }
 } // namespace models

@@ -145,5 +145,7 @@ namespace models
     core::Face *addFaceByHalfEdges(std::vector<core::HalfEdge *> half_edges);
     core::Face *addFaceByVertices(std::vector<core::Vertex *> vertexes);
     core::HalfEdge *findEdge(core::Vertex *vertex1, core::Vertex *vertex2);
+
+    bool isOutsideViewport(core::Vector2 viewport_min, core::Vector2 viewport_max);
   };
 } // namespace models

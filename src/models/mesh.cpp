@@ -468,4 +468,22 @@ namespace models
 
     return nullptr;
   }
+
+  /**
+   * @brief Método que verifica se a malha está fora da viewport
+   *
+   * @param min_viewport Coordenada mínima da viewport (tela)
+   * @param max_viewport Coordenada máxima da viewport (tela)
+   * @return true Se a malha está fora da viewport
+   * @return false Se a malha está dentro da viewport
+   */
+  bool Mesh::isOutsideViewport(core::Vector2 min_viewport, core::Vector2 max_viewport)
+  {
+    core::Vector4 box = this->getBox(true);
+
+    if (box.x > max_viewport.x || box.z < min_viewport.x || box.y > max_viewport.y || box.w < min_viewport.y)
+      return true;
+
+    return false;
+  }
 } // namespace models

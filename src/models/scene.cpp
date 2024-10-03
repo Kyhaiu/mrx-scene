@@ -290,6 +290,7 @@ namespace models
     {
       if (*it == object)
       {
+        this->deselectObject();
         this->objects.erase(it);
         break;
       }
@@ -344,6 +345,15 @@ namespace models
       }
 
       object->determineNormals();
+    }
+
+    // Remove de cena os objetos completamente fora da viewport
+    for (auto object : this->objects)
+    {
+      if (object->isOutsideViewport(this->getMinViewport(), this->getMaxViewport()))
+      {
+        this->removeObject(object);
+      }
     }
 
     // Rasteriza a luz
@@ -402,6 +412,10 @@ namespace models
   {
     int width = static_cast<int>(this->max_viewport.x);
     int height = static_cast<int>(this->max_viewport.y);
+
+    // clear the buffers
+    this->z_buffer.clear();
+    this->color_buffer.clear();
 
     // Resize and initialize the z-buffer and color buffer
     this->z_buffer = std::vector<std::vector<float>>(width, std::vector<float>(height, std::numeric_limits<float>::infinity()));
