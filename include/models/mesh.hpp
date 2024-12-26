@@ -55,7 +55,6 @@
 #include <map>       // Include this for std::map
 
 #include <models/common.hpp>
-#include <models/colors.hpp>
 
 #include <core/vertex.hpp>
 #include <core/face.hpp>

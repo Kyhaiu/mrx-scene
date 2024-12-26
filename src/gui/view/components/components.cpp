@@ -195,7 +195,7 @@ namespace GUI
         face->clipped_vertex.clear();
 
         // Vetor que armazena os vetores normais médios dos vértices da face
-        std::vector<std::pair<core::Vector3, core::Vector3>> vertexes;
+        std::vector<core::Vertex *> vertexes;
 
         while (true)
         {
@@ -204,11 +204,11 @@ namespace GUI
           face->clipped_vertex.push_back(clipped_vertex.first);
           face->clipped_vertex.push_back(clipped_vertex.second);
 
-          vertexes.push_back({he->getOrigin()->getVectorScreen(), he->getOrigin()->getNormal()});
-          vertexes.push_back({he->getNext()->getOrigin()->getVectorScreen(), he->getNext()->getOrigin()->getNormal()});
+          vertexes.push_back(he->getOrigin());
+          vertexes.push_back(he->getNext()->getOrigin());
 
           // utils::DrawVertexBuffer(clipped_vertex.first, models::WHITE, scene->z_buffer, scene->color_buffer, 5);
-          // utils::DrawString(he->getOrigin()->getId().c_str(), clipped_vertex.first, models::WHITE);
+          // utils::DrawString(he->getOrigin()->getId().c_str(), clipped_vertex.first, models::RED);
 
           // utils::DrawLineBuffer({clipped_vertex.first, clipped_vertex.second}, models::WHITE, scene->z_buffer, scene->color_buffer);
 
@@ -217,10 +217,12 @@ namespace GUI
             break;
         }
 
-        // utils::DrawFaceBufferFlatShading(face->clipped_vertex, scene->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
+        // utils::DrawFaceBufferFlatShading(vertexes, scene->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
         // O vetor normal da face é calculado na ocultação de faces
+        // precisa recortar o vetor normal do vertice também (assim simplifica o calculo de interpolação)
+        // usar excel como base
         // utils::DrawFaceBufferGouraudShading(vertexes, scene->getCamera()->position, object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
-        utils::DrawFaceBufferPhongShading(vertexes, scene->getCamera()->position, object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
+        utils::DrawFaceBufferPhongShading(vertexes, face->getFaceCentroid(), scene->getCamera()->position, object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
 
         // utils::DrawString(face->getId().c_str(), face->getFaceCentroid(true), models::WHITE);
 
@@ -230,7 +232,7 @@ namespace GUI
     }
 
     // Desenha no buffer a luz omni
-    utils::DrawVertexBuffer(scene->omni_lights[0].screen_position, models::ChannelsToColor(scene->omni_lights[0].intensity), scene->z_buffer, scene->color_buffer, 20);
+    // utils::DrawVertexBuffer(scene->omni_lights[0].screen_position, models::ChannelsToColor(scene->omni_lights[0].intensity), scene->z_buffer, scene->color_buffer, 20);
 
     utils::DrawBuffer(draw_list, scene->z_buffer, scene->color_buffer, min_viewport);
   }

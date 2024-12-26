@@ -18,7 +18,7 @@ namespace models
   void LightOrbital(models::Omni *omni, float orbitalSpeed)
   {
     // (0, 1, 0) é o vetor up (eixo de rotação)
-    core::Matrix rotation = math::MatrixRotate(math::Vector3Normalize({0, 1, 0}), orbitalSpeed);
+    core::Matrix rotation = math::MatrixRotate(math::Vector3Normalize({1, 1, 0}), orbitalSpeed);
     // (0, 0, 0) é o centro da cena já que a luz não possui ponto focal (raio de visão)
     core::Vector3 view = math::Vector3Subtract(omni->position, {0, 0, 0});
     view = math::Vector3Transform(view, rotation);
@@ -87,6 +87,10 @@ namespace models
 
     models::Color color = models::BLACK;
 
+    ambient_illumination = {0, 0, 0, 255};
+    // diffuse_illumination = models::BLACK;
+    specular_illumination = {0, 0, 0, 255};
+
     // Passo 4: Calcular a cor final
     color.r = static_cast<models::Uint8>(math::Clamp(static_cast<float>(ambient_illumination.r + diffuse_illumination.r + specular_illumination.r), 0, 255));
     color.g = static_cast<models::Uint8>(math::Clamp(static_cast<float>(ambient_illumination.g + diffuse_illumination.g + specular_illumination.g), 0, 255));
@@ -116,13 +120,14 @@ namespace models
    *
    * @param light Luz ambiente da cena
    * @param omni Vetor de Lampa omnidirecionais
+   * @param centroid Centroide da face
    * @param pixel Posição do pixel
    * @param pixel_normal Normal do pixel
    * @param eye Posição do observador (câmera)
    * @param material Material do objeto
    * @return models::Color Cor do pixel
    */
-  models::Color PhongIllumination(const models::Light &light, const std::vector<models::Omni> &omni, const core::Vector3 &pixel, const core::Vector3 &pixel_normal, const core::Vector3 &eye, const models::Material &material)
+  models::Color PhongIllumination(const models::Light &light, const std::vector<models::Omni> &omni, const core::Vector3 &centroid, const core::Vector3 &pixel, const core::Vector3 &pixel_normal, const core::Vector3 &eye, const models::Material &material)
   {
     models::Color ambient_illumination = models::BLACK;
     models::Color diffuse_illumination = models::BLACK;
@@ -134,7 +139,7 @@ namespace models
     ambient_illumination.b = static_cast<models::Uint8>(math::Clamp(light.intensity.b * material.ambient.b, 0, 255));
 
     // pre computar o vetor S (direção do observador) já que ele é constante
-    core::Vector3 S = math::Vector3Normalize(math::Vector3Subtract(eye, pixel));
+    core::Vector3 S = math::Vector3Normalize(math::Vector3Subtract(eye, centroid));
 
     // Para cada fonte de luz na cena
     for (auto lamp : omni)
@@ -159,12 +164,6 @@ namespace models
       core::Vector3 H = math::Vector3Normalize(LS);
 
       float cos_alpha = math::Vector3DotProduct(pixel_normal, H);
-
-      // // Vetor da reflexão da luz (R = (2N.L). N - L)
-      // // N = normal do pixel
-      // core::Vector3 R = math::Vector3Subtract(math::Vector3MultiplyValue(pixel_normal, 2 * cos_theta), L);
-
-      // float cos_alpha = math::Vector3DotProduct(R, S);
 
       models::ColorChannels ks = material.specular;
       float n = material.shininess;
@@ -198,9 +197,9 @@ namespace models
    *
    * @return models::Color Cor do vértice
    */
-  models::Color PhongShading(const models::Light &light, const std::vector<models::Omni> &omni, const std::pair<core::Vector3, core::Vector3> &vertex, const core::Vector3 &eye, const models::Material &material)
+  models::Color PhongShading(const models::Light &light, const std::vector<models::Omni> &omni, const core::Vector3 &centroid, const std::pair<core::Vector3, core::Vector3> &vertex, const core::Vector3 &eye, const models::Material &material)
   {
-    return PhongIllumination(light, omni, vertex.first, vertex.second, eye, material);
+    return PhongIllumination(light, omni, centroid, vertex.first, vertex.second, eye, material);
   }
 
 } // namespace models

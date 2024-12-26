@@ -84,6 +84,10 @@ namespace math
     // In this case, the z_prp is 0. Because this point coincides with the origin of the SRC (0, 0, 0).
     float z_prp = 0;
 
+    // core::Matrix result = core::Flota16ToMatrix({1, 0, 0, 0,
+    //                                              0, 1, 0, 0,
+    //                                              0, 0, 0, 0,
+    //                                              0, 0, 0, 1});
     core::Matrix result = core::Flota16ToMatrix({1, 0, 0, 0,
                                                  0, 1, 0, 0,
                                                  0, 0, (-z_vp) / dp, z_vp * (z_prp) / dp,
@@ -372,7 +376,7 @@ namespace math
    * @param max_window_size Tamanho máximo da janela
    *
    */
-  void fill_polygon_flat_shading(const std::vector<core::Vector3> &vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const core::Vector3 &face_centroid, const core::Vector3 &face_normal, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer, core::Vector2 max_window_size)
+  void fill_polygon_flat_shading(const std::vector<core::Vertex *> &vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const core::Vector3 &face_centroid, const core::Vector3 &face_normal, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer, core::Vector2 max_window_size)
   {
     models::Color color = models::FlatShading(global_light, omni_lights, face_centroid, face_normal, eye, object_material);
 
@@ -381,10 +385,11 @@ namespace math
 
     for (auto vertex : vertexes)
     {
-      if (vertex.y < y_min)
-        y_min = static_cast<int>(vertex.y);
-      if (vertex.y > y_max)
-        y_max = static_cast<int>(vertex.y);
+      float y = vertex->getVectorScreen().y;
+      if (y < y_min)
+        y_min = static_cast<int>(y);
+      if (y > y_max)
+        y_max = static_cast<int>(y);
     }
 
     std::vector<std::vector<core::Vector3>> scanlines(y_max - y_min);
@@ -392,8 +397,8 @@ namespace math
     // Como a lista de vertices é composta pelo inicio e fim da aresta, o incremento é de 2
     for (int i = 0; i < vertexes.size(); i += 2)
     {
-      core::Vector3 start = vertexes[i];
-      core::Vector3 end = vertexes[i + 1];
+      core::Vector3 start = vertexes[i]->getVectorScreen();
+      core::Vector3 end = vertexes[i + 1]->getVectorScreen();
 
       if (start.y == end.y)
         continue;
@@ -456,15 +461,18 @@ namespace math
    * @param color_buffer Buffer de cores
    *
    */
-  void fill_polygon_gourand(const std::vector<std::pair<core::Vector3, core::Vector3>> &_vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  void fill_polygon_gourand(const std::vector<core::Vertex *> &_vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
   {
     // Usando para associar cada vértice com sua cor calculada
-    std::vector<std::pair<core::Vector3, models::Color>> vertexes;
+    std::vector<std::pair<core::Vertex *, models::Color>> vertexes;
 
     for (auto vertex : _vertexes)
     {
-      models::Color color = models::GouraudShading(global_light, omni_lights, vertex, eye, object_material);
-      vertexes.push_back(std::make_pair(vertex.first, color));
+      // utiliza o vertice nas coordenadas SRU para calcular a cor
+      core::Vector3 v = vertex->getVector().toVector3();
+      core::Vector3 n = vertex->getNormal();
+      models::Color color = models::GouraudShading(global_light, omni_lights, std::make_pair(v, n), eye, object_material);
+      vertexes.push_back(std::make_pair(vertex, color));
     }
 
     int y_min = std::numeric_limits<int>::max();
@@ -472,19 +480,23 @@ namespace math
 
     for (auto vertex : vertexes)
     {
-      if (vertex.first.y < y_min)
-        y_min = static_cast<int>(vertex.first.y);
-      if (vertex.first.y > y_max)
-        y_max = static_cast<int>(vertex.first.y);
+      float y = vertex.first->getVectorScreen().y;
+      if (y < y_min)
+        y_min = static_cast<int>(y);
+      if (y > y_max)
+        y_max = static_cast<int>(y);
     }
 
+    // Vetor de scanlines
+    // 1º parâmetro do par: vetor de coordenadas SRT (coordenadas de tela)
+    // 2º parâmetro do par: cor do pixel
     std::vector<std::vector<std::pair<core::Vector3, models::Color>>> scanlines(y_max - y_min);
 
     // Como a lista de vertices é composta pelo inicio e fim da aresta, o incremento é de 2
     for (int i = 0; i < vertexes.size(); i += 2)
     {
-      core::Vector3 start = vertexes[i].first;
-      core::Vector3 end = vertexes[i + 1].first;
+      core::Vector3 start = vertexes[i].first->getVectorScreen();
+      core::Vector3 end = vertexes[i + 1].first->getVectorScreen();
 
       models::Color start_color = vertexes[i % vertexes.size()].second;
       models::Color end_color = vertexes[(i + 1) % vertexes.size()].second;
@@ -573,7 +585,7 @@ namespace math
   /**
    * @brief Preenche um polígono com sombreamento de Phong
    *
-   * @param vertexes Lista de vertices e normais dos vertices
+   * @param _vertexes Lista de vertices e normais dos vertices
    * @param global_light Luz ambiente global
    * @param omni_lights Lista de luzes omnidirecionais
    * @param eye Posição do observador
@@ -581,42 +593,32 @@ namespace math
    * @param z_buffer Buffer de profundidade
    * @param color_buffer Buffer de cores
    */
-  void fill_polygon_phong(const std::vector<std::pair<core::Vector3, core::Vector3>> &_vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  void fill_polygon_phong(const std::vector<core::Vertex *> &_vertexes, const core::Vector3 &centroid, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
   {
-    // Usando para associar cada vértice com sua cor calculada
-    std::vector<std::tuple<core::Vector3, core::Vector3, models::Color>> vertexes;
-
-    for (auto vertex : _vertexes)
-    {
-      models::Color color = models::PhongShading(global_light, omni_lights, vertex, eye, object_material);
-      vertexes.push_back(std::make_tuple(vertex.first, vertex.second, color));
-    }
-
     int y_min = std::numeric_limits<int>::max();
     int y_max = std::numeric_limits<int>::min();
 
-    for (auto vertex : vertexes)
+    for (auto vertex : _vertexes)
     {
-      if (std::get<0>(vertex).y < y_min)
-        y_min = static_cast<int>(std::get<0>(vertex).y);
-      if (std::get<0>(vertex).y > y_max)
-        y_max = static_cast<int>(std::get<0>(vertex).y);
+      float y = vertex->getVectorScreen().y;
+      if (y < y_min)
+        y_min = static_cast<int>(y);
+      if (y > y_max)
+        y_max = static_cast<int>(y);
     }
 
-    std::vector<std::vector<std::tuple<core::Vector3, core::Vector3, models::Color>>> scanlines(y_max - y_min);
+    // Vetor de scanlines
+    // 1º parâmetro do par: vetor de coordenadas SRT (coordenadas de tela)
+    // 2º parâmetro do par: vetor normal do pixel (interpolado)
+    std::vector<std::vector<std::tuple<core::Vector3, core::Vector3>>> scanlines(y_max - y_min);
 
-    // Como a lista de vertices é composta pelo inicio e fim da aresta, o incremento é de 2
-    for (int i = 0; i < vertexes.size(); i += 2)
+    for (int count = 0; count < _vertexes.size(); count += 2)
     {
-      // pixeis
-      core::Vector3 start = std::get<0>(vertexes[i]);
-      core::Vector3 end = std::get<0>(vertexes[i + 1]);
-      // normais dos pixeis
-      core::Vector3 start_normal = std::get<1>(vertexes[i]);
-      core::Vector3 end_normal = std::get<1>(vertexes[(i + 1) % vertexes.size()]);
-      // cores dos pixeis
-      models::Color start_color = std::get<2>(vertexes[i % vertexes.size()]);
-      models::Color end_color = std::get<2>(vertexes[(i + 1) % vertexes.size()]);
+      core::Vector3 start = _vertexes[count]->getVectorScreen();
+      core::Vector3 end = _vertexes[count + 1]->getVectorScreen();
+
+      core::Vector3 start_normal = _vertexes[count]->getNormal();
+      core::Vector3 end_normal = _vertexes[count + 1]->getNormal();
 
       // Se a linha for horizontal, não faz nada
       if (start.y == end.y)
@@ -626,73 +628,83 @@ namespace math
       {
         std::swap(start, end);
         std::swap(start_normal, end_normal);
-        // std::swap(start_color, end_color);
       }
 
       float dy = end.y - start.y;
+      float dx = end.x - start.x;
+      float dz = end.z - start.z;
+      // i,j,k se referem ao vetor normal do pixel (x, y, z)
+      float dn_i = end_normal.x - start_normal.x;
+      float dn_j = end_normal.y - start_normal.y;
+      float dn_k = end_normal.z - start_normal.z;
 
-      float m_inv = (end.x - start.x) / dy;
-      float dz = (end.z - start.z) / dy;
+      // taxa de variação do x em relação ao y
+      float t_x = dx / dy;
+      // taxa de variação do z em relação ao y
+      float t_z = dz / dy;
+      // taxa de variação do i em relação ao y
+      float t_i = dn_i / dy;
+      // taxa de variação do j em relação ao y
+      float t_j = dn_j / dy;
+      // taxa de variação do k em relação ao y
+      float t_k = dn_k / dy;
 
       float x = start.x;
       float z = start.z;
 
-      models::Color current_color = start_color;
-
-      core::Vector3 n = start_normal;
+      float i = start_normal.x;
+      float j = start_normal.y;
+      float k = start_normal.z;
 
       for (int y = static_cast<int>(start.y); y < static_cast<int>(end.y); y++)
       {
-
-        scanlines[y - y_min].push_back(std::make_tuple(core::Vector3{x, static_cast<float>(y), z}, n, current_color));
-        x += m_inv;
-        z += dz;
-
-        // Interpolação do vetor normal pixel a pixel
-        n.x = ((y - end.y) / (start.y - end.y)) * start_normal.x + ((start.y - y) / (start.y - end.y)) * end_normal.x;
-        n.y = ((y - end.y) / (start.y - end.y)) * start_normal.y + ((start.y - y) / (start.y - end.y)) * end_normal.y;
-        n.z = ((y - end.y) / (start.y - end.y)) * start_normal.z + ((start.y - y) / (start.y - end.y)) * end_normal.z;
-
-        current_color = models::PhongShading(global_light, omni_lights, std::make_pair(core::Vector3{x, static_cast<float>(y), z}, n), eye, object_material);
+        scanlines[y - y_min].push_back(std::make_tuple<core::Vector3, core::Vector3>({x, static_cast<float>(y), z}, {i, j, k}));
+        // incrementa com as taxas de variação (interpolação linear)
+        x += t_x;
+        z += t_z;
+        i += t_i;
+        j += t_j;
+        k += t_k;
       }
     }
 
-    for (int i = 0; i < scanlines.size(); i++)
+    for (int row = 0; row < scanlines.size(); row++)
     {
-      std::sort(scanlines[i].begin(), scanlines[i].end(),
-                [](std::tuple<core::Vector3, core::Vector3, models::Color> a, std::tuple<core::Vector3, core::Vector3, models::Color> b)
+      std::sort(scanlines[row].begin(), scanlines[row].end(),
+                [](std::tuple<core::Vector3, core::Vector3> a, std::tuple<core::Vector3, core::Vector3> b)
                 { return std::get<0>(a).x < std::get<0>(b).x; });
 
-      for (int j = 0; j < scanlines[i].size(); j = j + 2)
+      for (int col = 0; col < scanlines[row].size(); col += 2)
       {
+        core::Vector3 start = std::get<0>(scanlines[row][col]);
+        core::Vector3 end = std::get<0>(scanlines[row][col + 1]);
 
-        core::Vector3 start = std::get<0>(scanlines[i][j]);
-        core::Vector3 end = std::get<0>(scanlines[i][j + 1]);
-
-        core::Vector3 start_normal = std::get<1>(scanlines[i][j]);
-        core::Vector3 end_normal = std::get<1>(scanlines[i][j + 1]);
-
-        models::Color start_color = std::get<2>(scanlines[i][j]);
-        models::Color end_color = std::get<2>(scanlines[i][j + 1]);
+        core::Vector3 start_normal = std::get<1>(scanlines[row][col]);
+        core::Vector3 end_normal = std::get<1>(scanlines[row][col + 1]);
 
         float dx = end.x - start.x;
-
         float dz = (end.z - start.z) / dx;
         float z = start.z + (start.x - ceilf(start.x)) * dz;
 
-        models::Color current_color = start_color;
-        core::Vector3 n = start_normal;
+        float dn_i = (end_normal.x - start_normal.x) / dx;
+        float dn_j = (end_normal.y - start_normal.y) / dx;
+        float dn_k = (end_normal.z - start_normal.z) / dx;
+
+        float i = start_normal.x;
+        float j = start_normal.y;
+        float k = start_normal.z;
 
         for (float x = ceilf(start.x); x <= floorf(end.x); x++)
         {
-          math::z_buffer(x, start.y, z, current_color, z_buffer, color_buffer);
+          core::Vector3 v = {x, start.y, z};
+          core::Vector3 n = {i, j, k};
+
+          models::Color color = models::PhongShading(global_light, omni_lights, centroid, std::make_pair(v, n), eye, object_material);
+          math::z_buffer(x, start.y, z, color, z_buffer, color_buffer);
           z += dz;
-
-          n.x = ((x - end.x) / (start.x - end.x)) * start_normal.x + ((start.x - x) / (start.x - end.x)) * end_normal.x;
-          n.y = ((x - end.x) / (start.x - end.x)) * start_normal.y + ((start.x - x) / (start.x - end.x)) * end_normal.y;
-          n.z = ((x - end.x) / (start.x - end.x)) * start_normal.z + ((start.x - x) / (start.x - end.x)) * end_normal.z;
-
-          current_color = models::PhongShading(global_light, omni_lights, std::make_pair(core::Vector3{x, static_cast<float>(start.y), z}, n), eye, object_material);
+          i += dn_i;
+          j += dn_j;
+          k += dn_k;
         }
       }
     }

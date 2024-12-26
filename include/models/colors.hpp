@@ -43,7 +43,6 @@
 #include <gui/imgui/imgui.h>
 
 #include <models/common.hpp>
-#include <math/math.hpp>
 
 namespace models
 {

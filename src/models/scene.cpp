@@ -55,14 +55,14 @@ namespace models
     // TODO: Arruma a construção da luz da cena de um jeito mais elegante
     models::Light light;
 
-    light.intensity = models::WHITE;
+    light.intensity = models::RED;
 
     this->global_light = light;
 
     models::Omni omni;
     omni.position = {2.0f, 2.0f, 2.0f};
 
-    omni.intensity = models::ColorToChannels(models::WHITE);
+    omni.intensity = models::ColorToChannels(models::RED);
 
     this->omni_lights.push_back(omni);
   }
@@ -305,8 +305,8 @@ namespace models
    */
   void Scene::rasterize()
   {
-    for (int i = 0; i < this->omni_lights.size(); i++)
-      LightOrbital(&this->omni_lights[i], 0.02f);
+    // for (int i = 0; i < this->omni_lights.size(); i++)
+    //   LightOrbital(&this->omni_lights[i], 0.02f);
 
     models::Camera3D *camera = this->getCamera();
 
