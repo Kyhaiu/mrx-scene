@@ -118,7 +118,7 @@ namespace GUI
 
     if (ImGui::BeginTabBar("Propriedades do objeto"))
     {
-      if (ImGui::BeginTabItem("Propriedades"))
+      if (ImGui::BeginTabItem("Propriedades da cena"))
       {
 
         auto camera = controller->getScene()->getCamera();
@@ -237,39 +237,4 @@ namespace GUI
     utils::DrawBuffer(draw_list, scene->z_buffer, scene->color_buffer, min_viewport);
   }
 
-  //-----------------------------------------------------------------------------------------------
-  // HierarchyViewer Class
-  //-----------------------------------------------------------------------------------------------
-
-  GUI::components::HierarchyViewer::HierarchyViewer(GUI::Controller *_controller)
-  {
-    this->controller = _controller;
-  }
-
-  void GUI::components::HierarchyViewer::render(models::Scene *scene)
-  {
-    ImGui::SetNextWindowPos(ImVec2(0, 20));
-    ImGui::SetNextWindowSize(ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y));
-    ImGui::Begin("hierarchy-component-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-    if (ImGui::TreeNode("Hierarquia da cena"))
-    {
-      if (ImGui::TreeNodeEx((void *)(intptr_t)selected_index, ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen, "Camera"))
-      {
-        if (ImGui::IsItemClicked())
-        {
-          selected_index = 0;
-          this->controller->on_hierarchy_item_selected(-1);
-        }
-        else
-        {
-          selected_index = -1;
-        }
-      }
-    }
-    ImGui::TreePop();
-    ImGui::End();
-  }
-  //-----------------------------------------------------------------------------------------------
-  // End of HierarchyViewer Class
-  //-----------------------------------------------------------------------------------------------
 } // namespace GUI

@@ -72,6 +72,29 @@ void GUI::Controller::addObject(models::Mesh *object)
   this->updateScene();
 }
 
+/**
+ * @brief Remove um objeto da cena
+ *
+ * @note A cena é atualizada após a remoção do objeto
+ *
+ * @param object Ponteiro para o objeto a ser removido
+ */
+void GUI::Controller::removeObject(models::Mesh *object)
+{
+  this->scene->removeObject(object);
+  this->updateScene();
+}
+
+/**
+ * @brief Seleciona um objeto da cena
+ *
+ * @param object Ponteiro para o objeto a ser selecionado
+ */
+void GUI::Controller::selectObject(models::Mesh *object)
+{
+  this->scene->setSelectedObject(object);
+}
+
 //-----------------------------------------------------------------------------
 // Events
 //-----------------------------------------------------------------------------

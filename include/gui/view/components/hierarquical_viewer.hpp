@@ -43,24 +43,29 @@
 
 #include <utils/utils.hpp>
 #include <gui/controller/controller.hpp>
-#include <gui/view/components/hierarquical_viewer.hpp>
 #include <models/scene.hpp>
+#include <models/mesh.hpp>
+#include <models/camera.hpp>
+#include <models/light.hpp>
 #include <shapes/shapes.hpp>
 
 namespace GUI
 {
   namespace components
   {
-    void HelpMarker(const char *desc);
+    class HierarchyViewer
+    {
+    private:
+      GUI::Controller *controller;
+      int selected_index = -1;
 
-    void menu(GUI::Controller *_controller);
+    public:
+      void objectRenderingNode(models::Mesh *object, int index);
+      void cameraRenderingNode(models::Camera3D *camera);
+      void lightRenderingNode(models::Light *light, int index);
 
-    // Forward declaration
-    class HierarchyViewer;
-
-    void object_inspector(GUI::Controller *_controller);
-    void viewport(models::Scene *scene);
-    void performance_monitor();
-
+      HierarchyViewer(GUI::Controller *_controller);
+      void render(models::Scene *scene);
+    };
   }
 } // namespace GUI

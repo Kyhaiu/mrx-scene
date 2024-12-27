@@ -105,6 +105,8 @@ namespace GUI
     // Methods
     void updateScene();
     void addObject(models::Mesh *object);
+    void removeObject(models::Mesh *object);
+    void selectObject(models::Mesh *object);
 
     // Events
     void on_hierarchy_item_selected(int index);
