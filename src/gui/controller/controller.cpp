@@ -55,7 +55,8 @@ void GUI::Controller::updateScene()
 {
   // models::CameraOrbital(this->scene->getCamera(), this->camera_rotation_sensitivity);
 
-  this->scene->rasterize();
+  this->scene->rasterize_adair_pipeline();
+  // this->scene->rasterize_portugues_pipeline();
 }
 
 /**

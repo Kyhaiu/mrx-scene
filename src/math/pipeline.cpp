@@ -22,7 +22,7 @@ namespace math
    * @param fp Ponto para onde a câmera está olhando
    * @return Matriz de transformação de SRU para SRC
    */
-  core::Matrix sru_to_src(const core::Vector3 &vrp, const core::Vector3 fp)
+  core::Matrix pipeline_adair::sru_to_src(const core::Vector3 &vrp, const core::Vector3 fp)
   {
     // Define the n vector.
     core::Vector3 n = {vrp.x - fp.x, vrp.y - fp.y, vrp.z - fp.z};
@@ -67,7 +67,7 @@ namespace math
    * @param d Distância do VRP ao plano ponto focal
    * @return Matriz de projeção
    */
-  core::Matrix projection(const core::Vector3 &vrp, const core::Vector3 p, const float d)
+  core::Matrix pipeline_adair::projection(const core::Vector3 &vrp, const core::Vector3 p, const float d)
   {
 
     // This is the definitions of the projection plane.
@@ -113,7 +113,7 @@ namespace math
    * @param reflected Flag que indica se a transformação é refletida
    * @return Matriz de transformação de SRC para SRT
    */
-  core::Matrix src_to_srt(const core::Vector2 min_window, const core::Vector2 min_viewport, const core::Vector2 max_window, const core::Vector2 max_viewport, bool reflected = false)
+  core::Matrix pipeline_adair::src_to_srt(const core::Vector2 min_window, const core::Vector2 min_viewport, const core::Vector2 max_window, const core::Vector2 max_viewport, bool reflected = false)
   {
     float u_min = min_viewport.x;
     float u_max = max_viewport.x;
@@ -149,6 +149,94 @@ namespace math
                                       0, 0, 1, 0,
                                       0, 0, 0, 1});
     }
+
+    return result;
+  }
+
+  /**
+   * @brief Obtém a matrix de transformação do volume canônico ortogonal
+   *
+   * @param width Largura do plano de projeção
+   * @param height Altura do plano de projeção
+   * @param far Distância do plano posterior ao VRP
+   * @param near Distância do plano anterior ao VRP
+   * @return core::Matrix
+   */
+  core::Matrix pipeline_portugues::orthogonal_volume_transformation(const float width, const float height, const float far, const float near)
+  {
+    core::Matrix result;
+
+    // | (1/width) 0            0                  0
+    // | 0         (1/height)   0                  0
+    // |0          0            (1 / far - near)  -near
+    // |0          0            0                  1
+    result = core::Flota16ToMatrix({1 / width, 0, 0, 0, 0, 1 / height, 0, 0, 0, 0, 1 / (far - near), -near, 0, 0, 0, 1});
+
+    return result;
+  }
+
+  /**
+   * @brief Obtém a matrix de transformação do volume canônico perspectivo
+   *
+   * @param s_x Fator de escala em x
+   * @param s_y Fator de escala em y
+   * @param far Distância do plano posterior ao VRP
+   * @return core::Matrix
+   */
+  core::Matrix pipeline_portugues::perspective_volume_transformation(const float s_x, const float s_y, const float far)
+  {
+    core::Matrix result;
+
+    // | s_x/B 0      0     0
+    // | 0   s_y/far  0     0
+    // | 0   0        1/far 0
+    // | 0   0        0     1
+    result = core::Flota16ToMatrix({s_x / far, 0, 0, 0, 0, s_y / far, 0, 0, 0, 0, 1 / far, 0, 0, 0, 0, 1 / far});
+
+    return result;
+  }
+
+  /**
+   * @brief Obtém a matrix de transformação perspectiva
+   *
+   * @note A transformação de perspectiva opera diretamente no espaço 3D e transforma o frustum em um paralelepípedo canônico com lados paralelos e comprimento unitário.
+   *
+   * @param k Razão da distância entre os planos posterior e anterior. (far/near)
+   * @return core::Matrix
+   */
+  core::Matrix pipeline_portugues::perspective_transformation(const float k)
+  {
+    core::Matrix result;
+
+    // | 1 0 0          0
+    // | 0 1 0          0
+    // | 0 0 -(1/(1-k)) (-k/(1-k))
+    // | 0 0 1          0
+    result = core::Flota16ToMatrix({1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -(1 / (1 - k)), (-k / (1 - k)), 0, 0, 1, 0});
+
+    return result;
+  }
+
+  /**
+   * @brief Obtém a matrix de projeção
+   *
+   * @note https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix.html
+   *
+   * @param near Distância do plano anterior ao VRP
+   * @param far Distância do plano posterior ao VRP
+   * @return core::Matrix
+   */
+  core::Matrix pipeline_portugues::projection(const float near, const float far)
+  {
+    core::Matrix result;
+
+    // | 1 0 0                         0
+    // | 0 1 0                         0
+    // | 0 0 -(far/(far-near))        -1
+    // | 0 0 -((far*near)/(far-near))  0
+    result = core::Flota16ToMatrix({1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -(far / (far - near)), -1, 0, 0, -((far * near) / (far - near)), 0});
+    // Alvy Ray Projection
+    // result = core::Flota16ToMatrix({1, 0, 0, 0, 0, 1, 0, 0, 0, 0, (far / (far - near)), 1, 0, 0, (-near / (far - near)), 0});
 
     return result;
   }

@@ -58,10 +58,23 @@
 
 namespace math
 {
-  // Funções do Pipeline de Visualização 3D	- Adair Santa Catarina
-  core::Matrix sru_to_src(const core::Vector3 &vrp, const core::Vector3 fp);
-  core::Matrix projection(const core::Vector3 &vrp, const core::Vector3 p, const float d);
-  core::Matrix src_to_srt(const core::Vector2 min_window, const core::Vector2 min_viewport, const core::Vector2 max_window, const core::Vector2 max_viewport, bool reflected);
+
+  namespace pipeline_adair
+  {
+    // Funções do Pipeline de Visualização 3D	- Adair Santa Catarina
+    core::Matrix sru_to_src(const core::Vector3 &vrp, const core::Vector3 fp);
+    core::Matrix projection(const core::Vector3 &vrp, const core::Vector3 p, const float d);
+    core::Matrix src_to_srt(const core::Vector2 min_window, const core::Vector2 min_viewport, const core::Vector2 max_window, const core::Vector2 max_viewport, bool reflected);
+  }
+
+  namespace pipeline_portugues
+  {
+    // Funções do pipeline de visualização 3D - João Madeiras Pereira
+    core::Matrix orthogonal_volume_transformation(const float width, const float height, const float far, const float near);
+    core::Matrix perspective_volume_transformation(const float s_x, const float s_y, const float far);
+    core::Matrix perspective_transformation(const float k);
+    core::Matrix projection(const float near, const float far);
+  }
 
   //-------------------------------------------------------------------------------------------------
   // Funções de Clipping (Clipagem de Linha)

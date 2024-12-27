@@ -112,6 +112,13 @@ namespace core
     {
       return {x, y, z};
     }
+
+    // operator << - Overloads the << operator to print the Vector4
+    friend std::ostream &operator<<(std::ostream &os, const Vector4 &v)
+    {
+      os << v.x << ", " << v.y << ", " << v.z << ", " << v.w;
+      return os;
+    }
   } Vector4;
 
   typedef struct Matrix
@@ -129,6 +136,15 @@ namespace core
     const float &operator()(int i, int j) const
     {
       return ((float *)this)[i + j * 4];
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const Matrix &m)
+    {
+      os << m.m0 << "\t" << m.m4 << "\t" << m.m8 << "\t" << m.m12 << std::endl;
+      os << m.m1 << "\t" << m.m5 << "\t" << m.m9 << "\t" << m.m13 << std::endl;
+      os << m.m2 << "\t" << m.m6 << "\t" << m.m10 << "\t" << m.m14 << std::endl;
+      os << m.m3 << "\t" << m.m7 << "\t" << m.m11 << "\t" << m.m15 << std::endl;
+      return os;
     }
   } Matrix;
 

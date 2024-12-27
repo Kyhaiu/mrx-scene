@@ -145,7 +145,8 @@ namespace models
     // Functions
     void addObject(models::Mesh *object);
     void removeObject(models::Mesh *object);
-    void rasterize();
+    void rasterize_adair_pipeline();
+    void rasterize_portugues_pipeline();
     void selectObject(int x, int y);
     void deselectObject();
     void moveCamera(int x, int y);

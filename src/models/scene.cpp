@@ -298,12 +298,12 @@ namespace models
   }
 
   /**
-   * @brief Rasteriza a cena
+   * @brief Rasteriza a cena utilizando o pipeline descrito por Adair
    *
    * @note A rasterização da cena é responsável por renderizar todos os objetos
    * da cena na tela
    */
-  void Scene::rasterize()
+  void Scene::rasterize_adair_pipeline()
   {
     // for (int i = 0; i < this->omni_lights.size(); i++)
     //   LightOrbital(&this->omni_lights[i], 0.02f);
@@ -311,12 +311,12 @@ namespace models
     models::Camera3D *camera = this->getCamera();
 
     // Obtém as matrizes de transformação
-    core::Matrix sru_src_matrix = math::sru_to_src(camera->position, camera->target);
-    core::Matrix projection_matrix = math::projection(
+    core::Matrix sru_src_matrix = math::pipeline_adair::sru_to_src(camera->position, camera->target);
+    core::Matrix projection_matrix = math::pipeline_adair::projection(
         camera->position,
         camera->target,
         camera->d);
-    core::Matrix viewport_matrix = math::src_to_srt(
+    core::Matrix viewport_matrix = math::pipeline_adair::src_to_srt(
         this->getMinWindow(),
         this->getMinViewport(),
         this->getMaxWindow(),
@@ -361,6 +361,69 @@ namespace models
     core::Vector4 light = math::MatrixMultiplyVector(result, {Light_position.x, Light_position.y, Light_position.z, 1.0f});
 
     this->omni_lights[0].screen_position = {light.x / light.w, light.y / light.w, light.z};
+  }
+
+  /**
+   * @brief Rasteriza a cena utilizando o pipeline descrito por João Madeiras Pereira
+   *
+   * @note A rasterização da cena é responsável por renderizar todos os objetos
+   * da cena na tela
+   */
+  void Scene::rasterize_portugues_pipeline()
+  {
+    // for (int i = 0; i < this->omni_lights.size(); i++)
+    //   LightOrbital(&this->omni_lights[i], 0.02f);
+
+    models::Camera3D *camera = this->getCamera();
+
+    // Obtém as matrizes de transformação
+    core::Matrix sru_src_matrix = math::pipeline_adair::sru_to_src(camera->position, camera->target);
+
+    float s_x = camera->d / this->max_viewport.x;
+    float s_y = camera->d / this->max_viewport.y;
+
+    core::Matrix perspective_volume_matrix = math::pipeline_portugues::perspective_volume_transformation(s_x, s_y, camera->d + 10);
+
+    core::Matrix perspective_transformation_matrix = math::pipeline_portugues::perspective_transformation((camera->d + 10) / (camera->d - 10));
+
+    core::Matrix projection_matrix = math::pipeline_portugues::projection(camera->d - 10, camera->d + 10);
+
+    core::Matrix viewport_matrix = math::pipeline_adair::src_to_srt(
+        this->getMinWindow(),
+        this->getMinViewport(),
+        this->getMaxWindow(),
+        this->getMaxViewport(),
+        true);
+
+    // Multiplica as matrizes
+    core::Matrix result = math::MatrixMultiply(viewport_matrix, projection_matrix);
+    result = math::MatrixMultiply(result, perspective_transformation_matrix);
+    result = math::MatrixMultiply(result, perspective_volume_matrix);
+    result = math::MatrixMultiply(result, sru_src_matrix);
+
+    core::Vector4 vectorResult = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    // Rasteriza todos os objetos da cena
+    for (auto object : this->objects)
+    {
+      for (auto vertex : object->getVertices())
+      {
+        vectorResult = math::MatrixMultiplyVector(result, vertex->getVector());
+
+        vertex->setVectorScreen({vectorResult.x / vectorResult.w, vectorResult.y / vectorResult.w, vectorResult.z});
+        std::cout << vertex->getVectorScreen() << std::endl;
+
+        // vertex->setVectorScreen({vectorResult.x, vectorResult.y, vectorResult.z});
+        // std::cout << vectorResult << std::endl;
+      }
+
+      for (auto face : object->getFaces())
+      {
+        face->setVisible(face->isVisible(camera->position));
+      }
+
+      object->determineNormals();
+    }
   }
 
   /**
@@ -431,7 +494,7 @@ namespace models
     if (this->selected_object == nullptr) // Nada a fazer
       return;
 
-    core::Matrix viewportInv = math::MatrixInvert(math::src_to_srt(
+    core::Matrix viewportInv = math::MatrixInvert(math::pipeline_adair::src_to_srt(
         this->getMinWindow(),
         this->getMinViewport(),
         this->getMaxWindow(),

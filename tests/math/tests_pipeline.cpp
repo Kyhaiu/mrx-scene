@@ -39,7 +39,7 @@ protected:
  */
 TEST_F(PipelineTest, sru2src)
 {
-  core::Matrix result = math::sru_to_src(vrp, p);
+  core::Matrix result = math::pipeline_adair::sru_to_src(vrp, p);
 
   std::vector<std::vector<float>> expected = {
       {0.995893206467705f, 0.000000000000000f, -0.090535746042518f, -17.654470478291100f},
@@ -63,7 +63,7 @@ TEST_F(PipelineTest, sru2src)
  */
 TEST_F(PipelineTest, projection)
 {
-  core::Matrix result = math::projection(vrp, p, dp);
+  core::Matrix result = math::pipeline_adair::projection(vrp, p, dp);
 
   std::vector<std::vector<float>> expected = {
       {1.0f, 0.0f, 0.0f, 0.0f},
@@ -87,7 +87,7 @@ TEST_F(PipelineTest, projection)
  */
 TEST_F(PipelineTest, src2srt_with_reflection)
 {
-  core::Matrix result = math::src_to_srt(min_window, min_viewport, max_window, max_viewport, true);
+  core::Matrix result = math::pipeline_adair::src_to_srt(min_window, min_viewport, max_window, max_viewport, true);
 
   std::vector<std::vector<float>> expected = {
       {19.9375f, 0.0f, 0.0f, 0.0f},
@@ -111,7 +111,7 @@ TEST_F(PipelineTest, src2srt_with_reflection)
  */
 TEST_F(PipelineTest, src2srt_without_reflection)
 {
-  core::Matrix result = math::src_to_srt(min_window, min_viewport, max_window, max_viewport, false);
+  core::Matrix result = math::pipeline_adair::src_to_srt(min_window, min_viewport, max_window, max_viewport, false);
 
   std::vector<std::vector<float>> expected = {
       {19.9375f, 0.0f, 0.0f, 0.0f},
@@ -132,9 +132,9 @@ TEST_F(PipelineTest, src2srt_without_reflection)
 TEST_F(PipelineTest, full_pipeline)
 {
   // https://pt.symbolab.com/solver/step-by-step/%5Cbegin%7Bpmatrix%7D19.9375%260%260%260%5C%5C%200%26-19.9166666666667%260%26239%5C%5C%200%260%261%260%5C%5C%200%260%260%261%5Cend%7Bpmatrix%7D%5Ccdot%5Cbegin%7Bpmatrix%7D1%260%260%260%5C%5C%200%261%260%260%5C%5C%200%260%261%260%5C%5C%200%260%26-0.025%260%5Cend%7Bpmatrix%7D%5Ccdot%5Cbegin%7Bpmatrix%7D0.995893206467705%260.000000000000000%26-0.090535746042518%26-17.654470478291100%5C%5C%20-0.008163333305850%260.995926663313714%26-0.089796666364351%26-7.551083307911350%5C%5C%200.090166963466743%260.090166963466743%260.991836598134176%26-82.95360638940380%5C%5C%200%260%260%261%5Cend%7Bpmatrix%7D%5Ccdot%5Cbegin%7Bpmatrix%7D21.2%2634.1%2618.8%265.9%2620%5C%5C%200.7%263.4%265.6%262.9%2620%5C%5C%2042.3%2627.2%2614.6%2629.7%2631.6%5C%5C%201%261%261%261%261%5Cend%7Bpmatrix%7D?or=input
-  core::Matrix sru_to_src_matrix = math::sru_to_src(vrp, p);
-  core::Matrix projection_matrix = math::projection(vrp, p, dp);
-  core::Matrix src_to_srt_matrix = math::src_to_srt(min_window, min_viewport, max_window, max_viewport, true);
+  core::Matrix sru_to_src_matrix = math::pipeline_adair::sru_to_src(vrp, p);
+  core::Matrix projection_matrix = math::pipeline_adair::projection(vrp, p, dp);
+  core::Matrix src_to_srt_matrix = math::pipeline_adair::src_to_srt(min_window, min_viewport, max_window, max_viewport, true);
 
   core::Matrix result_matrix = math::MatrixMultiply(src_to_srt_matrix, projection_matrix);
   result_matrix = math::MatrixMultiply(result_matrix, sru_to_src_matrix);
