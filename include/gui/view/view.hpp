@@ -39,14 +39,16 @@
  **********************************************************************************************/
 #pragma once
 
+// External dependencies
 #include <gui/imgui/imgui.h>
-
 #include <gui/imgui-sdl2/imgui_impl_sdl2.h>
 #include <gui/imgui-sdl2/imgui_impl_sdlrenderer2.h>
 #include <SDL.h>
 
-#include <gui/controller/controller.hpp>
+// Internal dependencies
 #include <gui/view/components/components.hpp>
+#include <gui/view/components/menu.hpp>
+#include <gui/controller/controller.hpp>
 #include <models/scene.hpp>
 #include <shapes/shapes.hpp>
 

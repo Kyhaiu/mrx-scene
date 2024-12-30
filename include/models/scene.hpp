@@ -116,6 +116,14 @@ namespace models
      * @note Omni refere-se a lampada omnidirecional que tem as mesmas propriedades de cor em todas as direções
      */
     std::vector<models::Omni> omni_lights;
+    /**
+     * @brief Flag que determina qual modelo de iluminação será utilizado
+     *
+     * @note 0 - Flat Shading (Padrão)
+     * @note 1 - Gouraud Shading
+     * @note 2 - Phong Shading
+     */
+    int lighting_model = 0;
 
     // Construtor and Destrutor
     Scene();

@@ -39,26 +39,13 @@
  **********************************************************************************************/
 #pragma once
 
-#include <gui/imgui/imgui.h>
-
-#include <utils/utils.hpp>
 #include <gui/controller/controller.hpp>
-#include <gui/view/components/hierarquical_viewer.hpp>
-#include <models/scene.hpp>
 #include <shapes/shapes.hpp>
 
 namespace GUI
 {
   namespace components
   {
-    void HelpMarker(const char *desc);
-
-    // Forward declaration
-    class HierarchyViewer;
-
-    void object_inspector(GUI::Controller *_controller);
-    void viewport(models::Scene *scene);
-    void performance_monitor();
-
+    void menu(GUI::Controller *_controller);
   }
-} // namespace GUI
+}

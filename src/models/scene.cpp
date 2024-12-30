@@ -344,7 +344,9 @@ namespace models
         face->setVisible(face->isVisible(camera->position));
       }
 
-      object->determineNormals();
+      // Só calcula os vetores unitários normais se o modelo de iluminação for diferente de FLAT_SHADING
+      if (this->lighting_model != FLAT_SHADING)
+        object->determineNormals();
     }
 
     // Remove de cena os objetos completamente fora da viewport

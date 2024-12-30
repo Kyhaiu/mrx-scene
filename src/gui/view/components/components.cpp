@@ -22,93 +22,6 @@ namespace GUI
     }
   }
 
-  /**
-   * @brief Renderiza o menu da aplicação
-   *
-   * @param controller Referência para o controlador da aplicação
-   *
-   * @note O menu da aplicação é responsável por renderizar as opções
-   * relacionadas ao arquivo e a cena
-   */
-  void GUI::components::menu(GUI::Controller *controller)
-  {
-    if (ImGui::BeginMainMenuBar())
-    {
-      if (ImGui::BeginMenu("Arquivos"))
-      {
-        ImGui::MenuItem("Novo");
-        ImGui::MenuItem("Abrir");
-        ImGui::MenuItem("Salvar");
-        ImGui::EndMenu();
-      }
-      if (ImGui::BeginMenu("Inserir"))
-      {
-        if (ImGui::MenuItem("Cubo"))
-          controller->addObject(shapes::cube());
-        if (ImGui::MenuItem("Pirâmide"))
-          controller->addObject(shapes::pyramid());
-        if (ImGui::BeginMenu("Esfera"))
-        {
-          if (ImGui::BeginMenu("Esfera"))
-          {
-            ImGui::SliderFloat("Raio", &controller->insertionOptions.radius, 0.1f, 3.0f);
-            ImGui::SliderInt("Segmentos", &controller->insertionOptions.segments, 3, 100);
-            ImGui::SliderInt("Anéis", &controller->insertionOptions.rings, 3, 100);
-
-            if (ImGui::Button("Criar Esfera"))
-            {
-              controller->addObject(shapes::sphere(controller->insertionOptions.radius, controller->insertionOptions.rings, controller->insertionOptions.segments));
-            }
-
-            ImGui::EndMenu();
-          }
-
-          if (ImGui::BeginMenu("Icosfera"))
-          {
-            ImGui::SliderFloat("Raio", &controller->insertionOptions.radius, 0.1f, 3.0f);
-            ImGui::SliderInt("Subdivisões", &controller->insertionOptions.subdivisions, 1, 5);
-
-            if (ImGui::Button("Criar"))
-            {
-              controller->addObject(shapes::icosphere(controller->insertionOptions.radius, controller->insertionOptions.subdivisions));
-            }
-            ImGui::EndMenu();
-          }
-
-          ImGui::EndMenu();
-        }
-
-        if (ImGui::BeginMenu("Cone"))
-        {
-
-          ImGui::SliderFloat("Raio", &controller->insertionOptions.radius, 0.1f, 3.0f);
-          ImGui::SliderFloat("Altura", &controller->insertionOptions.height, 0.1f, 3.0f);
-          ImGui::SliderInt("Segmentos", &controller->insertionOptions.segments, 3, 100);
-
-          if (ImGui::Button("Criar"))
-          {
-            controller->addObject(shapes::cone(controller->insertionOptions.radius, controller->insertionOptions.height, controller->insertionOptions.segments));
-          }
-
-          ImGui::EndMenu();
-        }
-        ImGui::EndMenu();
-      }
-      if (ImGui::BeginMenu("Editar"))
-      {
-        ImGui::MenuItem("Desfazer");
-        ImGui::MenuItem("Refazer");
-        ImGui::EndMenu();
-      }
-      if (ImGui::BeginMenu("Configurações"))
-      {
-        ImGui::MenuItem("Preferências");
-        ImGui::EndMenu();
-      }
-      ImGui::EndMainMenuBar();
-    }
-  }
-
   void GUI::components::object_inspector(GUI::Controller *controller)
   {
 
@@ -214,24 +127,21 @@ namespace GUI
           vertexes.push_back(he->getOrigin());
           vertexes.push_back(he->getNext()->getOrigin());
 
-          // utils::DrawVertexBuffer(clipped_vertex.first, models::WHITE, scene->z_buffer, scene->color_buffer, 5);
-          // utils::DrawString(he->getOrigin()->getId().c_str(), clipped_vertex.first, models::RED);
-
-          // utils::DrawLineBuffer({clipped_vertex.first, clipped_vertex.second}, models::WHITE, scene->z_buffer, scene->color_buffer);
-
           he = he->getNext();
           if (he == face->getHalfEdge())
             break;
         }
 
-        // utils::DrawFaceBufferFlatShading(vertexes, scene->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
         // O vetor normal da face é calculado na ocultação de faces
         // precisa recortar o vetor normal do vertice também (assim simplifica o calculo de interpolação)
         // usar excel como base
-        // utils::DrawFaceBufferGouraudShading(vertexes, scene->getCamera()->position, object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
-        utils::DrawFaceBufferPhongShading(vertexes, face->getFaceCentroid(), scene->getCamera()->position, object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
 
-        // utils::DrawString(face->getId().c_str(), face->getFaceCentroid(true), models::WHITE);
+        if (scene->lighting_model == FLAT_SHADING)
+          utils::DrawFaceBufferFlatShading(vertexes, scene->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
+        else if (scene->lighting_model == GOURAUD_SHADING)
+          utils::DrawFaceBufferGouraudShading(vertexes, scene->getCamera()->position, object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
+        else if (scene->lighting_model == PHONG_SHADING)
+          utils::DrawFaceBufferPhongShading(vertexes, face->getFaceCentroid(), scene->getCamera()->position, object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
 
         // Limpa o vetor de vetores normais dos vértices da face
         vertexes.clear();

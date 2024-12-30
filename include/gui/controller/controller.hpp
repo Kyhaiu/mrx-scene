@@ -90,7 +90,6 @@ namespace GUI
     float camera_rotation_sensitivity = 0.01667f;
     /**
      * @brief Parâmetros de inserção de objetos
-     *
      */
     insertion_options_parameters insertionOptions;
 
