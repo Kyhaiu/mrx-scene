@@ -182,6 +182,13 @@ namespace GUI
 
     for (auto object : scene->getObjects())
     {
+
+      if (object == scene->getSelectedObject())
+      {
+        core::Vector4 box = object->getBox(true);
+        utils::DrawBoundingBox({box.x, box.y}, {box.z, box.w}, models::YELLOW, scene->z_buffer, scene->color_buffer);
+      }
+
       for (auto face : object->getFaces())
       {
 

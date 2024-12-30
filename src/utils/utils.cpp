@@ -173,4 +173,35 @@ namespace utils
 
     draw_list->AddText(ImVec2(position.x, position.y), GET_COLOR_UI32(color), text);
   }
+
+  /**
+   * @brief Desenha a caixa de seleção
+   *
+   * @param min_point Ponto mínimo da caixa
+   * @param max_point Ponto máximo da caixa
+   * @param color Cor da caixa
+   * @param z_buffer Buffer de profundidade
+   * @param color_buffer Buffer de cores
+   */
+  void DrawBoundingBox(const core::Vector2 &min_point, const core::Vector2 &max_point, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  {
+    // Vetor de vértices que compõem a caixa
+    // Obs.: O valor de z é -99999 para que a caixa seja desenhada na frente de todos os objetos
+    std::vector<core::Vector3> vertexes = {
+        // Linha superior
+        {min_point.x, min_point.y, -99999.f},
+        {max_point.x, min_point.y, -99999.f},
+        // Linha inferior
+        {max_point.x, max_point.y, -99999.f},
+        {min_point.x, max_point.y, -99999.f},
+        // Linha vertical esquerda
+        {min_point.x, min_point.y, -99999.f},
+        {min_point.x, max_point.y, -99999.f},
+        // Linha vertical direita
+        {max_point.x, min_point.y, -99999.f},
+        {max_point.x, max_point.y, -99999.f},
+    };
+
+    DrawLineBuffer(vertexes, color, z_buffer, color_buffer);
+  }
 } // namespace utils
