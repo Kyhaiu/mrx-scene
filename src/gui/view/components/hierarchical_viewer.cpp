@@ -25,12 +25,15 @@ namespace GUI
     ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
     if (this->selected_index == index)
-      node_flags |= ImGuiTreeNodeFlags_Selected | ImGuiTreeNodeFlags_Leaf;
+      node_flags |= ImGuiTreeNodeFlags_Selected;
 
     bool node_open = ImGui::TreeNodeEx((void *)(intptr_t)index, node_flags, object->getId().c_str());
 
     if (ImGui::IsItemClicked())
       this->selected_index = index;
+
+    static bool show_material_popup = false;
+    static int popup_object_index = -1;
 
     if (ImGui::BeginPopupContextItem())
     {
@@ -44,11 +47,49 @@ namespace GUI
         this->controller->removeObject(object);
         this->selected_index = -1;
       }
+
+      if (ImGui::MenuItem("Editar Material")) // Abre o popup ao clicar
+      {
+        show_material_popup = true;
+        popup_object_index = index;
+      }
+
+      ImGui::EndPopup();
+    }
+
+    if (show_material_popup && popup_object_index == index)
+    {
+      ImGui::OpenPopup("Editar Material");
+    }
+
+    if (ImGui::BeginPopupModal("Editar Material", &show_material_popup))
+    {
+      {
+
+        ImGui::Text("Iluminação ambiente:");
+        ImGui::ColorEdit3("##ambient", reinterpret_cast<float *>(&object->material.ambient));
+
+        ImGui::Text("Iluminação difusa:");
+        ImGui::ColorEdit3("##diffuse", reinterpret_cast<float *>(&object->material.diffuse));
+
+        ImGui::Text("Iluminação especular:");
+        ImGui::ColorEdit3("##specular", reinterpret_cast<float *>(&object->material.specular));
+
+        ImGui::Text("Brilho:");
+        ImGui::InputFloat("##shininess", &object->material.shininess);
+
+        if (ImGui::Button("Fechar"))
+        {
+          show_material_popup = false;
+          ImGui::CloseCurrentPopup();
+        }
+      }
+
       ImGui::EndPopup();
     }
 
     if (node_open)
-      ImGui::TreePop(); // fecha o nó
+      ImGui::TreePop();
   }
 
   /**
