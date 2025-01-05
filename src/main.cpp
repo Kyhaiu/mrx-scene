@@ -20,6 +20,8 @@
 
 #define SDL_main main
 
+using json = nlohmann::json;
+
 int main(int argc, char *argv[])
 {
 

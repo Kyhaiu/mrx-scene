@@ -173,7 +173,47 @@ struct hash_pair
   }
 };
 
-// Função para encontrar ou criar um novo vértice no meio de dois vértices
+/**
+ * @brief Calcula o ponto médio entre dois vértices e gerencia o cache.
+ *
+ * Esta função calcula as coordenadas do ponto médio entre dois vértices,
+ * dados seus índices no vetor de vértices. Ela utiliza um cache para evitar
+ * o recálculo de pontos médios já computados, otimizando o processo de
+ * subdivisão de uma malha.
+ *
+ * @param v1 Índice do primeiro vértice.
+ * @param v2 Índice do segundo vértice.
+ * @param cache Referência para um mapa que armazena os pontos médios calculados.
+ *              A chave do mapa é um par ordenado dos índices dos vértices
+ *              (usando std::minmax para garantir que a ordem não importe), e o
+ *              valor é o índice do novo vértice na lista `vertices`.
+ * @param vertices Referência para um vetor que armazena todos os vértices da malha.
+ *
+ * @return O índice do vértice do ponto médio no vetor `vertices`.
+ *         Se o ponto médio já tiver sido calculado, retorna o índice
+ *         armazenado no cache. Caso contrário, calcula o ponto médio,
+ *         adiciona o novo vértice ao vetor `vertices` e atualiza o cache
+ *         antes de retornar o índice.
+ *
+ * @remark A função normaliza o vetor do ponto médio antes de adicioná-lo
+ *         ao vetor de vértices, garantindo que o novo vértice fique na
+ *         superfície de uma esfera unitária (ou seja, a distância da origem
+ *         é 1).
+ *
+ * @remark O cache é crucial para o desempenho, pois evita cálculos
+ *         redundantes do mesmo ponto médio, o que seria computacionalmente
+ *         custoso, especialmente com um grande número de subdivisões.
+ *
+ * @code
+ * // Exemplo de uso:
+ * std::vector<core::Vertex*> vertices;
+ * std::unordered_map<std::pair<int, int>, int, hash_pair> cache;
+ * // ... (adicionar vértices iniciais ao vetor vertices) ...
+ * int indexMidPoint = getMidPoint(0, 1, cache, vertices);
+ * core::Vertex* midVertex = vertices[indexMidPoint];
+ * // ... (usar o vértice midVertex) ...
+ * @endcode
+ */
 int getMidPoint(int v1, int v2, std::unordered_map<std::pair<int, int>, int, hash_pair> &cache, std::vector<core::Vertex *> &vertices)
 {
   auto key = std::minmax(v1, v2);
@@ -214,7 +254,6 @@ models::Mesh *shapes::icosphere(float radius, int subdivisions)
 
   // Constantes do Icosaedro
   const float t = (1.0f + std::sqrtf(5.0)) / 2.0f;
-  const float s = std::sqrtf(1 + t * t);
 
   // Definir os 12 vértices iniciais de um Icosaedro
   vertices.push_back(new core::Vertex(-1, t, 0, 1.0f, nullptr, "v0"));
