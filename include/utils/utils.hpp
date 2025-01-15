@@ -66,7 +66,8 @@ namespace utils
   void DrawFaceBufferPhongShading(const std::vector<core::Vertex *> &vertexes, const core::Vector3 &centroid, const core::Vector3 &eye, const models::Material &object_material, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
   void DrawBuffer(ImDrawList *draw_list, const std::vector<std::vector<float>> &z_buffer, const std::vector<std::vector<models::Color>> &color_buffer, core::Vector2 min_window_size);
 
-  // Demais funções
+  // Demais funções de desenho
   void DrawString(const char *text, const core::Vector3 &position, const models::Color &color);
   void DrawBoundingBox(const core::Vector2 &min, const core::Vector2 &max, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
+
 }

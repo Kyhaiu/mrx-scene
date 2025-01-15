@@ -43,16 +43,19 @@
  **********************************************************************************************/
 #pragma once
 
+#include <limits>
+
+#include <vector>
+#include <iostream>
+
 #include <models/mesh.hpp>
 #include <models/camera.hpp>
 #include <math/pipeline.hpp>
 #include <models/colors.hpp>
 #include <models/light.hpp>
+#include <utils/nlohmann/json.hpp>
 
-#include <limits>
-
-#include <vector>
-#include <iostream>
+using json = nlohmann::json;
 
 namespace models
 {
@@ -158,8 +161,8 @@ namespace models
     void selectObject(int x, int y);
     void deselectObject();
     void moveCamera(int x, int y);
-
     void initializeBuffers();
+    json to_json();
 
     // Individual Object Transformations
     void translateObject(core::Vector3 translation);

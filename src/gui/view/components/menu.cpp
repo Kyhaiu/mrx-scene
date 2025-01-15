@@ -7,19 +7,33 @@ namespace GUI
    * @brief Renderiza o menu da aplicação
    *
    * @param controller Referência para o controlador da aplicação
+   * @param fileDialog Referência para o diálogo de arquivos
    *
    * @note O menu da aplicação é responsável por renderizar as opções
    * relacionadas ao arquivo e a cena
    */
-  void GUI::components::menu(GUI::Controller *controller)
+  void GUI::components::menu(GUI::Controller *controller, ImGui::FileBrowser &fileDialog)
   {
     if (ImGui::BeginMainMenuBar())
     {
       if (ImGui::BeginMenu("Arquivos"))
       {
-        ImGui::MenuItem("Novo");
-        ImGui::MenuItem("Abrir");
-        ImGui::MenuItem("Salvar");
+        if (ImGui::MenuItem("Novo"))
+        {
+          controller->newScene();
+        }
+        if (ImGui::MenuItem("Abrir"))
+        {
+
+          fileDialog.SetTitle("Abrir arquivo");
+          fileDialog.SetTypeFilters({".json"});
+
+          fileDialog.Open();
+        }
+        if (ImGui::MenuItem("Salvar"))
+        {
+          controller->save_scene();
+        }
         ImGui::EndMenu();
       }
       if (ImGui::BeginMenu("Inserir"))

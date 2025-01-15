@@ -71,8 +71,12 @@
 
 #include <core/common.hpp>
 
+#include <utils/nlohmann/json.hpp>
+
 #include <cmath>
 #include <iostream>
+
+using json = nlohmann::json;
 
 namespace core
 {
@@ -84,6 +88,11 @@ namespace core
   {
     float x;
     float y;
+
+    json to_json()
+    {
+      return json{{"x", x}, {"y", y}};
+    }
   } Vector2;
 
   typedef struct Vector3
@@ -95,6 +104,11 @@ namespace core
     bool operator==(const Vector3 &v) const
     {
       return x == v.x && y == v.y && z == v.z;
+    }
+
+    json to_json()
+    {
+      return json{{"x", x}, {"y", y}, {"z", z}};
     }
   } Vector3;
 
@@ -118,6 +132,11 @@ namespace core
     {
       os << v.x << ", " << v.y << ", " << v.z << ", " << v.w;
       return os;
+    }
+
+    json to_json()
+    {
+      return json{{"x", x}, {"y", y}, {"z", z}, {"w", w}};
     }
   } Vector4;
 
@@ -145,6 +164,11 @@ namespace core
       os << m.m2 << "\t" << m.m6 << "\t" << m.m10 << "\t" << m.m14 << std::endl;
       os << m.m3 << "\t" << m.m7 << "\t" << m.m11 << "\t" << m.m15 << std::endl;
       return os;
+    }
+
+    json to_json()
+    {
+      return json{{"m0", m0}, {"m4", m4}, {"m8", m8}, {"m12", m12}, {"m1", m1}, {"m5", m5}, {"m9", m9}, {"m13", m13}, {"m2", m2}, {"m6", m6}, {"m10", m10}, {"m14", m14}, {"m3", m3}, {"m7", m7}, {"m11", m11}, {"m15", m15}};
     }
   } Matrix;
 

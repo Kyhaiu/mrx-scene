@@ -1,25 +1,25 @@
 /**********************************************************************************************
  *   IDIOM: PORTUGUÊS
  *
- *   mrxuicomponents v1.0 -
+ *   mrximgui_sfml_utils v1.0 - Conjunto de funções utilitárias para trabalhar com ImGui e SFML neste projeto
  *
  *   CONVENTIONS: (Convenções)
  *
  *   IDIOM: ENGLISH
  *
- *   mrxuicomponents v1.0 -
+ *   mrximgui_sfml_utils v1.0 - Set of utility functions to work with ImGui and SFML in this project
  *
  *   CONVENTIONS:
- *
+
  *   CONFIGURATION:
  *       ...
  *
  *   DEPENDENCIES:
  *
+ *
  *   CONTRIBUTORS:
  *      Marcos Augusto Campagnaro: Initial implementation, review and maintenance
  *
- *   TODO:
  *
  *   LICENSE: GPL 3.0
  *
@@ -39,15 +39,16 @@
  **********************************************************************************************/
 #pragma once
 
-#include <gui/imgui/imgui.h>
-#include <gui/controller/controller.hpp>
-#include <shapes/shapes.hpp>
-#include <gui/view/components/imfilebrowser.hpp>
+#include <fstream>
+#include <iostream>
 
-namespace GUI
+#include <utils/nlohmann/json.hpp>
+
+using json = nlohmann::json;
+
+namespace utils
 {
-  namespace components
-  {
-    void menu(GUI::Controller *_controller, ImGui::FileBrowser &fileDialog);
-  }
-}
+
+  json load_json(const std::string &file_path);
+  void save_json(const std::string &file_path, const json &json_data);
+} // namespace utils

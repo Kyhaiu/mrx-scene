@@ -61,7 +61,7 @@ void GUI::UI::viewport(models::Scene *_scene)
  */
 void GUI::UI::menu()
 {
-  GUI::components::menu(this->controller);
+  GUI::components::menu(this->controller, this->fileDialog);
 }
 
 void GUI::UI::hierarchy(models::Scene *_scene)
@@ -109,6 +109,10 @@ void GUI::UI::render()
   ImGui::NewFrame();
 
   this->menu();
+
+  // Rendeniza o diálogo de arquivos, caso ele tenha sido aberto no menu
+  this->fileDialog.Display();
+
   ImGui::SetNextWindowPos(ImVec2(0, 20));
   ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, ImGui::GetWindowSize().y));
   ImGui::Begin("left-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
@@ -160,10 +164,17 @@ void GUI::UI::handleEvents(const SDL_Event &event, SDL_Window *window, SDL_Rende
   // Process ImGui events using SDL2
   ImGui_ImplSDL2_ProcessEvent(&event);
 
-  // Convert SDL time to seconds (as it would be in SFML)
+  // Convert SDL time to seconds
   Uint32 currentTicks = SDL_GetTicks();
   float deltaTime = static_cast<float>(currentTicks) / 1000.0f;
 
-  // Pass the event and time to your controller
+  // Pass the event and time to controller
   this->controller->handleEvents(event, window, deltaTime);
+
+  // handle file dialog events
+  if (this->fileDialog.HasSelected())
+  {
+    this->controller->on_file_dialog_open(this->fileDialog.GetSelected().string());
+    this->fileDialog.ClearSelected();
+  }
 }

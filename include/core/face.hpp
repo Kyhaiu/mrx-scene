@@ -47,12 +47,16 @@
  **********************************************************************************************/
 #pragma once
 
-#include <core/vertex.hpp>
-#include <core/halfedge.hpp>
-
 #include <vector>
 #include <string>
 #include <limits> // Include this for std::numeric_limits
+
+#include <core/vertex.hpp>
+#include <core/halfedge.hpp>
+
+#include <utils/nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 namespace core
 {
@@ -136,6 +140,7 @@ namespace core
     bool isVisible(const core::Vector3 camera_position);
     void getFaceNormal();
     core::Vector3 getFaceCentroid(bool screen_coords = false);
+    json to_json();
 
     // Friend functions
     friend std::ostream &operator<<(std::ostream &os, const Face &face);

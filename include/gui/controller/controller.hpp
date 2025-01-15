@@ -6,6 +6,7 @@
 
 #include <models/scene.hpp>
 #include <models/camera.hpp>
+#include <utils/file.hpp>
 
 namespace GUI
 {
@@ -106,9 +107,12 @@ namespace GUI
     void addObject(models::Mesh *object);
     void removeObject(models::Mesh *object);
     void selectObject(models::Mesh *object);
+    void newScene();
 
     // Events
     void on_hierarchy_item_selected(int index);
     void handleEvents(const SDL_Event &event, SDL_Window *window, float deltaTime);
+    void on_file_dialog_open(const std::string &file);
+    void save_scene();
   };
 }

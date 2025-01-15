@@ -65,12 +65,16 @@
 #include <math/math.hpp>
 #include <core/vector.hpp>
 
+#include <utils/nlohmann/json.hpp>
+
 #include <math.h>
 #include <iostream>
 
+using json = nlohmann::json;
+
 namespace models
 {
-  typedef struct
+  typedef struct Camera3D
   {
     /**
      * @brief Vetor 3D que contem as coordenadas da posição da câmera
@@ -100,6 +104,11 @@ namespace models
      * @brief Flag que indica se a câmera deve rotacionar o vetor up (tipicamente usado em camera livre)
      */
     bool rotateUp;
+
+    json to_json()
+    {
+      return json{{"position", position.to_json()}, {"target", target.to_json()}, {"up", up.to_json()}, {"d", d}};
+    }
   } Camera3D;
 
   //------------------------------------------------------------------------------------------------

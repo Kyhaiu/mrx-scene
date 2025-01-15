@@ -487,6 +487,32 @@ namespace models
     this->color_buffer = std::vector<std::vector<models::Color>>(width, std::vector<models::Color>(height, models::TRANSPARENT));
   }
 
+  /**
+   * @brief Função para converter a cena em um objeto json
+   *
+   * @return json
+   */
+  json Scene::to_json()
+  {
+    json j;
+
+    j["camera"] = this->camera->to_json();
+
+    j["objects"] = json::array();
+    for (auto object : this->objects)
+    {
+      j["objects"].push_back(object->to_json());
+    }
+
+    j["min_viewport"] = this->min_viewport.to_json();
+    j["max_viewport"] = this->max_viewport.to_json();
+    j["min_window"] = this->min_window.to_json();
+    j["max_window"] = this->max_window.to_json();
+    j["illumination"] = this->lighting_model;
+
+    return j;
+  }
+
   //------------------------------------------------------------------------------------------------
   // Individual Object Transformations
   //------------------------------------------------------------------------------------------------

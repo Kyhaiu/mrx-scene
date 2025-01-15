@@ -48,6 +48,7 @@
 // Internal dependencies
 #include <gui/view/components/components.hpp>
 #include <gui/view/components/menu.hpp>
+#include <gui/view/components/imfilebrowser.hpp>
 #include <gui/controller/controller.hpp>
 #include <models/scene.hpp>
 #include <shapes/shapes.hpp>
@@ -79,6 +80,13 @@ namespace GUI
      * @brief Relógio para controlar o tempo de execução
      */
     float delta_time;
+    /**
+     * @brief Instancia do file browser
+     *
+     * @note A biblioteca filebrowser necessita de uma instância para funcionar
+     * @see https://github.com/AirGuanZ/imgui-filebrowser/blob/master/README.md
+     */
+    ImGui::FileBrowser fileDialog;
 
     UI(SDL_Window *window, SDL_Renderer *renderer);
     ~UI();

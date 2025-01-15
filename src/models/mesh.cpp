@@ -35,6 +35,7 @@ namespace models
     this->setVertices(vertexes);
     this->setNumFaces(faces.size());
     this->setId(id);
+    this->index_vertices = faces;
     this->createMesh(faces);
   }
 
@@ -56,6 +57,7 @@ namespace models
     this->faces = mesh.faces;
     this->half_edges = mesh.half_edges;
     this->num_faces = mesh.num_faces;
+    this->index_vertices = mesh.index_vertices;
     this->id = mesh.id;
   }
 
@@ -485,5 +487,52 @@ namespace models
       return true;
 
     return false;
+  }
+
+  /**
+   * @brief Função que converte a malha para um objeto json
+   *
+   * @return json
+   */
+  json Mesh::to_json()
+  {
+    json j;
+
+    j["id"] = this->id;
+    j["num_faces"] = this->num_faces;
+
+    json vertices;
+    for (auto v : this->vertices)
+    {
+      vertices.push_back(v->getVector().to_json());
+    }
+
+    j["vertices"] = vertices;
+
+    json faces;
+    for (auto f : this->faces)
+    {
+      faces.push_back(f->to_json());
+    }
+
+    j["faces"] = faces;
+
+    json index_vertices;
+
+    for (auto face : this->index_vertices)
+    {
+      json face_json = json::array();
+      for (auto index : face)
+      {
+        face_json.push_back(index);
+      }
+
+      index_vertices.push_back(face_json);
+      face_json.clear();
+    }
+
+    j["index_vertices"] = index_vertices;
+
+    return j;
   }
 } // namespace models

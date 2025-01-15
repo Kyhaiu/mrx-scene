@@ -204,4 +204,5 @@ namespace utils
 
     DrawLineBuffer(vertexes, color, z_buffer, color_buffer);
   }
+
 } // namespace utils

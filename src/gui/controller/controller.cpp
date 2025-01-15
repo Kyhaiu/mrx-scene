@@ -95,6 +95,29 @@ void GUI::Controller::selectObject(models::Mesh *object)
   this->scene->setSelectedObject(object);
 }
 
+/**
+ * @brief Cria uma nova cena
+ *
+ */
+void GUI::Controller::newScene()
+{
+
+  float canvasWidth = static_cast<float>(this->windowWidth);
+  float canvasHeight = static_cast<float>(this->windowHeight);
+
+  this->scene = new models::Scene(
+      models::CreateCamera3D({10, 10, 20}, {0, 0, 0}, {0, 1, 0}, 20),
+      {},
+      // The canvas don't start at the left corner
+      // If the layout changes it will be necessary to change this values
+      {canvasWidth * 0.2f, 20},
+      {canvasWidth, canvasHeight},
+      {-3, -3},
+      {3, 3});
+
+  this->insertionOptions = {1, 1.0f, 1.0f, 10, 10};
+}
+
 //-----------------------------------------------------------------------------
 // Events
 //-----------------------------------------------------------------------------
@@ -107,7 +130,6 @@ void GUI::Controller::selectObject(models::Mesh *object)
  */
 void GUI::Controller::handleEvents(const SDL_Event &event, SDL_Window *window, float deltaTime)
 {
-
   switch (event.type)
   {
   case SDL_QUIT:
@@ -259,4 +281,31 @@ void GUI::Controller::on_hierarchy_item_selected(int index)
       i++;
     }
   }
+}
+
+/**
+ * @brief Callback para quando o diálogo de arquivos é aberto
+ *
+ * @param file Caminho do arquivo selecionado
+ */
+void GUI::Controller::on_file_dialog_open(const std::string &file)
+{
+  std::cout << "File selected: " << file << std::endl;
+
+  json j = utils::load_json(file);
+}
+
+/**
+ * @brief Salva a cena em um arquivo
+ *
+ */
+void GUI::Controller::save_scene()
+{
+  json j;
+
+  j["scene"] = this->scene->to_json();
+
+  std::string filename = "scene.json";
+
+  utils::save_json(filename, j);
 }

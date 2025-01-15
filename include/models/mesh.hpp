@@ -56,9 +56,13 @@
 
 #include <models/common.hpp>
 
+#include <utils/nlohmann/json.hpp>
+
 #include <core/vertex.hpp>
 #include <core/face.hpp>
 #include <core/halfedge.hpp>
+
+using json = nlohmann::json;
 
 namespace models
 {
@@ -70,6 +74,12 @@ namespace models
      * @brief Vector que contem todos os vértices da malha
      */
     std::vector<core::Vertex *> vertices;
+    /**
+     * @brief Vector que contem os índices dos vértices das faces
+     *
+     * @note Usado apenas na criação da malha (indexação dos vértices) e na exportação para JSON
+     */
+    std::vector<std::vector<int>> index_vertices;
     /**
      * @brief Vector que contem todas as faces da malha
      */
@@ -146,5 +156,7 @@ namespace models
     core::HalfEdge *findEdge(core::Vertex *vertex1, core::Vertex *vertex2);
 
     bool isOutsideViewport(core::Vector2 viewport_min, core::Vector2 viewport_max);
+
+    json to_json();
   };
 } // namespace models
