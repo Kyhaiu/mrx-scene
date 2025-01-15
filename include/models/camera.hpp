@@ -109,6 +109,15 @@ namespace models
     {
       return json{{"position", position.to_json()}, {"target", target.to_json()}, {"up", up.to_json()}, {"d", d}};
     }
+
+    static Camera3D *from_json(json json_data)
+    {
+      return new Camera3D{
+          core::Vector3::from_json(json_data["position"]),
+          core::Vector3::from_json(json_data["target"]),
+          core::Vector3::from_json(json_data["up"]),
+          json_data["d"], false, false, false};
+    }
   } Camera3D;
 
   //------------------------------------------------------------------------------------------------

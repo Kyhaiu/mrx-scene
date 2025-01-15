@@ -334,23 +334,4 @@ namespace core
     return centroid;
   }
 
-  /**
-   * @brief Função que converte a face para um objeto json
-   *
-   * @return json
-   */
-  json Face::to_json()
-  {
-    json j;
-
-    j["id"] = this->id;
-
-    j["vertex"] = json::array();
-    for (auto v : this->vertex)
-    {
-      j["vertex"].push_back(v->getVector().to_json());
-    }
-
-    return j;
-  }
 } // namespace core

@@ -293,6 +293,12 @@ void GUI::Controller::on_file_dialog_open(const std::string &file)
   std::cout << "File selected: " << file << std::endl;
 
   json j = utils::load_json(file);
+
+  this->scene->from_json(j["scene"]);
+
+  std::cout << "Scene loaded" << std::endl;
+
+  this->updateScene();
 }
 
 /**

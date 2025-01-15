@@ -513,6 +513,32 @@ namespace models
     return j;
   }
 
+  /**
+   * @brief Função para converter um objeto json em uma cena
+   *
+   * @param json_data json
+   */
+  void Scene::from_json(json json_data)
+  {
+    this->camera = this->camera->from_json(json_data["camera"]);
+
+    this->objects.clear();
+
+    for (auto object : json_data["objects"])
+    {
+      models::Mesh *mesh = new models::Mesh();
+      mesh->from_json(object);
+      this->objects.push_back(mesh);
+    }
+
+    this->min_viewport = core::Vector2::from_json(json_data["min_viewport"]);
+    this->max_viewport = core::Vector2::from_json(json_data["max_viewport"]);
+    this->min_window = core::Vector2::from_json(json_data["min_window"]);
+    this->max_window = core::Vector2::from_json(json_data["max_window"]);
+
+    this->lighting_model = json_data["illumination"];
+  }
+
   //------------------------------------------------------------------------------------------------
   // Individual Object Transformations
   //------------------------------------------------------------------------------------------------

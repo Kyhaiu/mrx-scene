@@ -504,18 +504,18 @@ namespace models
     json vertices;
     for (auto v : this->vertices)
     {
-      vertices.push_back(v->getVector().to_json());
+      json vertex;
+
+      vertex["id"] = v->getId();
+      vertex["x"] = v->getX();
+      vertex["y"] = v->getY();
+      vertex["z"] = v->getZ();
+      vertex["w"] = v->getW();
+
+      vertices.push_back(vertex);
     }
 
     j["vertices"] = vertices;
-
-    json faces;
-    for (auto f : this->faces)
-    {
-      faces.push_back(f->to_json());
-    }
-
-    j["faces"] = faces;
 
     json index_vertices;
 
@@ -534,5 +534,36 @@ namespace models
     j["index_vertices"] = index_vertices;
 
     return j;
+  }
+
+  /**
+   * @brief Função que converte um objeto json para a malha
+   *
+   * @param json_data Objeto json
+   */
+  void Mesh::from_json(json json_data)
+  {
+    this->setId(json_data["id"]);
+    this->setNumFaces(json_data["num_faces"]);
+
+    this->vertices.clear();
+    for (auto vertex : json_data["vertices"])
+    {
+      core::Vector4 v = core::Vector4::from_json(vertex);
+      this->vertices.push_back(new core::Vertex(v.x, v.y, v.z, v.w, nullptr, vertex["id"]));
+    }
+
+    this->index_vertices.clear();
+    for (auto face : json_data["index_vertices"])
+    {
+      std::vector<int> face_indices;
+      for (auto index : face)
+      {
+        face_indices.push_back(index);
+      }
+      this->index_vertices.push_back(face_indices);
+    }
+
+    this->createMesh(this->index_vertices);
   }
 } // namespace models

@@ -163,6 +163,7 @@ namespace models
     void moveCamera(int x, int y);
     void initializeBuffers();
     json to_json();
+    void from_json(json json_data);
 
     // Individual Object Transformations
     void translateObject(core::Vector3 translation);

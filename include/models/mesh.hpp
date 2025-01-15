@@ -158,5 +158,6 @@ namespace models
     bool isOutsideViewport(core::Vector2 viewport_min, core::Vector2 viewport_max);
 
     json to_json();
+    void from_json(json json_data);
   };
 } // namespace models

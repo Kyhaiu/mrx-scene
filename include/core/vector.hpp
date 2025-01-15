@@ -93,6 +93,11 @@ namespace core
     {
       return json{{"x", x}, {"y", y}};
     }
+
+    static Vector2 from_json(json j)
+    {
+      return {j["x"], j["y"]};
+    }
   } Vector2;
 
   typedef struct Vector3
@@ -109,6 +114,11 @@ namespace core
     json to_json()
     {
       return json{{"x", x}, {"y", y}, {"z", z}};
+    }
+
+    static Vector3 from_json(json j)
+    {
+      return {j["x"], j["y"], j["z"]};
     }
   } Vector3;
 
@@ -137,6 +147,11 @@ namespace core
     json to_json()
     {
       return json{{"x", x}, {"y", y}, {"z", z}, {"w", w}};
+    }
+
+    static Vector4 from_json(json j)
+    {
+      return {j["x"], j["y"], j["z"], j["w"]};
     }
   } Vector4;
 

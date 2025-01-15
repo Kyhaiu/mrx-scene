@@ -140,7 +140,6 @@ namespace core
     bool isVisible(const core::Vector3 camera_position);
     void getFaceNormal();
     core::Vector3 getFaceCentroid(bool screen_coords = false);
-    json to_json();
 
     // Friend functions
     friend std::ostream &operator<<(std::ostream &os, const Face &face);
