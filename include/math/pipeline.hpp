@@ -67,13 +67,12 @@ namespace math
     core::Matrix src_to_srt(const core::Vector2 min_window, const core::Vector2 min_viewport, const core::Vector2 max_window, const core::Vector2 max_viewport, bool reflected);
   }
 
-  namespace pipeline_portugues
+  namespace pipeline_smith
   {
-    // Funções do pipeline de visualização 3D - João Madeiras Pereira
-    core::Matrix orthogonal_volume_transformation(const float width, const float height, const float far, const float near);
-    core::Matrix perspective_volume_transformation(const float s_x, const float s_y, const float far);
-    core::Matrix perspective_transformation(const float k);
-    core::Matrix projection(const float near, const float far);
+    // Funções do Pipeline de visualização 3D - Alvy Ray Smith
+    // OBS.: O pipeline é simplificado
+    core::Matrix clipping_transformation(const float d, const float far, const core::Vector2 center_window, const core::Vector2 size_window);
+    core::Matrix perspective_transformation(const float near, const float far);
   }
 
   //-------------------------------------------------------------------------------------------------

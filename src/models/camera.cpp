@@ -300,7 +300,7 @@ namespace models
    *
    * @return Câmera 3D
    */
-  models::Camera3D *CreateCamera3D(core::Vector3 position, core::Vector3 target, core::Vector3 up, float d)
+  models::Camera3D *CreateCamera3D(core::Vector3 position, core::Vector3 target, core::Vector3 up, float d, float near, float far)
   {
     models::Camera3D *result = new models::Camera3D();
 
@@ -308,6 +308,8 @@ namespace models
     result->target = target;
     result->up = up;
     result->d = d;
+    result->near = near;
+    result->far = far;
     result->lockView = false;
     result->rotateAroundTarget = false;
     result->rotateUp = false;

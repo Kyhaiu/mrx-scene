@@ -1018,6 +1018,37 @@ namespace math
   }
 
   /**
+   * @brief Função para multiplicar uma matriz por um escalar.
+   *
+   * @param mat Matriz 4x4
+   * @param scalar Escalar
+   * @return core::Matrix
+   */
+  core::Matrix MatrixMultiplyValue(core::Matrix mat, float scalar)
+  {
+    core::Matrix result = {0};
+
+    result.m0 = mat.m0 * scalar;
+    result.m1 = mat.m1 * scalar;
+    result.m2 = mat.m2 * scalar;
+    result.m3 = mat.m3 * scalar;
+    result.m4 = mat.m4 * scalar;
+    result.m5 = mat.m5 * scalar;
+    result.m6 = mat.m6 * scalar;
+    result.m7 = mat.m7 * scalar;
+    result.m8 = mat.m8 * scalar;
+    result.m9 = mat.m9 * scalar;
+    result.m10 = mat.m10 * scalar;
+    result.m11 = mat.m11 * scalar;
+    result.m12 = mat.m12 * scalar;
+    result.m13 = mat.m13 * scalar;
+    result.m14 = mat.m14 * scalar;
+    result.m15 = mat.m15 * scalar;
+
+    return result;
+  }
+
+  /**
    * @brief Função que calcula o determinante de uma matriz 4x4.
    *
    * Esta função calcula o determinante de uma matriz 4x4(core::Matrix) e retorna o resultado como um valor de ponto flutuante.

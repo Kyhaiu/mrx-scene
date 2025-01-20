@@ -7,7 +7,7 @@ GUI::Controller::Controller(float canvasWidth, float canvasHeight)
   this->windowWidth = static_cast<int>(canvasWidth);
 
   this->scene = new models::Scene(
-      models::CreateCamera3D({10, 10, 20}, {0, 0, 0}, {0, 1, 0}, 20),
+      models::CreateCamera3D({10, 10, 20}, {0, 0, 0}, {0, 1, 0}, 20, 15, 40),
       {},
       // The canvas don't start at the left corner
       // If the layout changes it will be necessary to change this values
@@ -55,8 +55,8 @@ void GUI::Controller::updateScene()
 {
   // models::CameraOrbital(this->scene->getCamera(), this->camera_rotation_sensitivity);
 
-  this->scene->rasterize_adair_pipeline();
-  // this->scene->rasterize_portugues_pipeline();
+  // this->scene->rasterize_adair_pipeline();
+  this->scene->rasterize_smith_pipeline();
 }
 
 /**
@@ -106,7 +106,7 @@ void GUI::Controller::newScene()
   float canvasHeight = static_cast<float>(this->windowHeight);
 
   this->scene = new models::Scene(
-      models::CreateCamera3D({10, 10, 20}, {0, 0, 0}, {0, 1, 0}, 20),
+      models::CreateCamera3D({10, 10, 20}, {0, 0, 0}, {0, 1, 0}, 20, 15, 40),
       {},
       // The canvas don't start at the left corner
       // If the layout changes it will be necessary to change this values

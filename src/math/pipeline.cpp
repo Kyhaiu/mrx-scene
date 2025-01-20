@@ -154,44 +154,37 @@ namespace math
   }
 
   /**
-   * @brief Obtém a matrix de transformação do volume canônico ortogonal
+   * @brief Obtém a matriz de transformação de recorte.
    *
-   * @param width Largura do plano de projeção
-   * @param height Altura do plano de projeção
-   * @param far Distância do plano posterior ao VRP
-   * @param near Distância do plano anterior ao VRP
+   * @param d Distância do VRP ao plano de projeção
+   * @param far Plano de projeção distante
+   * @param center_window Centro da janela
+   * @param size_window Tamanho da janela
+   *
+   * @note O tamanho da janela é metade da largura e metade da altura
+   *
    * @return core::Matrix
    */
-  core::Matrix pipeline_portugues::orthogonal_volume_transformation(const float width, const float height, const float far, const float near)
+  core::Matrix pipeline_smith::clipping_transformation(const float d, const float far, const core::Vector2 center_window, const core::Vector2 size_window)
   {
-    core::Matrix result;
+    // cu = center window x
+    // cv = center window y
+    // su = size window x
+    // sv = size window y
+    // | d/(su*far) 0          -(cu/d*far) 0 |
+    // | 0          d/(sv*far) -(cv/d*far) 0 |
+    // | 0          0          1/far       0 |
+    // | 0          0          0           1 |
 
-    // | (1/width) 0            0                  0
-    // | 0         (1/height)   0                  0
-    // |0          0            (1 / far - near)  -near
-    // |0          0            0                  1
-    result = core::Flota16ToMatrix({1 / width, 0, 0, 0, 0, 1 / height, 0, 0, 0, 0, 1 / (far - near), -near, 0, 0, 0, 1});
+    float cu = center_window.x;
+    float cv = center_window.y;
+    float su = size_window.x / 2;
+    float sv = size_window.y / 2;
 
-    return result;
-  }
-
-  /**
-   * @brief Obtém a matrix de transformação do volume canônico perspectivo
-   *
-   * @param s_x Fator de escala em x
-   * @param s_y Fator de escala em y
-   * @param far Distância do plano posterior ao VRP
-   * @return core::Matrix
-   */
-  core::Matrix pipeline_portugues::perspective_volume_transformation(const float s_x, const float s_y, const float far)
-  {
-    core::Matrix result;
-
-    // | s_x/B 0      0     0
-    // | 0   s_y/far  0     0
-    // | 0   0        1/far 0
-    // | 0   0        0     1
-    result = core::Flota16ToMatrix({s_x / far, 0, 0, 0, 0, s_y / far, 0, 0, 0, 0, 1 / far, 0, 0, 0, 0, 1 / far});
+    core::Matrix result = core::Flota16ToMatrix({d / (su * far), 0, -(cu / d * far), 0,
+                                                 0, d / (sv * far), -(cv / d * far), 0,
+                                                 0, 0, 1 / far, 0,
+                                                 0, 0, 0, 1});
 
     return result;
   }
@@ -201,42 +194,51 @@ namespace math
    *
    * @note A transformação de perspectiva opera diretamente no espaço 3D e transforma o frustum em um paralelepípedo canônico com lados paralelos e comprimento unitário.
    *
-   * @param k Razão da distância entre os planos posterior e anterior. (far/near)
+   * @param near Plano de projeção próximo
+   * @param far Plano de projeção distante
    * @return core::Matrix
    */
-  core::Matrix pipeline_portugues::perspective_transformation(const float k)
+  core::Matrix pipeline_smith::perspective_transformation(const float near, const float far)
   {
-    core::Matrix result;
+    // Obs.: A transformação de perspectiva é feita através das seguintes operações:
+    // Translada z_min para a origem => F
+    // Escala o volume canônico em z para que o plano traseiro (far) coincida com z = 1 => G
+    // Realiza a transformação de perspectiva => H
+    // A matriz resultante I é igual à H * G * F
 
-    // | 1 0 0          0
-    // | 0 1 0          0
-    // | 0 0 -(1/(1-k)) (-k/(1-k))
-    // | 0 0 1          0
-    result = core::Flota16ToMatrix({1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -(1 / (1 - k)), (-k / (1 - k)), 0, 0, 1, 0});
+    // Matriz I
+    // | 1 0 0                                  0     |
+    // | 0 1 0                                  0     |
+    // | 0 0 (-z_min^2 + 2*z_min)/(-z_min + 1) -z_min |
+    // | 0 0 (-z_min + 1)/z_min                 1     |
+    float z_min = near / far;
+    core::Matrix result = core::Flota16ToMatrix({1, 0, 0, 0,
+                                                 0, 1, 0, 0,
+                                                 0, 0, (-std::powf(z_min, 2) + 2 * z_min) / (-z_min + 1), -z_min,
+                                                 0, 0, (-z_min + 1) / z_min, 1});
 
-    return result;
-  }
+    // multiplicar as 3 primeira linhas da matriz I por 1/z_min.
+    // Leva o tronco da piramide no prisma com dimensões 2*z_min em x, y e em z_min em z.
+    // linha 1
+    result.m0 *= 1 / z_min;
+    result.m4 *= 1 / z_min;
+    result.m8 *= 1 / z_min;
+    result.m12 *= 1 / z_min;
+    // linha 2
+    result.m1 *= 1 / z_min;
+    result.m5 *= 1 / z_min;
+    result.m9 *= 1 / z_min;
+    result.m13 *= 1 / z_min;
+    // linha 3
+    result.m2 *= 1 / z_min;
+    result.m6 *= 1 / z_min;
+    result.m10 *= 1 / z_min;
+    result.m14 *= 1 / z_min;
 
-  /**
-   * @brief Obtém a matrix de projeção
-   *
-   * @note https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/building-basic-perspective-projection-matrix.html
-   *
-   * @param near Distância do plano anterior ao VRP
-   * @param far Distância do plano posterior ao VRP
-   * @return core::Matrix
-   */
-  core::Matrix pipeline_portugues::projection(const float near, const float far)
-  {
-    core::Matrix result;
-
-    // | 1 0 0                         0
-    // | 0 1 0                         0
-    // | 0 0 -(far/(far-near))        -1
-    // | 0 0 -((far*near)/(far-near))  0
-    result = core::Flota16ToMatrix({1, 0, 0, 0, 0, 1, 0, 0, 0, 0, -(far / (far - near)), -1, 0, 0, -((far * near) / (far - near)), 0});
-    // Alvy Ray Projection
-    // result = core::Flota16ToMatrix({1, 0, 0, 0, 0, 1, 0, 0, 0, 0, (far / (far - near)), 1, 0, 0, (-near / (far - near)), 0});
+    // multiplicar a matriz pelo escalar z_min
+    // Faz a projeção perspectiva levando o VRP para o infinito.
+    // A projeção passa a ser uma proj. paralela ortográfica ao ignorar a coordenada z.
+    result = math::MatrixMultiplyValue(result, z_min);
 
     return result;
   }

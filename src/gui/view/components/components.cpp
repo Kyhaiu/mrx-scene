@@ -60,6 +60,8 @@ namespace GUI
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
 
         ImGui::InputFloat("D", reinterpret_cast<float *>(&camera->d));
+        ImGui::InputFloat("Near", reinterpret_cast<float *>(&camera->near));
+        ImGui::InputFloat("Far", reinterpret_cast<float *>(&camera->far));
 
         // models::CameraYaw(scene->getCamera(), *f * 3.14159, false);
         ImGui::EndTabItem();

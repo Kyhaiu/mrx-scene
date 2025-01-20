@@ -24,7 +24,7 @@ namespace models
         {0.0f, 0.0f, 20.0f},
         {0.0f, 0.0f, 0.0f},
         {0.0f, 1.0f, 0.0f},
-        2.0f);
+        20.0f, 15.0f, 40.0f);
     this->objects = std::vector<models::Mesh *>();
     this->min_viewport = {-3.0f, -3.0f};
     this->max_viewport = {3.0f, 3.0f};
@@ -365,31 +365,21 @@ namespace models
     this->omni_lights[0].screen_position = {light.x / light.w, light.y / light.w, light.z};
   }
 
-  /**
-   * @brief Rasteriza a cena utilizando o pipeline descrito por João Madeiras Pereira
-   *
-   * @note A rasterização da cena é responsável por renderizar todos os objetos
-   * da cena na tela
-   */
-  void Scene::rasterize_portugues_pipeline()
+  void Scene::rasterize_smith_pipeline()
   {
-    // for (int i = 0; i < this->omni_lights.size(); i++)
-    //   LightOrbital(&this->omni_lights[i], 0.02f);
-
     models::Camera3D *camera = this->getCamera();
 
-    // Obtém as matrizes de transformação
+    // Esta etapa é idêntica ao pipeline de Adair
     core::Matrix sru_src_matrix = math::pipeline_adair::sru_to_src(camera->position, camera->target);
 
-    float s_x = camera->d / this->max_viewport.x;
-    float s_y = camera->d / this->max_viewport.y;
+    core::Vector2 window_size = this->getMaxWindow();
 
-    core::Matrix perspective_volume_matrix = math::pipeline_portugues::perspective_volume_transformation(s_x, s_y, camera->d + 10);
+    window_size.x = window_size.x - this->getMinWindow().x;
+    window_size.y = window_size.y - this->getMinWindow().y;
 
-    core::Matrix perspective_transformation_matrix = math::pipeline_portugues::perspective_transformation((camera->d + 10) / (camera->d - 10));
-
-    core::Matrix projection_matrix = math::pipeline_portugues::projection(camera->d - 10, camera->d + 10);
-
+    core::Matrix clipping_transformation_matrix = math::pipeline_smith::clipping_transformation(camera->d, camera->far, core::Vector2{0.0f, 0.0f}, window_size);
+    core::Matrix perspective_transformation_matrix = math::pipeline_smith::perspective_transformation(camera->near, camera->far);
+    // Esta etapa é idêntica ao pipeline de Adair
     core::Matrix viewport_matrix = math::pipeline_adair::src_to_srt(
         this->getMinWindow(),
         this->getMinViewport(),
@@ -397,15 +387,12 @@ namespace models
         this->getMaxViewport(),
         true);
 
-    // Multiplica as matrizes
-    core::Matrix result = math::MatrixMultiply(viewport_matrix, projection_matrix);
-    result = math::MatrixMultiply(result, perspective_transformation_matrix);
-    result = math::MatrixMultiply(result, perspective_volume_matrix);
+    core::Matrix result = math::MatrixMultiply(viewport_matrix, perspective_transformation_matrix);
+    result = math::MatrixMultiply(result, clipping_transformation_matrix);
     result = math::MatrixMultiply(result, sru_src_matrix);
 
     core::Vector4 vectorResult = {0.0f, 0.0f, 0.0f, 0.0f};
 
-    // Rasteriza todos os objetos da cena
     for (auto object : this->objects)
     {
       for (auto vertex : object->getVertices())
@@ -413,10 +400,6 @@ namespace models
         vectorResult = math::MatrixMultiplyVector(result, vertex->getVector());
 
         vertex->setVectorScreen({vectorResult.x / vectorResult.w, vectorResult.y / vectorResult.w, vectorResult.z});
-        std::cout << vertex->getVectorScreen() << std::endl;
-
-        // vertex->setVectorScreen({vectorResult.x, vectorResult.y, vectorResult.z});
-        // std::cout << vectorResult << std::endl;
       }
 
       for (auto face : object->getFaces())
@@ -424,7 +407,8 @@ namespace models
         face->setVisible(face->isVisible(camera->position));
       }
 
-      object->determineNormals();
+      if (this->lighting_model != FLAT_SHADING)
+        object->determineNormals();
     }
   }
 

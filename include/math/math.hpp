@@ -155,6 +155,7 @@ namespace math
   core::Matrix MatrixSubtract(core::Matrix a, core::Matrix b);
   core::Matrix MatrixMultiply(core::Matrix a, core::Matrix b);
   core::Vector4 MatrixMultiplyVector(core::Matrix mat, core::Vector4 vec);
+  core::Matrix MatrixMultiplyValue(core::Matrix mat, float scalar);
   float MatrixDeterminant(core::Matrix mat);
   core::Matrix MatrixInvert(core::Matrix mat);
   core::Matrix MatrixTranspose(core::Matrix mat);

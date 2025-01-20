@@ -93,6 +93,14 @@ namespace models
      */
     float d;
     /**
+     * @brief Distância do plano de projeção mais distante
+     */
+    float far;
+    /**
+     * @brief Distância do plano de projeção mais próximo
+     */
+    float near;
+    /**
      * @brief Flag que indica se a câmera deve rotacionar em torno do ponto alvo
      */
     bool rotateAroundTarget;
@@ -141,7 +149,7 @@ namespace models
   void CameraOrbital(Camera3D *camera, float orbitalSpeed);
   void CameraArcball(Camera3D *camera, float deltaAngleX, float deltaAngleY);
 
-  models::Camera3D *CreateCamera3D(core::Vector3 position, core::Vector3 target, core::Vector3 up, float d);
+  models::Camera3D *CreateCamera3D(core::Vector3 position, core::Vector3 target, core::Vector3 up, float d, float near, float far);
 
   core::Vector3 GetSphericalCoordinates(core::Vector3 camera);
   core::Vector3 GetCartesianCoordinates(core::Vector3 camera);
