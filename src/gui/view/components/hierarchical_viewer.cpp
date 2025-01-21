@@ -25,9 +25,12 @@ namespace GUI
     ImGuiTreeNodeFlags node_flags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_OpenOnDoubleClick;
 
     if (this->selected_index == index)
+    {
       node_flags |= ImGuiTreeNodeFlags_Selected;
+      this->controller->selectObject(object);
+    }
 
-    bool node_open = ImGui::TreeNodeEx((void *)(intptr_t)index, node_flags, object->getId().c_str());
+    bool node_open = ImGui::TreeNodeEx((void *)(intptr_t)index, node_flags, object->getName().c_str());
 
     if (ImGui::IsItemClicked())
       this->selected_index = index;
@@ -127,6 +130,12 @@ namespace GUI
 
       ImGui::Text("D:");
       ImGui::InputFloat("##d", &camera->d);
+
+      ImGui::Text("Near:");
+      ImGui::InputFloat("##near", &camera->near);
+
+      ImGui::Text("Far:");
+      ImGui::InputFloat("##far", &camera->far);
 
       if (ImGui::Button("Fechar"))
       {

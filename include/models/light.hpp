@@ -46,6 +46,7 @@
 
 #include <vector>
 #include <tuple>
+#include <string>
 
 namespace models
 {
@@ -69,6 +70,8 @@ namespace models
     Position screen_position;
     // Intensidade da Luz da Lampada (Cor)
     ColorChannels intensity;
+    // Identificador da Luz
+    std::string id;
   } Omni;
 
   /**

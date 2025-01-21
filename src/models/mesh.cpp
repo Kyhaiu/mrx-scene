@@ -37,6 +37,7 @@ namespace models
     this->setId(id);
     this->index_vertices = faces;
     this->createMesh(faces);
+    this->setName(id);
   }
 
   /**
@@ -59,6 +60,7 @@ namespace models
     this->num_faces = mesh.num_faces;
     this->index_vertices = mesh.index_vertices;
     this->id = mesh.id;
+    this->name = mesh.name;
   }
 
   /**
@@ -73,6 +75,7 @@ namespace models
     this->half_edges = mesh.half_edges;
     this->num_faces = mesh.num_faces;
     this->id = mesh.id;
+    this->name = mesh.name;
     return *this;
   }
 
@@ -128,6 +131,16 @@ namespace models
   std::string Mesh::getId() const
   {
     return this->id;
+  }
+
+  /**
+   * @brief Método que retorna o nome do objeto
+   *
+   * @return std::string Nome do objeto
+   */
+  std::string Mesh::getName() const
+  {
+    return this->name;
   }
 
   /**
@@ -188,6 +201,16 @@ namespace models
   void Mesh::setId(const std::string &id)
   {
     this->id = id;
+  }
+
+  /**
+   * @brief Método que define o nome do objeto
+   *
+   * @param name Nome do objeto
+   */
+  void Mesh::setName(const std::string &name)
+  {
+    this->name = name;
   }
 
   /**
@@ -340,16 +363,10 @@ namespace models
 
       core::Vector3 normal = {0.0f, 0.0f, 0.0f};
 
-      // std::cout << "Determinando a normal do vertice: " << v->getId() << std::endl;
-      // std::cout << "As faces que compõem o vertice são: " << std::endl;
-
       while (true)
       {
 
         core::Vector3 face_normal = he->getFace()->getNormal();
-
-        // std::cout << he->getFace()->getId() << " ";
-        // std::cout << "Normal da face: " << face_normal.x << " " << face_normal.y << " " << face_normal.z << std::endl;
 
         normal.x += face_normal.x;
         normal.y += face_normal.y;
@@ -363,14 +380,9 @@ namespace models
 
       float length = sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
 
-      // std::cout << "Normal do vertice: " << normal.x << " " << normal.y << " " << normal.z << std::endl;
-      // std::cout << "Comprimento da normal: " << length << std::endl;
-
       normal.x /= length;
       normal.y /= length;
       normal.z /= length;
-
-      // std::cout << "Normal do vertice normalizada: " << normal.x << " " << normal.y << " " << normal.z << std::endl;
 
       v->setNormal(normal);
     }
@@ -499,6 +511,7 @@ namespace models
     json j;
 
     j["id"] = this->id;
+    j["name"] = this->name;
     j["num_faces"] = this->num_faces;
 
     json vertices;
@@ -544,6 +557,7 @@ namespace models
   void Mesh::from_json(json json_data)
   {
     this->setId(json_data["id"]);
+    this->setName(json_data["name"]);
     this->setNumFaces(json_data["num_faces"]);
 
     this->vertices.clear();

@@ -168,4 +168,6 @@ namespace math
   core::Matrix RotationMatrixX(float angle);
   core::Matrix RotationMatrixY(float angle);
   core::Matrix RotationMatrixZ(float angle);
+
+  core::Matrix MatrixRotateXYZ(core::Vector3 angle);
 } // namespace math

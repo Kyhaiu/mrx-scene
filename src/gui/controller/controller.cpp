@@ -55,8 +55,10 @@ void GUI::Controller::updateScene()
 {
   // models::CameraOrbital(this->scene->getCamera(), this->camera_rotation_sensitivity);
 
-  // this->scene->rasterize_adair_pipeline();
-  this->scene->rasterize_smith_pipeline();
+  if (this->scene->pipeline_model == SANTA_CATARINA_PIPELINE)
+    this->scene->rasterize_adair_pipeline();
+  else
+    this->scene->rasterize_smith_pipeline();
 }
 
 /**
@@ -93,6 +95,8 @@ void GUI::Controller::removeObject(models::Mesh *object)
 void GUI::Controller::selectObject(models::Mesh *object)
 {
   this->scene->setSelectedObject(object);
+
+  this->previousTranslations[object] = object->position;
 }
 
 /**
@@ -116,6 +120,45 @@ void GUI::Controller::newScene()
       {3, 3});
 
   this->insertionOptions = {1, 1.0f, 1.0f, 10, 10};
+}
+
+void GUI::Controller::translate_object(models::Mesh *object, core::Vector3 translation)
+{
+
+  // Obtém a translação anterior (se existir) ou inicializa com zero
+  core::Vector3 previousTranslation = this->previousTranslations.count(object) ? this->previousTranslations[object] : core::Vector3{0, 0, 0};
+
+  // Calcula a translação *real* a ser aplicada (diferença entre a nova e a anterior)
+  core::Vector3 actualTranslation = {
+      translation.x - previousTranslation.x,
+      translation.y - previousTranslation.y,
+      translation.z - previousTranslation.z};
+
+  this->getScene()->translateObject(actualTranslation);
+
+  // Atualiza a posição do objeto diretamente
+  object->position.x += actualTranslation.x;
+  object->position.y += actualTranslation.y;
+  object->position.z += actualTranslation.z;
+
+  // Atualiza a translação anterior
+  previousTranslations[object] = translation;
+}
+
+void GUI::Controller::rotate_object(models::Mesh *object, core::Vector3 rotation)
+{
+  core::Vector3 actualRotation = {
+      rotation.x - (this->previousRotation.count(object) ? previousRotation[object].x : 0.0f),
+      rotation.y - (previousRotation.count(object) ? previousRotation[object].y : 0.0f),
+      rotation.z - (previousRotation.count(object) ? previousRotation[object].z : 0.0f)};
+
+  this->getScene()->rotateObject(actualRotation);
+
+  object->rotation.x = rotation.x;
+  object->rotation.y = rotation.y;
+  object->rotation.z = rotation.z;
+
+  previousRotation[object] = rotation;
 }
 
 //-----------------------------------------------------------------------------

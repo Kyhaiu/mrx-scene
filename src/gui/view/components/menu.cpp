@@ -95,9 +95,19 @@ namespace GUI
         {
           // radio button para escolher o modelo de iluminação
 
-          ImGui::RadioButton("Flat Shading", &controller->getScene()->lighting_model, 0);
-          ImGui::RadioButton("Gouraud Shading", &controller->getScene()->lighting_model, 1);
-          ImGui::RadioButton("Phong Shading", &controller->getScene()->lighting_model, 2);
+          ImGui::RadioButton("Flat Shading", &controller->getScene()->lighting_model, FLAT_SHADING);
+          ImGui::RadioButton("Gouraud Shading", &controller->getScene()->lighting_model, GOURAUD_SHADING);
+          ImGui::RadioButton("Phong Shading", &controller->getScene()->lighting_model, PHONG_SHADING);
+
+          ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Modelo de pipeline"))
+        {
+          // radio button para escolher o modelo de pipeline
+
+          ImGui::RadioButton("Adair Santa Catarina", &controller->getScene()->pipeline_model, SANTA_CATARINA_PIPELINE);
+          ImGui::RadioButton("Alvy Ray Smith", &controller->getScene()->pipeline_model, SMITH_PIPELINE);
 
           ImGui::EndMenu();
         }

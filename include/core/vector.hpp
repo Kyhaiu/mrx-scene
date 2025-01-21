@@ -120,6 +120,11 @@ namespace core
     {
       return {j["x"], j["y"], j["z"]};
     }
+
+    float &operator[](int i)
+    {
+      return ((float *)this)[i];
+    }
   } Vector3;
 
   std::ostream &operator<<(std::ostream &os, const Vector3 &v);

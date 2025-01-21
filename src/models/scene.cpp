@@ -63,6 +63,7 @@ namespace models
     omni.position = {2.0f, 2.0f, 2.0f};
 
     omni.intensity = models::ColorToChannels(models::RED);
+    omni.id = "Omnidirectional light  " + std::to_string(this->omni_lights.size());
 
     this->omni_lights.push_back(omni);
   }
@@ -349,15 +350,6 @@ namespace models
         object->determineNormals();
     }
 
-    // Remove de cena os objetos completamente fora da viewport
-    for (auto object : this->objects)
-    {
-      if (object->isOutsideViewport(this->getMinViewport(), this->getMaxViewport()))
-      {
-        this->removeObject(object);
-      }
-    }
-
     // Rasteriza a luz
     core::Vector3 Light_position = this->omni_lights[0].position;
     core::Vector4 light = math::MatrixMultiplyVector(result, {Light_position.x, Light_position.y, Light_position.z, 1.0f});
@@ -527,11 +519,21 @@ namespace models
   // Individual Object Transformations
   //------------------------------------------------------------------------------------------------
 
+  /**
+   * @brief Função que translada o objeto selecionado da cena
+   *
+   * @param translation Deslocamento a ser aplicado ao objeto
+   */
   void Scene::translateObject(core::Vector3 translation)
   {
     if (this->selected_object == nullptr) // Nada a fazer
       return;
 
+    // Inverte a matriz de viewport
+    // Obs.: A inversão é necessária pois estamos trabalhando com coordenadas de tela (SRT)
+    // e a transformação deve ser feita em relação ao espaço do objeto (SRU)
+    // NOTA: NO PIPELINE DO ADAIR, NÃO É POSSÍVEL REVETER AS COORDENADAS DE TELA PARA O SRU, POIS A PROJEÇÃO NÃO É INVERTÍVEL
+    // LOGO É USADO APENAS A INVERSÃO DA MATRIZ DE VIEWPORT (APROXIMAÇÃO)
     core::Matrix viewportInv = math::MatrixInvert(math::pipeline_adair::src_to_srt(
         this->getMinWindow(),
         this->getMinViewport(),
@@ -539,13 +541,83 @@ namespace models
         this->getMaxViewport(),
         true));
 
-    core::Vector3 transformedTranslation = math::Vector3Transform({translation}, viewportInv);
+    core::Vector3 transformedTranslation;
+
+    if (this->pipeline_model == SMITH_PIPELINE)
+    {
+      core::Matrix perspective_transformation_inv = math::MatrixInvert(
+          math::pipeline_smith::perspective_transformation(this->camera->near, this->camera->far));
+
+      core::Vector2 window_size = this->getMaxWindow();
+
+      window_size.x = window_size.x - this->getMinWindow().x;
+      window_size.y = window_size.y - this->getMinWindow().y;
+
+      core::Matrix clipping_transformation_inv = math::MatrixInvert(
+          math::pipeline_smith::clipping_transformation(this->camera->d, this->camera->far, core::Vector2{0.0f, 0.0f}, window_size));
+
+      core::Matrix sru_src_matrix_inv = math::MatrixInvert(
+          math::pipeline_adair::sru_to_src(this->camera->position, this->camera->target));
+
+      core::Matrix result = viewportInv;
+
+      transformedTranslation = math::Vector3Transform({translation}, result);
+    }
+    else
+    {
+      transformedTranslation = math::Vector3Transform({translation}, viewportInv);
+    }
 
     for (auto vertex : this->selected_object->getVertices())
     {
       vertex->setVector({vertex->getX() + transformedTranslation.x,
                          vertex->getY() + transformedTranslation.y,
                          vertex->getZ() + transformedTranslation.z, 1.0f});
+    }
+  }
+
+  /**
+   * @brief Função que rotaciona o objeto selecionado da cena
+   *
+   * @param axis Eixo de rotação
+   * @param angle Ângulo de rotação
+   */
+  void Scene::rotateObject(core::Vector3 axis, float angle)
+  {
+    if (this->selected_object == nullptr) // Nada a fazer
+      return;
+
+    core::Matrix rotateMatrix = math::MatrixRotate(axis, angle);
+
+    for (auto vertex : this->selected_object->getVertices())
+    {
+      core::Vector4 vector = vertex->getVector();
+      core::Vector4 result = math::MatrixMultiplyVector(rotateMatrix, vector);
+
+      vertex->setVector(result);
+    }
+  }
+
+  /**
+   * @brief Função que rotaciona o objeto selecionado da cena
+   *
+   * @param angle Ângulo de rotação em torno dos eixos x, y e z
+   *
+   * @note Os ângulos são fornecidos em radianos
+   */
+  void Scene::rotateObject(core::Vector3 angle)
+  {
+    if (this->selected_object == nullptr) // Nada a fazer
+      return;
+
+    core::Matrix rotateMatrix = math::MatrixRotateXYZ(angle);
+
+    for (auto vertex : this->selected_object->getVertices())
+    {
+      core::Vector4 vector = vertex->getVector();
+      core::Vector4 result = math::MatrixMultiplyVector(rotateMatrix, vector);
+
+      vertex->setVector(result);
     }
   }
 } // namespace models

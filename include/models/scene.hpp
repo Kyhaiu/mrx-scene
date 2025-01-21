@@ -59,6 +59,8 @@ using json = nlohmann::json;
 
 namespace models
 {
+#define SANTA_CATARINA_PIPELINE 0
+#define SMITH_PIPELINE 1
   class Scene
   {
   private:
@@ -126,7 +128,14 @@ namespace models
      * @note 1 - Gouraud Shading
      * @note 2 - Phong Shading
      */
-    int lighting_model = 0;
+    int lighting_model = FLAT_SHADING;
+    /**
+     * @brief Flag que determina qual modelo de pipeline será utilizado
+     *
+     * @note 0 - Adair Santa Catarina (Padrão)
+     * @note 1 - Alvy Ray Smith
+     */
+    int pipeline_model = SANTA_CATARINA_PIPELINE;
 
     // Construtor and Destrutor
     Scene();
@@ -168,6 +177,7 @@ namespace models
     // Individual Object Transformations
     void translateObject(core::Vector3 translation);
     void scaleObject(core::Vector3 scale);
-    void rotateObject(core::Vector2 rotation);
+    void rotateObject(core::Vector3 axis, float angle);
+    void rotateObject(core::Vector3 angle);
   };
 } // namespace models

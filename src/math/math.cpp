@@ -1304,4 +1304,41 @@ namespace math
     return result;
   }
 
+  /**
+   * @brief Obtém uma matriz de rotação em torno dos eixos X, Y e Z.
+   *
+   * @param angle O ângulo de rotação.
+   *
+   * @note Os ângulos são fornecidos em radianos.
+   * @return core::Matrix
+   */
+  core::Matrix MatrixRotateXYZ(core::Vector3 angle)
+  {
+    core::Matrix result = {1.0f, 0.0f, 0.0f, 0.0f,
+                           0.0f, 1.0f, 0.0f, 0.0f,
+                           0.0f, 0.0f, 1.0f, 0.0f,
+                           0.0f, 0.0f, 0.0f, 1.0f}; // MatrixIdentity()
+
+    float cosz = cosf(-angle.z);
+    float sinz = sinf(-angle.z);
+    float cosy = cosf(-angle.y);
+    float siny = sinf(-angle.y);
+    float cosx = cosf(-angle.x);
+    float sinx = sinf(-angle.x);
+
+    result.m0 = cosz * cosy;
+    result.m1 = (cosz * siny * sinx) - (sinz * cosx);
+    result.m2 = (cosz * siny * cosx) + (sinz * sinx);
+
+    result.m4 = sinz * cosy;
+    result.m5 = (sinz * siny * sinx) + (cosz * cosx);
+    result.m6 = (sinz * siny * cosx) - (cosz * sinx);
+
+    result.m8 = -siny;
+    result.m9 = cosy * sinx;
+    result.m10 = cosy * cosx;
+
+    return result;
+  }
+
 } // namespace math

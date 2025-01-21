@@ -97,6 +97,10 @@ namespace models
      */
     std::string id;
     /**
+     * @brief Nome do objeto
+     */
+    std::string name;
+    /**
      * @brief Flag para indicar se o objeto esta selecionado
      */
     bool selected;
@@ -115,6 +119,27 @@ namespace models
      * @note Conteúdo do material: Cor difusa, Cor especular e Brilho
      */
     models::Material material;
+    /**
+     * @brief Posição do objeto no espaço
+     *
+     * @note A posição do objeto é dada em coordenadas do SRU (Sistema de Referência do Universo)
+     * @note Utilizado para a transformação de objetos
+     */
+    core::Vector3 position = {0, 0, 0};
+    /**
+     * @brief Rotação do objeto no espaço
+     *
+     * @note A rotação do objeto é dada em coordenadas do SRU (Sistema de Referência do Universo)
+     * @note Utilizado para a transformação de objetos
+     */
+    core::Vector3 rotation = {0, 0, 0};
+    /**
+     * @brief Escala do objeto no espaço
+     *
+     * @note A escala do objeto é dada em coordenadas do SRU (Sistema de Referência do Universo)
+     * @note Utilizado para a transformação de objetos
+     */
+    core::Vector3 scale = {1, 1, 1};
 
     // Constructors and Destructors
     Mesh();
@@ -133,6 +158,7 @@ namespace models
     std::vector<core::HalfEdge *> getHalfEdges() const;
     int getNumFaces() const;
     std::string getId() const;
+    std::string getName() const;
     bool isSelected() const;
 
     void setVertices(const std::vector<core::Vertex *> vertices);
@@ -140,6 +166,7 @@ namespace models
     void setHalfEdges(const std::vector<core::HalfEdge *> half_edges);
     void setNumFaces(int num_faces);
     void setId(const std::string &id);
+    void setName(const std::string &name);
     void setSelected(bool selected);
 
     // Functions

@@ -92,7 +92,21 @@ void GUI::UI::insertOptions()
  */
 void GUI::UI::object_properties()
 {
-  GUI::components::object_inspector(this->controller);
+  ImGui::SetNextWindowPos(ImVec2(0, ImGui::GetContentRegionAvail().y + 16));
+  ImGui::SetNextWindowSize(ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y));
+  ImGui::Begin("object-properties-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+
+  if (ImGui::BeginTabBar("Propriedades do objeto"))
+  {
+    if (ImGui::BeginTabItem("Propriedades do objeto"))
+    {
+      GUI::components::objectInspector(this->controller);
+      ImGui::EndTabItem();
+    }
+    ImGui::EndTabBar();
+  }
+
+  ImGui::End();
 }
 
 /**

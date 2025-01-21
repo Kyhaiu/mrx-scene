@@ -93,6 +93,18 @@ namespace GUI
      * @brief Parâmetros de inserção de objetos
      */
     insertion_options_parameters insertionOptions;
+    /**
+     * @brief Mapa para armazenar translações anteriores por objeto
+     *
+     * @note TODO: BUSCAR NÃO DEPENDER DE DOIS ESTADOS PARA REPRESENTAR A MESMA COISA
+     */
+    std::map<models::Mesh *, core::Vector3> previousTranslations;
+    /**
+     * @brief Mapa para armazenar rotações anteriores por objeto
+     *
+     * @note TODO: BUSCAR NÃO DEPENDER DE DOIS ESTADOS PARA REPRESENTAR A MESMA COISA
+     */
+    std::map<models::Mesh *, core::Vector3> previousRotation;
 
     // Constructor and Destructor
     Controller(float canvasWidth, float canvasHeight);
@@ -108,6 +120,8 @@ namespace GUI
     void removeObject(models::Mesh *object);
     void selectObject(models::Mesh *object);
     void newScene();
+    void translate_object(models::Mesh *object, core::Vector3 translation);
+    void rotate_object(models::Mesh *object, core::Vector3 rotation);
 
     // Events
     void on_hierarchy_item_selected(int index);
