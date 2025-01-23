@@ -333,13 +333,10 @@ void GUI::Controller::on_hierarchy_item_selected(int index)
  */
 void GUI::Controller::on_file_dialog_open(const std::string &file)
 {
-  std::cout << "File selected: " << file << std::endl;
 
   json j = utils::load_json(file);
 
   this->scene->from_json(j["scene"]);
-
-  std::cout << "Scene loaded" << std::endl;
 
   this->updateScene();
 }
@@ -357,4 +354,74 @@ void GUI::Controller::save_scene()
   std::string filename = "scene.json";
 
   utils::save_json(filename, j);
+}
+
+void GUI::Controller::start_benchmark()
+{
+  this->benchmarking = true;
+
+  on_file_dialog_open("C:\\Users\\marco\\OneDrive\\Documentos\\TCC\\mrx-scene\\scene.json");
+
+  models::benchmark_start(&this->benchmark_results);
+}
+
+void GUI::Controller::end_benchmark()
+{
+  this->benchmarking = false;
+
+  models::benchmark_end(&this->benchmark_results);
+
+  std::cout << "Benchmark results:" << std::endl;
+  std::cout << "Total time: " << this->benchmark_results.total_time.count() << "s" << std::endl;
+  std::cout << "Total frames: " << this->benchmark_results.total_frames << std::endl;
+  std::cout << "Average FPS: " << this->benchmark_results.average_fps << std::endl;
+  std::cout << "Average frame time: " << this->benchmark_results.average_frame_time << "s" << std::endl;
+  std::cout << "Min frame time: " << this->benchmark_results.min_frame_time << "s" << std::endl;
+  std::cout << "Max frame time: " << this->benchmark_results.max_frame_time << "s" << std::endl;
+  std::cout << "Worst 10% frame times:" << std::endl;
+  for (auto time : this->benchmark_results.worst_10_percentile)
+  {
+    std::cout << time << "s" << std::endl;
+  }
+}
+
+void GUI::Controller::update_benchmark(double frame_time)
+{
+  // Adiciona o tempo do frame ao vetor de tempos
+  this->benchmark_results.frame_times.push_back(frame_time);
+
+  // Atualiza o tempo total de execução
+  this->benchmark_results.total_time += std::chrono::duration<double>(frame_time);
+
+  // Atualiza o número total de frames
+  this->benchmark_results.total_frames++;
+
+  // Atualiza o tempo mínimo e máximo de frame
+  if (frame_time < this->benchmark_results.min_frame_time || this->benchmark_results.total_frames == 1)
+  {
+    this->benchmark_results.min_frame_time = frame_time;
+  }
+  if (frame_time > this->benchmark_results.max_frame_time)
+  {
+    this->benchmark_results.max_frame_time = frame_time;
+  }
+
+  // Calcula a média de tempo de frame
+  this->benchmark_results.average_frame_time = this->benchmark_results.total_time.count() / this->benchmark_results.total_frames;
+
+  // Calcula a média de FPS
+  this->benchmark_results.average_fps = this->benchmark_results.total_frames / this->benchmark_results.total_time.count();
+
+  // Atualiza os 10% piores frames
+  if (this->benchmark_results.frame_times.size() >= 10)
+  {
+    std::vector<double> sorted_times = this->benchmark_results.frame_times;
+    std::sort(sorted_times.begin(), sorted_times.end());
+    int worst_count = sorted_times.size() / 10;
+    this->benchmark_results.worst_10_percentile.clear();
+    for (int i = sorted_times.size() - worst_count; i < sorted_times.size(); i++)
+    {
+      this->benchmark_results.worst_10_percentile.push_back(sorted_times[i]);
+    }
+  }
 }

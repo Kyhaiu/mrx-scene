@@ -6,6 +6,7 @@
 
 #include <models/scene.hpp>
 #include <models/camera.hpp>
+#include <models/benchmark.hpp>
 #include <utils/file.hpp>
 
 namespace GUI
@@ -86,6 +87,10 @@ namespace GUI
      */
     bool camera_is_selected = false;
     /**
+     * @brief Flag usada para indicar se o benchmarking está ativo
+     */
+    bool benchmarking = false;
+    /**
      * @brief Sensibilidade da rotação da camera
      */
     float camera_rotation_sensitivity = 0.01667f;
@@ -105,6 +110,12 @@ namespace GUI
      * @note TODO: BUSCAR NÃO DEPENDER DE DOIS ESTADOS PARA REPRESENTAR A MESMA COISA
      */
     std::map<models::Mesh *, core::Vector3> previousRotation;
+    /**
+     * @brief
+     *
+     * @param canvasWidth
+     */
+    models::Benchmark benchmark_results;
 
     // Constructor and Destructor
     Controller(float canvasWidth, float canvasHeight);
@@ -128,5 +139,8 @@ namespace GUI
     void handleEvents(const SDL_Event &event, SDL_Window *window, float deltaTime);
     void on_file_dialog_open(const std::string &file);
     void save_scene();
+    void start_benchmark();
+    void end_benchmark();
+    void update_benchmark(double frame_time);
   };
 }

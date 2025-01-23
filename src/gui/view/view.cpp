@@ -117,6 +117,7 @@ void GUI::UI::object_properties()
  */
 void GUI::UI::render()
 {
+
   // Start the Dear ImGui frame
   ImGui_ImplSDL2_NewFrame();
   ImGui_ImplSDLRenderer2_NewFrame();
@@ -127,36 +128,55 @@ void GUI::UI::render()
   // Rendeniza o diálogo de arquivos, caso ele tenha sido aberto no menu
   this->fileDialog.Display();
 
-  ImGui::SetNextWindowPos(ImVec2(0, 20));
-  ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, ImGui::GetWindowSize().y));
-  ImGui::Begin("left-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
+  if (this->controller->benchmarking)
+  {
+    ImGui::SetNextWindowPos(ImVec2(0, 20));
+    ImGui::SetNextWindowSize(ImVec2(static_cast<float>(this->controller->windowWidth), static_cast<float>(this->controller->windowHeight)));
+    ImGui::Begin("benchmark", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-  ImGui::SetNextWindowPos(ImVec2(0, 20));
-  ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f));
-  ImGui::BeginChild("hierarchy", ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f), false);
-  this->hierarchy(this->controller->getScene());
-  ImGui::EndChild();
+    models::CameraOrbital(this->controller->getScene()->getCamera(), this->controller->camera_rotation_sensitivity);
 
-  ImGui::SetNextWindowPos(ImVec2(0, this->controller->windowHeight * 0.5f));
-  ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f));
-  ImGui::BeginChild("actions", ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f), false);
-  this->object_properties();
-  ImGui::EndChild();
+    // Mede o tempo de rasterização
+    auto start_time = std::chrono::high_resolution_clock::now();
+    this->controller->updateScene();
+    this->viewport(this->controller->getScene());
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> frame_time = end_time - start_time;
 
-  ImGui::End();
+    // Atualiza o benchmark com o tempo do frame
+    this->controller->update_benchmark(frame_time.count());
 
-  // std::cout << "GetWindowSize.x " << ImGui::GetWindowSize().x << std::endl;
-  // std::cout << "GetWindowSize.y " << ImGui::GetWindowSize().y << std::endl;
-  // std::cout << "GetContentRegionAvail.x " << ImGui::GetContentRegionAvail().x << std::endl;
-  // std::cout << "GetContentRegionAvail.y " << ImGui::GetContentRegionAvail().y << std::endl;
-  ImGui::SetNextWindowPos(ImVec2(this->controller->windowWidth * 0.2f, 20));
-  ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.8f, (float)this->controller->windowHeight));
-  ImGui::Begin("viewport", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+    ImGui::End();
+  }
+  else
+  {
+    ImGui::SetNextWindowPos(ImVec2(0, 20));
+    ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, ImGui::GetWindowSize().y));
+    ImGui::Begin("left-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-  this->controller->updateScene();
-  this->viewport(this->controller->getScene());
+    ImGui::SetNextWindowPos(ImVec2(0, 20));
+    ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f));
+    ImGui::BeginChild("hierarchy", ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f), false);
+    this->hierarchy(this->controller->getScene());
+    ImGui::EndChild();
 
-  ImGui::End();
+    ImGui::SetNextWindowPos(ImVec2(0, this->controller->windowHeight * 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f));
+    ImGui::BeginChild("actions", ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f), false);
+    this->object_properties();
+    ImGui::EndChild();
+
+    ImGui::End();
+
+    ImGui::SetNextWindowPos(ImVec2(this->controller->windowWidth * 0.2f, 20));
+    ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.8f, (float)this->controller->windowHeight));
+    ImGui::Begin("viewport", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
+
+    this->controller->updateScene();
+    this->viewport(this->controller->getScene());
+
+    ImGui::End();
+  }
 
   // Rendering
   ImGui::Render();

@@ -377,7 +377,7 @@ namespace models
         this->getMinViewport(),
         this->getMaxWindow(),
         this->getMaxViewport(),
-        true);
+        false);
 
     core::Matrix result = math::MatrixMultiply(viewport_matrix, perspective_transformation_matrix);
     result = math::MatrixMultiply(result, clipping_transformation_matrix);

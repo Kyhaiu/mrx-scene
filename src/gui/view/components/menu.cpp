@@ -112,6 +112,14 @@ namespace GUI
           ImGui::EndMenu();
         }
 
+        if (ImGui::MenuItem("Benchmark"))
+        {
+          if (!controller->benchmarking)
+            controller->start_benchmark();
+          else
+            controller->end_benchmark();
+        }
+
         ImGui::EndMenu();
       }
       ImGui::EndMainMenuBar();

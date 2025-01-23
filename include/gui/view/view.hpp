@@ -101,6 +101,7 @@ namespace GUI
 
     // Methods
     void render();
+    void renderBenchmark();
     void handleEvents(const SDL_Event &event, SDL_Window *window, SDL_Renderer *renderer);
   };
 } // namespace GUI
