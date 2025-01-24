@@ -390,34 +390,50 @@ namespace models
         core::HalfEdge *he = face->getHalfEdge();
 
         // Vetor que armazena os vetores normais médios dos vértices da face
-        std::vector<core::Vertex *> vertexes;
+        std::vector<std::pair<core::Vector3, core::Vector3>> vertexes;
 
         while (true)
         {
 
           // clipped_vertex = math::clip_line(he->getOrigin()->getVectorScreen(), he->getNext()->getOrigin()->getVectorScreen(), min_viewport, max_viewport);
 
-          vertexes.push_back(he->getOrigin());
-          vertexes.push_back(he->getNext()->getOrigin());
+          vertexes.push_back(std::make_pair(he->getOrigin()->getVectorScreen(), he->getOrigin()->getNormal()));
+          vertexes.push_back(std::make_pair(he->getNext()->getOrigin()->getVectorScreen(), he->getNext()->getOrigin()->getNormal()));
 
           he = he->getNext();
           if (he == face->getHalfEdge())
             break;
         }
 
+        std::cout << "Vertices antes do recorte" << std::endl;
+        for (auto vertex : vertexes)
+        {
+          std::cout << vertex.first << std::endl;
+        }
+
+        // Recorte 2D
+        std::vector<std::pair<core::Vector3, core::Vector3>> clipped_vertex = math::sutherland_hodgman(vertexes, min_viewport, max_viewport);
+
+        std::cout << "Vertices depois do recorte" << std::endl;
+        for (auto vertex : clipped_vertex)
+        {
+          std::cout << vertex.first << std::endl;
+        }
+
         // O vetor normal da face é calculado na ocultação de faces
         // precisa recortar o vetor normal do vertice também (assim simplifica o calculo de interpolação)
         // usar excel como base
 
-        if (this->lighting_model == FLAT_SHADING)
-          utils::DrawFaceBufferFlatShading(vertexes, this->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
-        else if (this->lighting_model == GOURAUD_SHADING)
-          utils::DrawFaceBufferGouraudShading(vertexes, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
-        else if (this->lighting_model == PHONG_SHADING)
-          utils::DrawFaceBufferPhongShading(vertexes, object_centroid, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        std::cout << "Desenhando face " << face->getId() << std::endl;
 
-        // Limpa o vetor de vetores normais dos vértices da face
-        vertexes.clear();
+        if (this->lighting_model == FLAT_SHADING)
+          utils::DrawFaceBufferFlatShading(clipped_vertex, this->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        else if (this->lighting_model == GOURAUD_SHADING)
+          utils::DrawFaceBufferGouraudShading(clipped_vertex, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        else if (this->lighting_model == PHONG_SHADING)
+          utils::DrawFaceBufferPhongShading(clipped_vertex, object_centroid, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+
+        std::cout << "-----------------" << std::endl;
       }
     }
   }
@@ -519,12 +535,12 @@ namespace models
         // precisa recortar o vetor normal do vertice também (assim simplifica o calculo de interpolação)
         // usar excel como base
 
-        if (this->lighting_model == FLAT_SHADING)
-          utils::DrawFaceBufferFlatShading(vertexes, this->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
-        else if (this->lighting_model == GOURAUD_SHADING)
-          utils::DrawFaceBufferGouraudShading(vertexes, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
-        else if (this->lighting_model == PHONG_SHADING)
-          utils::DrawFaceBufferPhongShading(vertexes, object_centroid, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        // if (this->lighting_model == FLAT_SHADING)
+        //   utils::DrawFaceBufferFlatShading(vertexes, this->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        // else if (this->lighting_model == GOURAUD_SHADING)
+        //   utils::DrawFaceBufferGouraudShading(vertexes, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        // else if (this->lighting_model == PHONG_SHADING)
+        //   utils::DrawFaceBufferPhongShading(vertexes, object_centroid, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
 
         // Limpa o vetor de vetores normais dos vértices da face
         vertexes.clear();

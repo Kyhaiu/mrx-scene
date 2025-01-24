@@ -11,7 +11,7 @@ GUI::Controller::Controller(float canvasWidth, float canvasHeight)
       {},
       // The canvas don't start at the left corner
       // If the layout changes it will be necessary to change this values
-      {canvasWidth * 0.2f, 20},
+      {0, 20},
       {canvasWidth, canvasHeight},
       {-3, -3},
       {3, 3});

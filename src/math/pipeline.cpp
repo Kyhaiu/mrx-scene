@@ -248,44 +248,57 @@ namespace math
   //-------------------------------------------------------------------------------------------------
 
   /**
-   * @brief Calcula o código de saída de um ponto em relação a uma janela de recorte.
+   * @brief Calcula a coordenada y do ponto de interseção entre duas linhas.
    *
-   * @param p Ponto a ser verificado
-   * @param min Canto inferior esquerdo da janela de recorte
-   * @param max Canto superior direito da janela de recorte
-   * @return Código de saída do ponto
+   * @param x1 Coordenada x do primeiro ponto da primeira linha.
+   * @param y1 Coordenada y do primeiro ponto da primeira linha.
+   * @param x2 Coordenada x do segundo ponto da primeira linha.
+   * @param y2 Coordenada y do segundo ponto da primeira linha.
+   * @param x3 Coordenada x do primeiro ponto da segunda linha.
+   * @param y3 Coordenada y do primeiro ponto da segunda linha.
+   * @param x4 Coordenada x do segundo ponto da segunda linha.
+   * @param y4 Coordenada y do segundo ponto da segunda linha.
    *
-   * @note O código de saída é uma combinação de bits que indicam a posição do ponto em relação à janela de recorte.
-   * @note O código de saída é calculado da seguinte forma:
-   * @note 0000: Ponto dentro da janela
-   * @note 0001: Ponto à esquerda da janela
-   * @note 0010: Ponto à direita da janela
-   * @note 0100: Ponto abaixo da janela
-   * @note 1000: Ponto acima da janela
+   * @return int Coordenada y do ponto de interseção.
+   *
+   * @note A função utiliza a fórmula da interseção de duas linhas no plano 2D.
+   * @note A interseção é calculada usando a regra de Cramer para resolver o sistema de equações lineares.
+   * @note Se as linhas forem paralelas, o denominador será zero, e o comportamento é indefinido.
    */
-  int compute_outcode(core::Vector3 p, core::Vector2 min, core::Vector2 max)
+  float y_intersection(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
   {
-    int code = INSIDE;
+    float num = (x1 * y2 - y1 * x2) * (y3 - y4) -
+                (y1 - y2) * (x3 * y4 - y3 * x4);
+    float den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 
-    if (p.x < min.x) // to the left of rectangle
-    {
-      code |= LEFT;
-    }
-    else if (p.x > max.x) // to the right of rectangle
-    {
-      code |= RIGHT;
-    }
+    return floorf(num / den);
+  }
 
-    if (p.y < min.y) // below the rectangle
-    {
-      code |= BOTTOM;
-    }
-    else if (p.y > max.y) // above the rectangle
-    {
-      code |= TOP;
-    }
+  /**
+   * @brief Calcula a coordenada x do ponto de interseção entre duas linhas.
+   *
+   * @param x1 Coordenada x do primeiro ponto da primeira linha.
+   * @param y1 Coordenada y do primeiro ponto da primeira linha.
+   * @param x2 Coordenada x do segundo ponto da primeira linha.
+   * @param y2 Coordenada y do segundo ponto da primeira linha.
+   * @param x3 Coordenada x do primeiro ponto da segunda linha.
+   * @param y3 Coordenada y do primeiro ponto da segunda linha.
+   * @param x4 Coordenada x do segundo ponto da segunda linha.
+   * @param y4 Coordenada y do segundo ponto da segunda linha.
+   *
+   * @return int Coordenada x do ponto de interseção.
+   *
+   * @note A função utiliza a fórmula da interseção de duas linhas no plano 2D.
+   * @note A interseção é calculada usando a regra de Cramer para resolver o sistema de equações lineares.
+   * @note Se as linhas forem paralelas, o denominador será zero, e o comportamento é indefinido.
+   */
+  float x_intersection(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
+  {
+    float num = (x1 * y2 - y1 * x2) * (x3 - x4) -
+                (x1 - x2) * (x3 * y4 - y3 * x4);
+    float den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
 
-    return code;
+    return floorf(num / den);
   }
 
   /**
@@ -296,230 +309,83 @@ namespace math
    * @param min Canto inferior esquerdo da janela de recorte
    * @param max Canto superior direito da janela de recorte
    *
-   * @return Par de pontos que representam a linha recortada
+   * @return std::pair<core::Vector3, core::Vector3> Par de pontos recortados
    *
    * @note A função recorta uma linha em relação a uma janela de recorte.
-   * @note O algoritmo utilizado é o de Cohen-Sutherland.
-   * @note A função retorna um par de pontos que representam a linha recortada.
    */
   std::pair<core::Vector3, core::Vector3> clip_line(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max)
   {
+    // Adiciona os vértices da janela de recorte ao polígono em sentido anti-horário
+    std::vector<core::Vector2> clipper_points = {{min.x, min.y}, {min.x, max.y}, {max.x, max.y}, {max.x, min.y}};
 
-    // Computa os códigos das extremidades da linha
-    int P = compute_outcode(p1, min, max);
-    int Q = compute_outcode(p2, min, max);
-
-    while (true)
+    for (int i = 0; i < clipper_points.size(); i++)
     {
-      if (P == 0 && Q == 0) // Ambos os pontos estão dentro da janela
+      int k = (i + 1) % clipper_points.size();
+
+      float ix = clipper_points[i].x, iy = clipper_points[i].y;
+      float kx = clipper_points[k].x, ky = clipper_points[k].y;
+
+      // Calcula a posição do primeiro ponto em relação à linha do recorte
+      float i_pos = (kx - ix) * (p1.y - iy) - (ky - iy) * (p1.x - ix);
+
+      // Calcula a posição do segundo ponto em relação à linha do recorte
+      float k_pos = (kx - ix) * (p2.y - iy) - (ky - iy) * (p2.x - ix);
+
+      // Caso 1: Ambos os pontos estão dentro
+      if (i_pos < 0 && k_pos < 0)
       {
-        break;
+        // não faz nada
       }
-      else if (P & Q) // Ambos os pontos estão fora da janela
+      // Caso 2: Se apenas o primeiro ponto está fora
+      else if (i_pos >= 0 && k_pos < 0)
       {
-        // Como a função de recorte retorna um par de pontos, é necessário retornar um par de pontos válidos (dentro do buffer)
-        if (p1.x < 0)
-          p1.x = min.x;
-        if (p1.x > max.x)
-          p1.x = max.x;
-        if (p1.y < 0)
-          p1.y = min.y;
-        if (p1.y > max.y)
-          p1.y = max.y;
-
-        if (p2.x < 0)
-          p2.x = min.x;
-        if (p2.x > max.x)
-          p2.x = max.x;
-        if (p2.y < 0)
-          p2.y = min.y;
-        if (p2.y > max.y)
-          p2.y = max.y;
-
-        break;
+        p1 = core::Vector3{
+            x_intersection(ix, iy, kx, ky, p1.x, p1.y, p2.x, p2.y),
+            y_intersection(ix, iy, kx, ky, p1.x, p1.y, p2.x, p2.y),
+            p1.z};
       }
-      else
+      // Caso 3: Se apenas o segundo ponto está fora
+      else if (i_pos < 0 && k_pos >= 0)
       {
-        // Alguns dos segmento está dentro da janela
-        int outcode = Q > P ? Q : P;
-        float x, y;
-
-        // Encontra o ponto de interseção
-        // Usando a fórmula y = y1 + coeficiente de inclinação * (x - x1)
-        // x = x1 + (1 / coeficiente de inclinação) * (y - y1)
-        if (outcode & TOP) // O Ponto está acima da janela
-        {
-          x = p1.x + (p2.x - p1.x) * (max.y - p1.y) / (p2.y - p1.y);
-          y = max.y;
-        }
-        else if (outcode & BOTTOM) // O Ponto está abaixo da janela
-        {
-          x = p1.x + (p2.x - p1.x) * (min.y - p1.y) / (p2.y - p1.y);
-          y = min.y;
-        }
-        else if (outcode & RIGHT) // O Ponto está à direita da janela
-        {
-          y = p1.y + (p2.y - p1.y) * (max.x - p1.x) / (p2.x - p1.x);
-          x = max.x;
-        }
-        else if (outcode & LEFT) // O Ponto está à esquerda da janela
-        {
-          y = p1.y + (p2.y - p1.y) * (min.x - p1.x) / (p2.x - p1.x);
-          x = min.x;
-        }
-
-        // Move o ponto externo para a interseção
-        if (outcode == P)
-        {
-          p1.x = x;
-          p1.y = y;
-          P = compute_outcode(p1, min, max);
-        }
-        else
-        {
-          p2.x = x;
-          p2.y = y;
-          Q = compute_outcode(p2, min, max);
-        }
+        p2 = core::Vector3{
+            x_intersection(ix, iy, kx, ky, p1.x, p1.y, p2.x, p2.y),
+            y_intersection(ix, iy, kx, ky, p1.x, p1.y, p2.x, p2.y),
+            p2.z};
       }
+      // Caso 4: Ambos os pontos estão fora
+      // Nenhum ponto é adicionado ao novo polígono
     }
 
     return std::make_pair(p1, p2);
   }
 
   /**
-   * @brief Verifica se um ponto está dentro de uma aresta específica da janela de recorte.
-   *
-   * @param point Ponto a ser verificado.
-   * @param edge Aresta da janela de recorte (TOP, BOTTOM, LEFT, RIGHT).
-   * @param min Canto inferior esquerdo da janela de recorte.
-   * @param max Canto superior direito da janela de recorte.
-   *
-   * @return bool true se o ponto estiver dentro da aresta de recorte, false caso contrário.
-   */
-  bool is_inside(const core::Vector3 &point, int edge, const core::Vector2 &min, const core::Vector2 &max)
-  {
-    switch (edge)
-    {
-    case LEFT:
-      return point.x >= min.x;
-    case RIGHT:
-      return point.x <= max.x;
-    case BOTTOM:
-      return point.y >= min.y;
-    case TOP:
-      return point.y <= max.y;
-    default:
-      return false;
-    }
-  }
-
-  /**
-   * @brief Calcula o ponto de interseção entre uma aresta do polígono e uma aresta da janela de recorte.
-   *
-   * @param p1 Primeiro ponto da aresta do polígono.
-   * @param p2 Segundo ponto da aresta do polígono.
-   * @param min Canto inferior esquerdo da janela de recorte.
-   * @param max Canto superior direito da janela de recorte.
-   * @param edge Aresta da janela de recorte (TOP, BOTTOM, LEFT, RIGHT).
-   *
-   * @return core::Vector3 Ponto de interseção com as coordenadas x, y e z interpoladas.
-   *
-   * @note A função preserva a coordenada z do ponto de interseção por meio de interpolação.
-   */
-  core::Vector3 compute_intersection(const core::Vector3 &p1, const core::Vector3 &p2, const core::Vector2 &min, const core::Vector2 &max, int edge)
-  {
-    float x = 0, y = 0, z = 0;
-
-    // Calcula o fator de interpolação (t) para a interseção
-    float t = 0;
-
-    if (edge == TOP)
-    { // Aresta superior
-      t = (max.y - p1.y) / (p2.y - p1.y);
-      x = p1.x + t * (p2.x - p1.x);
-      y = max.y;
-      z = p1.z + t * (p2.z - p1.z); // Interpola z
-    }
-    else if (edge == BOTTOM)
-    { // Aresta inferior
-      t = (min.y - p1.y) / (p2.y - p1.y);
-      x = p1.x + t * (p2.x - p1.x);
-      y = min.y;
-      z = p1.z + t * (p2.z - p1.z); // Interpola z
-    }
-    else if (edge == RIGHT)
-    { // Aresta direita
-      t = (max.x - p1.x) / (p2.x - p1.x);
-      y = p1.y + t * (p2.y - p1.y);
-      x = max.x;
-      z = p1.z + t * (p2.z - p1.z); // Interpola z
-    }
-    else if (edge == LEFT)
-    { // Aresta esquerda
-      t = (min.x - p1.x) / (p2.x - p1.x);
-      y = p1.y + t * (p2.y - p1.y);
-      x = min.x;
-      z = p1.z + t * (p2.z - p1.z); // Interpola z
-    }
-
-    return core::Vector3{x, y, z}; // Retorna o ponto com z interpolado
-  }
-
-  /**
-   * @brief Recorta um polígono em relação a uma janela de recorte retangular, preservando as coordenadas z dos vértices.
+   * @brief Recorta um polígono em relação a uma janela de recorte retangular.
    *
    * @param polygon Lista de vértices do polígono a ser recortado.
-   * @param min Canto inferior esquerdo da janela de recorte.
-   * @param max Canto superior direito da janela de recorte.
+   * @param min Menores coordenadas da janela de recorte.
+   * @param max Maiores coordenadas da janela de recorte.
    *
    * @return std::vector<core::Vector3> Lista de vértices do polígono recortado.
    *
    * @note A função utiliza o algoritmo de Sutherland-Hodgman para recortar o polígono.
+   * @todo DESCOBRIR UM JEITO DE NÃO PRECISAR PASSAR A NORMAL DOS VERTICES PARA A FUNÇÃO (USADO NA ILUMINAÇÃO)
    */
-  std::vector<core::Vector3> sutherland_hodgman(const std::vector<core::Vector3> &polygon, const core::Vector2 &min, const core::Vector2 &max)
+  std::vector<std::pair<core::Vector3, core::Vector3>> sutherland_hodgman(std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max)
   {
-    std::vector<core::Vector3> output = polygon;
 
-    // Define as arestas da janela de recorte (esquerda, direita, inferior, superior)
-    int edges[] = {LEFT, RIGHT, BOTTOM, TOP};
+    std::vector<std::pair<core::Vector3, core::Vector3>> new_polygon;
 
-    for (int edge : edges)
+    for (int i = 0; i < polygon.size() - 1; i += 2)
     {
-      std::vector<core::Vector3> input = output;
-      output.clear();
+      std::pair<core::Vector3, core::Vector3> new_line;
+      new_line = clip_line(polygon[i].first, polygon[i + 1].first, min, max);
 
-      if (input.empty())
-        break;
-
-      core::Vector3 prev_point = input.back();
-      for (const core::Vector3 &curr_point : input)
-      {
-        // Verifica a posição dos pontos em relação à aresta de recorte
-        bool prev_inside = is_inside(prev_point, edge, min, max);
-        bool curr_inside = is_inside(curr_point, edge, min, max);
-
-        if (curr_inside)
-        {
-          if (!prev_inside)
-          {
-            // Adiciona o ponto de interseção
-            output.push_back(compute_intersection(prev_point, curr_point, min, max, edge));
-          }
-          // Adiciona o ponto atual
-          output.push_back(curr_point);
-        }
-        else if (prev_inside)
-        {
-          // Adiciona o ponto de interseção
-          output.push_back(compute_intersection(prev_point, curr_point, min, max, edge));
-        }
-
-        prev_point = curr_point;
-      }
+      new_polygon.push_back(std::make_pair(new_line.first, polygon[i].second));
+      new_polygon.push_back(std::make_pair(new_line.second, polygon[i + 1].second));
     }
 
-    return output;
+    return new_polygon;
   }
 
   //-------------------------------------------------------------------------------------------------
@@ -601,7 +467,7 @@ namespace math
    * @param max_window_size Tamanho máximo da janela
    *
    */
-  void fill_polygon_flat_shading(const std::vector<core::Vertex *> &vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const core::Vector3 &face_centroid, const core::Vector3 &face_normal, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer, core::Vector2 max_window_size)
+  void fill_polygon_flat_shading(const std::vector<std::pair<core::Vector3, core::Vector3>> &vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const core::Vector3 &face_centroid, const core::Vector3 &face_normal, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer, core::Vector2 max_window_size)
   {
     models::Color color = models::FlatShading(global_light, omni_lights, face_centroid, face_normal, eye, object_material);
 
@@ -610,7 +476,7 @@ namespace math
 
     for (auto vertex : vertexes)
     {
-      float y = vertex->getVectorScreen().y;
+      float y = vertex.first.y;
       if (y < y_min)
         y_min = static_cast<int>(y);
       if (y > y_max)
@@ -622,8 +488,8 @@ namespace math
     // Como a lista de vertices é composta pelo inicio e fim da aresta, o incremento é de 2
     for (int i = 0; i < vertexes.size(); i += 2)
     {
-      core::Vector3 start = vertexes[i]->getVectorScreen();
-      core::Vector3 end = vertexes[i + 1]->getVectorScreen();
+      core::Vector3 start = vertexes[i].first;
+      core::Vector3 end = vertexes[i + 1].first;
 
       if (start.y == end.y)
         continue;
@@ -633,8 +499,12 @@ namespace math
         std::swap(start, end);
       }
 
+      std::cout << "Interpolando entre " << start << " e " << end << std::endl;
+
       float m_inv = (end.x - start.x) / (end.y - start.y);
       float mz = (end.z - start.z) / (end.y - start.y);
+
+      std::cout << "m_inv: " << m_inv << " mz: " << mz << std::endl;
 
       float x = start.x;
       float z = start.z;
@@ -686,18 +556,18 @@ namespace math
    * @param color_buffer Buffer de cores
    *
    */
-  void fill_polygon_gourand(const std::vector<core::Vertex *> &_vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  void fill_polygon_gourand(const std::vector<std::pair<core::Vector3, core::Vector3>> &_vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
   {
     // Usando para associar cada vértice com sua cor calculada
-    std::vector<std::pair<core::Vertex *, models::Color>> vertexes;
+    std::vector<std::pair<core::Vector3, models::Color>> vertexes;
 
     for (auto vertex : _vertexes)
     {
       // utiliza o vertice nas coordenadas SRU para calcular a cor
-      core::Vector3 v = vertex->getVector().toVector3();
-      core::Vector3 n = vertex->getNormal();
+      core::Vector3 v = vertex.first;
+      core::Vector3 n = vertex.second;
       models::Color color = models::GouraudShading(global_light, omni_lights, std::make_pair(v, n), eye, object_material);
-      vertexes.push_back(std::make_pair(vertex, color));
+      vertexes.push_back(std::make_pair(vertex.first, color));
     }
 
     int y_min = std::numeric_limits<int>::max();
@@ -705,7 +575,7 @@ namespace math
 
     for (auto vertex : vertexes)
     {
-      float y = vertex.first->getVectorScreen().y;
+      float y = vertex.first.y;
       if (y < y_min)
         y_min = static_cast<int>(y);
       if (y > y_max)
@@ -720,8 +590,8 @@ namespace math
     // Como a lista de vertices é composta pelo inicio e fim da aresta, o incremento é de 2
     for (int i = 0; i < vertexes.size(); i += 2)
     {
-      core::Vector3 start = vertexes[i].first->getVectorScreen();
-      core::Vector3 end = vertexes[i + 1].first->getVectorScreen();
+      core::Vector3 start = vertexes[i].first;
+      core::Vector3 end = vertexes[i + 1].first;
 
       models::Color start_color = vertexes[i % vertexes.size()].second;
       models::Color end_color = vertexes[(i + 1) % vertexes.size()].second;
@@ -818,14 +688,14 @@ namespace math
    * @param z_buffer Buffer de profundidade
    * @param color_buffer Buffer de cores
    */
-  void fill_polygon_phong(const std::vector<core::Vertex *> &_vertexes, const core::Vector3 &centroid, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  void fill_polygon_phong(const std::vector<std::pair<core::Vector3, core::Vector3>> &_vertexes, const core::Vector3 &centroid, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
   {
     int y_min = std::numeric_limits<int>::max();
     int y_max = std::numeric_limits<int>::min();
 
     for (auto vertex : _vertexes)
     {
-      float y = vertex->getVectorScreen().y;
+      float y = vertex.first.y;
       if (y < y_min)
         y_min = static_cast<int>(y);
       if (y > y_max)
@@ -839,11 +709,11 @@ namespace math
 
     for (int count = 0; count < _vertexes.size(); count += 2)
     {
-      core::Vector3 start = _vertexes[count]->getVectorScreen();
-      core::Vector3 end = _vertexes[count + 1]->getVectorScreen();
+      core::Vector3 start = _vertexes[count].first;
+      core::Vector3 end = _vertexes[count + 1].first;
 
-      core::Vector3 start_normal = _vertexes[count]->getNormal();
-      core::Vector3 end_normal = _vertexes[count + 1]->getNormal();
+      core::Vector3 start_normal = _vertexes[count].second;
+      core::Vector3 end_normal = _vertexes[count + 1].second;
 
       // Se a linha for horizontal, não faz nada
       if (start.y == end.y)
@@ -951,11 +821,7 @@ namespace math
     int y_int = static_cast<int>(std::roundf(y));
 
     if (x_int < 0 || x_int >= z_buffer.size() || y_int < 0 || y_int >= z_buffer[0].size())
-    {
-      // std::cout << " Buffer de profundidade: " << z_buffer.size() << ", " << z_buffer[0].size() << std::endl;
-      // std::cout << "Fora do buffer: " << x_int << ", " << y_int << std::endl;
       return;
-    }
 
     // Se o pixel atual estiver mais distante que o pixel já desenhado, não atualiza os buffers
     if (z_buffer[x_int][y_int] < z)
