@@ -4,23 +4,6 @@
 
 namespace GUI
 {
-  /**
-   * @brief Renderiza um marcador de ajuda (?) que exibe uma descrição ao passar o mouse sobre ele
-   *
-   * @param desc Descrição do marcador de ajuda
-   *
-   */
-  void GUI::components::HelpMarker(const char *desc)
-  {
-    ImGui::TextDisabled("(?)");
-    if (ImGui::BeginItemTooltip())
-    {
-      ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
-      ImGui::TextUnformatted(desc);
-      ImGui::PopTextWrapPos();
-      ImGui::EndTooltip();
-    }
-  }
 
   // void GUI::components::object_inspector(GUI::Controller *controller)
   // {
@@ -107,6 +90,13 @@ namespace GUI
         utils::DrawBoundingBox({box.x, box.y}, {box.z, box.w}, models::YELLOW, scene->z_buffer, scene->color_buffer);
       }
 
+      core::Vector3 object_centroid = {0.0f, 0.0f, 0.0f};
+
+      if (scene->centroid_algorithm == CENTROID_BY_WRAP_BOX)
+        object_centroid = object->getCentroidByWrapBox();
+      else if (scene->centroid_algorithm == CENTROID_BY_MEAN)
+        object_centroid = object->getCentroidByMean();
+
       for (auto face : object->getFaces())
       {
 
@@ -146,7 +136,7 @@ namespace GUI
         else if (scene->lighting_model == GOURAUD_SHADING)
           utils::DrawFaceBufferGouraudShading(vertexes, scene->getCamera()->position, object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
         else if (scene->lighting_model == PHONG_SHADING)
-          utils::DrawFaceBufferPhongShading(vertexes, face->getFaceCentroid(), scene->getCamera()->position, object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
+          utils::DrawFaceBufferPhongShading(vertexes, object_centroid, scene->getCamera()->position, object->material, scene->global_light, scene->omni_lights, scene->z_buffer, scene->color_buffer);
 
         // Limpa o vetor de vetores normais dos vértices da face
         vertexes.clear();

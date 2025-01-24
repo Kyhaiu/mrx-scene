@@ -173,8 +173,12 @@ namespace models
     void createMesh(std::vector<std::vector<int>> index_faces);
     void createMesh(const std::string &filename);
     void createMesh(const std::vector<core::Vertex> &vertices, std::vector<std::vector<int>> index_faces);
-    core::Vector4 getBox(bool screen_coordinates); // x = min_x, y = min_y, z = max_x, w = max_y
+    core::Vector4 getBox(bool screen_coordinates);                // x = min_x, y = min_y, z = max_x, w = max_y
+    std::vector<core::Vector3> getBox3D(bool screen_coordinates); // v[0] = min, v[1] = max
     void determineNormals();
+    void determineNormalsByAverage();
+    core::Vector3 getCentroidByMean();
+    core::Vector3 getCentroidByWrapBox();
 
     void clearMesh();
     core::HalfEdge *addEdge(core::Vertex *vertex1, core::Vertex *vertex2);

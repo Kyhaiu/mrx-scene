@@ -41,23 +41,10 @@
 
 #include <gui/imgui/imgui.h>
 
-#include <utils/utils.hpp>
-#include <gui/controller/controller.hpp>
-#include <gui/view/components/hierarquical_viewer.hpp>
-#include <gui/view/components/object_inspector.hpp>
-#include <models/scene.hpp>
-#include <shapes/shapes.hpp>
-
 namespace GUI
 {
   namespace components
   {
-    // Forward declaration
-    class HierarchyViewer;
-
-    void object_inspector(GUI::Controller *_controller);
-    void viewport(models::Scene *scene);
-    void performance_monitor();
-
+    void HelpMarker(const char *desc);
   }
 } // namespace GUI

@@ -61,6 +61,13 @@ namespace models
 {
 #define SANTA_CATARINA_PIPELINE 0
 #define SMITH_PIPELINE 1
+
+#define FOLEY_UNIT_NORMAL_VECTOR 0
+#define CONCI_UNIT_NORMAL_VECTOR 1
+
+#define CENTROID_BY_MEAN 0
+#define CENTROID_BY_WRAP_BOX 1
+
   class Scene
   {
   private:
@@ -136,6 +143,20 @@ namespace models
      * @note 1 - Alvy Ray Smith
      */
     int pipeline_model = SANTA_CATARINA_PIPELINE;
+    /**
+     * @brief Flag que determina qual algoritmo de vetor normal unitário será utilizado
+     *
+     * @note 0 - Foley (Padrão)
+     * @note 1 - Conci, Azevedo e Leta
+     */
+    int normal_algorithm = FOLEY_UNIT_NORMAL_VECTOR;
+    /**
+     * @brief Flag que determina qual algoritmo de cálculo do centroide será utilizado
+     *
+     * @note 0 - Média dos vértices (Padrão)
+     * @note 1 - Caixa envolvente
+     */
+    int centroid_algorithm = CENTROID_BY_MEAN;
 
     // Construtor and Destrutor
     Scene();

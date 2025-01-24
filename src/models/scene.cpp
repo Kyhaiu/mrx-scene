@@ -55,14 +55,14 @@ namespace models
     // TODO: Arruma a construção da luz da cena de um jeito mais elegante
     models::Light light;
 
-    light.intensity = models::RED;
+    light.intensity = models::WHITE;
 
     this->global_light = light;
 
     models::Omni omni;
     omni.position = {2.0f, 2.0f, 2.0f};
 
-    omni.intensity = models::ColorToChannels(models::RED);
+    omni.intensity = models::ColorToChannels(models::WHITE);
     omni.id = "Omnidirectional light  " + std::to_string(this->omni_lights.size());
 
     this->omni_lights.push_back(omni);
@@ -347,7 +347,10 @@ namespace models
 
       // Só calcula os vetores unitários normais se o modelo de iluminação for diferente de FLAT_SHADING
       if (this->lighting_model != FLAT_SHADING)
-        object->determineNormals();
+        if (this->normal_algorithm == FOLEY_UNIT_NORMAL_VECTOR)
+          object->determineNormals();
+        else
+          object->determineNormalsByAverage();
     }
 
     // Rasteriza a luz

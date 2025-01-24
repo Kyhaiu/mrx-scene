@@ -350,8 +350,67 @@ namespace models
   }
 
   /**
+   * @brief Método que retorna o box envolvente da malha
+   *
+   * @param screen_coordinates Flag que indica se as coordenadas são em relação à tela
+   *
+   * @note O vector contém 2 pontos, o primeiro é o ponto mínimo e o segundo é o ponto máximo
+   * @note vector[0] = min_x, min_y, min_z
+   * @note vector[1] = max_x, max_y, max_z
+   * @return std::vector<core::Vector3> Box envolvente da malha
+   */
+  std::vector<core::Vector3> Mesh::getBox3D(bool screen_coordinates)
+  {
+    float min_x = std::numeric_limits<float>::max();
+    float min_y = std::numeric_limits<float>::max();
+    float min_z = std::numeric_limits<float>::max();
+    float max_x = std::numeric_limits<float>::min();
+    float max_y = std::numeric_limits<float>::min();
+    float max_z = std::numeric_limits<float>::min();
+
+    float x, y, z;
+
+    for (auto v : this->getVertices())
+    {
+      x = screen_coordinates ? v->getX(true) : v->getX();
+      y = screen_coordinates ? v->getY(true) : v->getY();
+      z = screen_coordinates ? v->getZ(true) : v->getZ();
+
+      if (x < min_x)
+      {
+        min_x = x;
+      }
+      if (y < min_y)
+      {
+        min_y = y;
+      }
+      if (z < min_z)
+      {
+        min_z = z;
+      }
+      if (x > max_x)
+      {
+        max_x = x;
+      }
+      if (y > max_y)
+      {
+        max_y = y;
+      }
+      if (z > max_z)
+      {
+        max_z = z;
+      }
+    }
+
+    std::vector<core::Vector3> result = {core::Vector3{min_x, min_y, min_z}, core::Vector3{max_x, max_y, max_z}};
+
+    return result;
+  }
+
+  /**
    * @brief Método que calcula as normais dos vértices da malha
    *
+   * @note este método é o método descrito por Foley para se determinar o vetor unitário normal a um vértice
    */
   void Mesh::determineNormals()
   {
@@ -386,6 +445,94 @@ namespace models
 
       v->setNormal(normal);
     }
+  }
+
+  /**
+   * @brief Método que calcula as normais dos vértices da malha
+   *
+   * @note Este método é uma alternativa descrita por Conci, Azevedo e Leta
+   */
+  void Mesh::determineNormalsByAverage()
+  {
+    for (auto v : this->getVertices())
+    {
+      core::HalfEdge *start_he = v->getHalfEdge();
+      core::HalfEdge *he = start_he;
+
+      core::Vector3 normal = {0.0f, 0.0f, 0.0f};
+
+      int count = 0;
+
+      while (true)
+      {
+        core::Vector3 face_normal = he->getFace()->getNormal();
+
+        normal.x += face_normal.x;
+        normal.y += face_normal.y;
+        normal.z += face_normal.z;
+
+        count++;
+
+        he = he->getTwin()->getNext();
+
+        if (he == start_he)
+          break;
+      }
+
+      normal.x /= count;
+      normal.y /= count;
+      normal.z /= count;
+
+      v->setNormal(normal);
+    }
+  }
+
+  /**
+   * @brief Método que retorna o centroide da malha
+   *
+   * @note O centroide é calculado pela média dos vértices da malha
+   * @return core::Vector3 Centroide da malha
+   */
+  core::Vector3 Mesh::getCentroidByMean()
+  {
+    core::Vector3 centroid = {0.0f, 0.0f, 0.0f};
+
+    for (auto v : this->getVertices())
+    {
+      centroid.x += v->getX();
+      centroid.y += v->getY();
+      centroid.z += v->getZ();
+    }
+
+    int size = this->getVertices().size();
+
+    centroid.x /= size;
+    centroid.y /= size;
+    centroid.z /= size;
+
+    return centroid;
+  }
+
+  /**
+   * @brief Método que retorna o centroide da malha
+   *
+   * @note O centroide é calculado pela soma dos pontos extremos da malha dividido por 2
+   * @return core::Vector3 Centroide da malha
+   */
+  core::Vector3 Mesh::getCentroidByWrapBox()
+  {
+    std::vector<core::Vector3> box = this->getBox3D(false);
+
+    core::Vector3 min = box[0];
+    core::Vector3 max = box[1];
+
+    core::Vector3 centroid = {0.0f, 0.0f, 0.0f};
+
+    centroid.x = (min.x + max.x) / 2;
+    centroid.y = (min.y + max.y) / 2;
+    centroid.z = (min.z + max.z) / 2;
+
+    return centroid;
   }
 
   core::HalfEdge *Mesh::addEdge(core::Vertex *vertex1, core::Vertex *vertex2)

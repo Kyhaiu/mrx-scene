@@ -99,6 +99,32 @@ namespace GUI
           ImGui::RadioButton("Gouraud Shading", &controller->getScene()->lighting_model, GOURAUD_SHADING);
           ImGui::RadioButton("Phong Shading", &controller->getScene()->lighting_model, PHONG_SHADING);
 
+          if (ImGui::BeginMenu("Normais dos vértices"))
+          {
+            ImGui::RadioButton("Foley", &controller->getScene()->normal_algorithm, FOLEY_UNIT_NORMAL_VECTOR);
+            ImGui::SameLine();
+            GUI::components::HelpMarker("Este é o algoritmo clássico descrito por Foley para determinar o vetor normal unitário de um vértice");
+
+            ImGui::RadioButton("Conci, Azevedo e Leta", &controller->getScene()->normal_algorithm, CONCI_UNIT_NORMAL_VECTOR);
+            ImGui::SameLine();
+            GUI::components::HelpMarker("Este é o algoritmo descrito por Conci, Azevedo e Leta para determinar o vetor normal unitário de um vértice");
+
+            ImGui::EndMenu();
+          }
+
+          if (ImGui::BeginMenu("Centroide"))
+          {
+            ImGui::RadioButton("Média dos vértices", &controller->getScene()->centroid_algorithm, CENTROID_BY_MEAN);
+            ImGui::SameLine();
+            GUI::components::HelpMarker("Este é o algoritmo clássico descrito por Foley para determinar o centroide de um objeto");
+
+            ImGui::RadioButton("Caixa envolvente", &controller->getScene()->centroid_algorithm, CENTROID_BY_WRAP_BOX);
+            ImGui::SameLine();
+            GUI::components::HelpMarker("Este é o algoritmo descrito por Conci, Azevedo e Leta para determinar o centroide de um objeto");
+
+            ImGui::EndMenu();
+          }
+
           ImGui::EndMenu();
         }
 

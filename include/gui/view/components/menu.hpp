@@ -41,8 +41,10 @@
 
 #include <gui/imgui/imgui.h>
 #include <gui/controller/controller.hpp>
-#include <shapes/shapes.hpp>
 #include <gui/view/components/imfilebrowser.hpp>
+#include <gui/view/components/helpmarker.hpp>
+
+#include <shapes/shapes.hpp>
 
 namespace GUI
 {
