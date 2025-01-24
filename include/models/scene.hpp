@@ -54,6 +54,7 @@
 #include <models/colors.hpp>
 #include <models/light.hpp>
 #include <utils/nlohmann/json.hpp>
+#include <utils/utils.hpp>
 
 using json = nlohmann::json;
 

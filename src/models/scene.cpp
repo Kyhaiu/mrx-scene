@@ -358,6 +358,69 @@ namespace models
     core::Vector4 light = math::MatrixMultiplyVector(result, {Light_position.x, Light_position.y, Light_position.z, 1.0f});
 
     this->omni_lights[0].screen_position = {light.x / light.w, light.y / light.w, light.z};
+
+    // Rasterização dos objetos
+    this->initializeBuffers();
+
+    for (auto object : this->getObjects())
+    {
+
+      if (object == this->getSelectedObject())
+      {
+        core::Vector4 box = object->getBox(true);
+        utils::DrawBoundingBox({box.x, box.y}, {box.z, box.w}, models::YELLOW, this->z_buffer, this->color_buffer);
+      }
+
+      core::Vector3 object_centroid = {0.0f, 0.0f, 0.0f};
+
+      if (this->centroid_algorithm == CENTROID_BY_WRAP_BOX)
+        object_centroid = object->getCentroidByWrapBox();
+      else if (this->centroid_algorithm == CENTROID_BY_MEAN)
+        object_centroid = object->getCentroidByMean();
+
+      for (auto face : object->getFaces())
+      {
+
+        if (!face->getVisible())
+          continue;
+
+        core::HalfEdge *he = face->getHalfEdge();
+
+        // Necessário limpar o vetor pois a cada frame ele é preenchido novamente
+        // TODO: Descobrir uma maneira de não precisar limpar o vetor se não houver mudanças
+        face->clipped_vertex.clear();
+
+        // Vetor que armazena os vetores normais médios dos vértices da face
+        std::vector<core::Vertex *> vertexes;
+
+        while (true)
+        {
+
+          // clipped_vertex = math::clip_line(he->getOrigin()->getVectorScreen(), he->getNext()->getOrigin()->getVectorScreen(), min_viewport, max_viewport);
+
+          vertexes.push_back(he->getOrigin());
+          vertexes.push_back(he->getNext()->getOrigin());
+
+          he = he->getNext();
+          if (he == face->getHalfEdge())
+            break;
+        }
+
+        // O vetor normal da face é calculado na ocultação de faces
+        // precisa recortar o vetor normal do vertice também (assim simplifica o calculo de interpolação)
+        // usar excel como base
+
+        if (this->lighting_model == FLAT_SHADING)
+          utils::DrawFaceBufferFlatShading(vertexes, this->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        else if (this->lighting_model == GOURAUD_SHADING)
+          utils::DrawFaceBufferGouraudShading(vertexes, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        else if (this->lighting_model == PHONG_SHADING)
+          utils::DrawFaceBufferPhongShading(vertexes, object_centroid, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+
+        // Limpa o vetor de vetores normais dos vértices da face
+        vertexes.clear();
+      }
+    }
   }
 
   void Scene::rasterize_smith_pipeline()
@@ -404,6 +467,69 @@ namespace models
 
       if (this->lighting_model != FLAT_SHADING)
         object->determineNormals();
+    }
+
+    // Rasterização dos objetos
+    this->initializeBuffers();
+
+    for (auto object : this->getObjects())
+    {
+
+      if (object == this->getSelectedObject())
+      {
+        core::Vector4 box = object->getBox(true);
+        utils::DrawBoundingBox({box.x, box.y}, {box.z, box.w}, models::YELLOW, this->z_buffer, this->color_buffer);
+      }
+
+      core::Vector3 object_centroid = {0.0f, 0.0f, 0.0f};
+
+      if (this->centroid_algorithm == CENTROID_BY_WRAP_BOX)
+        object_centroid = object->getCentroidByWrapBox();
+      else if (this->centroid_algorithm == CENTROID_BY_MEAN)
+        object_centroid = object->getCentroidByMean();
+
+      for (auto face : object->getFaces())
+      {
+
+        if (!face->getVisible())
+          continue;
+
+        core::HalfEdge *he = face->getHalfEdge();
+
+        // Necessário limpar o vetor pois a cada frame ele é preenchido novamente
+        // TODO: Descobrir uma maneira de não precisar limpar o vetor se não houver mudanças
+        face->clipped_vertex.clear();
+
+        // Vetor que armazena os vetores normais médios dos vértices da face
+        std::vector<core::Vertex *> vertexes;
+
+        while (true)
+        {
+
+          // clipped_vertex = math::clip_line(he->getOrigin()->getVectorScreen(), he->getNext()->getOrigin()->getVectorScreen(), min_viewport, max_viewport);
+
+          vertexes.push_back(he->getOrigin());
+          vertexes.push_back(he->getNext()->getOrigin());
+
+          he = he->getNext();
+          if (he == face->getHalfEdge())
+            break;
+        }
+
+        // O vetor normal da face é calculado na ocultação de faces
+        // precisa recortar o vetor normal do vertice também (assim simplifica o calculo de interpolação)
+        // usar excel como base
+
+        if (this->lighting_model == FLAT_SHADING)
+          utils::DrawFaceBufferFlatShading(vertexes, this->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        else if (this->lighting_model == GOURAUD_SHADING)
+          utils::DrawFaceBufferGouraudShading(vertexes, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        else if (this->lighting_model == PHONG_SHADING)
+          utils::DrawFaceBufferPhongShading(vertexes, object_centroid, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+
+        // Limpa o vetor de vetores normais dos vértices da face
+        vertexes.clear();
+      }
     }
   }
 
