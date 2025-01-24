@@ -56,9 +56,9 @@ void GUI::Controller::updateScene()
   // models::CameraOrbital(this->scene->getCamera(), this->camera_rotation_sensitivity);
 
   if (this->scene->pipeline_model == SANTA_CATARINA_PIPELINE)
-    this->scene->rasterize_adair_pipeline();
+    this->scene->adair_pipeline();
   else
-    this->scene->rasterize_smith_pipeline();
+    this->scene->smith_pipeline();
 }
 
 /**

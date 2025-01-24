@@ -85,7 +85,10 @@ namespace math
 #define TOP 0b1000    // 1000
 
   int compute_outcode(core::Vector3 p, core::Vector2 min, core::Vector2 max);
+  bool is_inside(const core::Vector3 &p, int edge, const core::Vector2 &min, const core::Vector2 &max);
   std::pair<core::Vector3, core::Vector3> clip_line(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max);
+  core::Vector3 compute_intersection(const core::Vector3 &p1, const core::Vector3 &p2, const core::Vector2 &min, const core::Vector2 &max, int edge);
+  std::vector<core::Vector3> sutherland_hodgman(const std::vector<core::Vector3> &polygon, const core::Vector2 &min, const core::Vector2 &max);
 
   //-------------------------------------------------------------------------------------------------
   // Funções de Preenchimento de Polígonos e Desenho de Linhas

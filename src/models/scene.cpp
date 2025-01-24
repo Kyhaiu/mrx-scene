@@ -304,7 +304,7 @@ namespace models
    * @note A rasterização da cena é responsável por renderizar todos os objetos
    * da cena na tela
    */
-  void Scene::rasterize_adair_pipeline()
+  void Scene::adair_pipeline()
   {
     // for (int i = 0; i < this->omni_lights.size(); i++)
     //   LightOrbital(&this->omni_lights[i], 0.02f);
@@ -362,6 +362,9 @@ namespace models
     // Rasterização dos objetos
     this->initializeBuffers();
 
+    core::Vector2 min_viewport = this->getMinViewport();
+    core::Vector2 max_viewport = this->getMaxViewport();
+
     for (auto object : this->getObjects())
     {
 
@@ -385,10 +388,6 @@ namespace models
           continue;
 
         core::HalfEdge *he = face->getHalfEdge();
-
-        // Necessário limpar o vetor pois a cada frame ele é preenchido novamente
-        // TODO: Descobrir uma maneira de não precisar limpar o vetor se não houver mudanças
-        face->clipped_vertex.clear();
 
         // Vetor que armazena os vetores normais médios dos vértices da face
         std::vector<core::Vertex *> vertexes;
@@ -423,7 +422,7 @@ namespace models
     }
   }
 
-  void Scene::rasterize_smith_pipeline()
+  void Scene::smith_pipeline()
   {
     models::Camera3D *camera = this->getCamera();
 

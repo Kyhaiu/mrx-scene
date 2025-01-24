@@ -387,6 +387,141 @@ namespace math
     return std::make_pair(p1, p2);
   }
 
+  /**
+   * @brief Verifica se um ponto está dentro de uma aresta específica da janela de recorte.
+   *
+   * @param point Ponto a ser verificado.
+   * @param edge Aresta da janela de recorte (TOP, BOTTOM, LEFT, RIGHT).
+   * @param min Canto inferior esquerdo da janela de recorte.
+   * @param max Canto superior direito da janela de recorte.
+   *
+   * @return bool true se o ponto estiver dentro da aresta de recorte, false caso contrário.
+   */
+  bool is_inside(const core::Vector3 &point, int edge, const core::Vector2 &min, const core::Vector2 &max)
+  {
+    switch (edge)
+    {
+    case LEFT:
+      return point.x >= min.x;
+    case RIGHT:
+      return point.x <= max.x;
+    case BOTTOM:
+      return point.y >= min.y;
+    case TOP:
+      return point.y <= max.y;
+    default:
+      return false;
+    }
+  }
+
+  /**
+   * @brief Calcula o ponto de interseção entre uma aresta do polígono e uma aresta da janela de recorte.
+   *
+   * @param p1 Primeiro ponto da aresta do polígono.
+   * @param p2 Segundo ponto da aresta do polígono.
+   * @param min Canto inferior esquerdo da janela de recorte.
+   * @param max Canto superior direito da janela de recorte.
+   * @param edge Aresta da janela de recorte (TOP, BOTTOM, LEFT, RIGHT).
+   *
+   * @return core::Vector3 Ponto de interseção com as coordenadas x, y e z interpoladas.
+   *
+   * @note A função preserva a coordenada z do ponto de interseção por meio de interpolação.
+   */
+  core::Vector3 compute_intersection(const core::Vector3 &p1, const core::Vector3 &p2, const core::Vector2 &min, const core::Vector2 &max, int edge)
+  {
+    float x = 0, y = 0, z = 0;
+
+    // Calcula o fator de interpolação (t) para a interseção
+    float t = 0;
+
+    if (edge == TOP)
+    { // Aresta superior
+      t = (max.y - p1.y) / (p2.y - p1.y);
+      x = p1.x + t * (p2.x - p1.x);
+      y = max.y;
+      z = p1.z + t * (p2.z - p1.z); // Interpola z
+    }
+    else if (edge == BOTTOM)
+    { // Aresta inferior
+      t = (min.y - p1.y) / (p2.y - p1.y);
+      x = p1.x + t * (p2.x - p1.x);
+      y = min.y;
+      z = p1.z + t * (p2.z - p1.z); // Interpola z
+    }
+    else if (edge == RIGHT)
+    { // Aresta direita
+      t = (max.x - p1.x) / (p2.x - p1.x);
+      y = p1.y + t * (p2.y - p1.y);
+      x = max.x;
+      z = p1.z + t * (p2.z - p1.z); // Interpola z
+    }
+    else if (edge == LEFT)
+    { // Aresta esquerda
+      t = (min.x - p1.x) / (p2.x - p1.x);
+      y = p1.y + t * (p2.y - p1.y);
+      x = min.x;
+      z = p1.z + t * (p2.z - p1.z); // Interpola z
+    }
+
+    return core::Vector3{x, y, z}; // Retorna o ponto com z interpolado
+  }
+
+  /**
+   * @brief Recorta um polígono em relação a uma janela de recorte retangular, preservando as coordenadas z dos vértices.
+   *
+   * @param polygon Lista de vértices do polígono a ser recortado.
+   * @param min Canto inferior esquerdo da janela de recorte.
+   * @param max Canto superior direito da janela de recorte.
+   *
+   * @return std::vector<core::Vector3> Lista de vértices do polígono recortado.
+   *
+   * @note A função utiliza o algoritmo de Sutherland-Hodgman para recortar o polígono.
+   */
+  std::vector<core::Vector3> sutherland_hodgman(const std::vector<core::Vector3> &polygon, const core::Vector2 &min, const core::Vector2 &max)
+  {
+    std::vector<core::Vector3> output = polygon;
+
+    // Define as arestas da janela de recorte (esquerda, direita, inferior, superior)
+    int edges[] = {LEFT, RIGHT, BOTTOM, TOP};
+
+    for (int edge : edges)
+    {
+      std::vector<core::Vector3> input = output;
+      output.clear();
+
+      if (input.empty())
+        break;
+
+      core::Vector3 prev_point = input.back();
+      for (const core::Vector3 &curr_point : input)
+      {
+        // Verifica a posição dos pontos em relação à aresta de recorte
+        bool prev_inside = is_inside(prev_point, edge, min, max);
+        bool curr_inside = is_inside(curr_point, edge, min, max);
+
+        if (curr_inside)
+        {
+          if (!prev_inside)
+          {
+            // Adiciona o ponto de interseção
+            output.push_back(compute_intersection(prev_point, curr_point, min, max, edge));
+          }
+          // Adiciona o ponto atual
+          output.push_back(curr_point);
+        }
+        else if (prev_inside)
+        {
+          // Adiciona o ponto de interseção
+          output.push_back(compute_intersection(prev_point, curr_point, min, max, edge));
+        }
+
+        prev_point = curr_point;
+      }
+    }
+
+    return output;
+  }
+
   //-------------------------------------------------------------------------------------------------
   // Funções de Preenchimento de Polígonos e Desenho de Linhas
   //-------------------------------------------------------------------------------------------------
