@@ -137,10 +137,10 @@ namespace utils
    * @param color_buffer Buffer de cores
    *
    */
-  void DrawFaceBufferGouraudShading(const std::vector<std::pair<core::Vector3, core::Vector3>> &vertexes, const core::Vector3 &eye, const models::Material &object_material, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  void DrawFaceBufferGouraudShading(const std::vector<std::pair<core::Vector3, models::Color>> &vertexes, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
   {
 
-    math::fill_polygon_gourand(vertexes, global_light, omni_lights, eye, object_material, z_buffer, color_buffer);
+    math::fill_polygon_gourand(vertexes, z_buffer, color_buffer);
   }
 
   /**

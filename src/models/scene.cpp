@@ -367,7 +367,7 @@ namespace models
 
     for (auto object : this->getObjects())
     {
-
+      // Desenha a caixa envolvente do objeto se ele estiver selecionado
       if (object == this->getSelectedObject())
       {
         core::Vector4 box = object->getBox(true);
@@ -389,37 +389,81 @@ namespace models
 
         core::HalfEdge *he = face->getHalfEdge();
 
-        // Vetor que armazena os vetores normais médios dos vértices da face
-        std::vector<core::Vector3> vertexes;
+        // first = Coordenadas de tela
+        // second = normal do vértice
+        std::vector<std::pair<core::Vector3, core::Vector3>> vertexes;
 
         while (true)
         {
-
-          // clipped_vertex = math::clip_line(he->getOrigin()->getVectorScreen(), he->getNext()->getOrigin()->getVectorScreen(), min_viewport, max_viewport);
-
-          vertexes.push_back(he->getOrigin()->getVectorScreen());
-          // vertexes.push_back(he->getNext()->getOrigin()->getVectorScreen());
+          vertexes.push_back(std::make_pair(he->getOrigin()->getVectorScreen(), he->getOrigin()->getNormal()));
 
           he = he->getNext();
           if (he == face->getHalfEdge())
             break;
         }
 
-        // Recorte 2D
-        std::vector<core::Vector3> clipped_vertex = math::sutherland_hodgman(vertexes, min_viewport, max_viewport);
-
         // O vetor normal da face é calculado na ocultação de faces
         // precisa recortar o vetor normal do vertice também (assim simplifica o calculo de interpolação)
         // usar excel como base
 
-        if (this->lighting_model == FLAT_SHADING && clipped_vertex.size() != 0)
+        if (this->lighting_model == FLAT_SHADING)
+        {
+          std::vector<core::Vector3> clipped_vertex;
+
+          // Flat shading não precisa da normal do vértice
+          for (auto vertex : vertexes)
+            clipped_vertex.push_back(vertex.first);
+
+          clipped_vertex = math::clip_polygon(clipped_vertex, min_viewport, max_viewport);
+
+          // Se o vetor de vértices for menor que 3, não é possível formar um polígono, então não é necessário desenhar
+          if (clipped_vertex.size() < 3)
+            continue;
+
           utils::DrawFaceBufferFlatShading(clipped_vertex, this->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
-        // else if (this->lighting_model == GOURAUD_SHADING)
-        //   utils::DrawFaceBufferGouraudShading(clipped_vertex, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
-        // else if (this->lighting_model == PHONG_SHADING)
-        //   utils::DrawFaceBufferPhongShading(clipped_vertex, object_centroid, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        }
+        else if (this->lighting_model == GOURAUD_SHADING)
+        {
+          // No Gouraud Shading, a cor de cada vértice é calculada antes do recorte
+
+          std::vector<std::pair<core::Vector3, models::Color>> vertexes_gouraud;
+
+          core::Vector3 eye = this->getCamera()->position;
+          models::Material object_material = object->material;
+
+          for (auto vertex : vertexes)
+          {
+            core::Vector3 v = vertex.first;
+            core::Vector3 n = vertex.second;
+            models::Color color = models::GouraudShading(this->global_light, this->omni_lights, std::make_pair(v, n), eye, object_material);
+            vertexes_gouraud.push_back(std::make_pair(v, color));
+          }
+
+          vertexes_gouraud = math::clip_polygon_gouraud(vertexes_gouraud, min_viewport, max_viewport);
+
+          // Se o vetor de vértices for menor que 3, não é possível formar um polígono, então não é necessário desenhar
+          if (vertexes_gouraud.size() < 3)
+            continue;
+
+          utils::DrawFaceBufferGouraudShading(vertexes_gouraud, this->z_buffer, this->color_buffer);
+        }
+        else if (this->lighting_model == PHONG_SHADING)
+        {
+          std::vector<std::pair<core::Vector3, core::Vector3>> clipped_vertex = math::clip_polygon_phong(vertexes, min_viewport, max_viewport);
+
+          // Se o vetor de vértices for menor que 3, não é possível formar um polígono, então não é necessário desenhar
+          if (clipped_vertex.size() < 3)
+            continue;
+
+          utils::DrawFaceBufferPhongShading(clipped_vertex, object_centroid, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        }
       }
     }
+
+    // Resetar a clipping flag de cada vértice para a próxima iteração
+    for (auto object : this->getObjects())
+      for (auto vertex : object->getVertices())
+        vertex->setClipped(false);
   }
 
   void Scene::smith_pipeline()

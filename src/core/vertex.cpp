@@ -124,6 +124,28 @@ namespace core
   }
 
   /**
+   * @brief Método get da flag de clipagem da classe Vertex
+   *
+   * Retorna a flag que indica se o vértice foi clipado.
+   *
+   * @return bool
+   */
+  bool Vertex::getClipped() const
+  {
+    return this->clipped;
+  }
+
+  /**
+   * @brief Método set da flag de clipagem da classe Vertex
+   *
+   * @param clipped Flag para indicar se o vértice foi clipado
+   */
+  void Vertex::setClipped(bool clipped)
+  {
+    this->clipped = clipped;
+  }
+
+  /**
    * @brief Método get do identificador da classe Vertex
    *
    * Retorna o id do vetor.

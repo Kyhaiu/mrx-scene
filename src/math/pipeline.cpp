@@ -248,6 +248,47 @@ namespace math
   //-------------------------------------------------------------------------------------------------
 
   /**
+   * @brief Calcula o código de saída de um ponto em relação a uma janela de recorte.
+   *
+   * @param p Ponto a ser verificado
+   * @param min Canto inferior esquerdo da janela de recorte
+   * @param max Canto superior direito da janela de recorte
+   * @return Código de saída do ponto
+   *
+   * @note O código de saída é uma combinação de bits que indicam a posição do ponto em relação à janela de recorte.
+   * @note O código de saída é calculado da seguinte forma:
+   * @note 0000: Ponto dentro da janela
+   * @note 0001: Ponto à esquerda da janela
+   * @note 0010: Ponto à direita da janela
+   * @note 0100: Ponto abaixo da janela
+   * @note 1000: Ponto acima da janela
+   */
+  int compute_outcode(core::Vector3 p, core::Vector2 min, core::Vector2 max)
+  {
+    int code = INSIDE;
+
+    if (p.x < min.x) // to the left of rectangle
+    {
+      code |= LEFT;
+    }
+    else if (p.x > max.x) // to the right of rectangle
+    {
+      code |= RIGHT;
+    }
+
+    if (p.y < min.y) // below the rectangle
+    {
+      code |= BOTTOM;
+    }
+    else if (p.y > max.y) // above the rectangle
+    {
+      code |= TOP;
+    }
+
+    return code;
+  }
+
+  /**
    * @brief Calcula a coordenada y do ponto de interseção entre duas linhas.
    *
    * @param x1 Coordenada x do primeiro ponto da primeira linha.
@@ -339,14 +380,186 @@ namespace math
       else if (i_pos >= 0 && k_pos < 0)
       {
         // Adiciona o ponto de interseção e o segundo ponto
-        clipped_polygon.push_back({x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[i].z});
+        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[i].z};
+
+        clipped_polygon.push_back(intersection);
         clipped_polygon.push_back(polygon[k]);
       }
       // Caso 3: Apenas o segundo ponto está fora da janela
       else if (i_pos < 0 && k_pos >= 0)
       {
         // Adiciona o ponto de interseção com a janela
-        clipped_polygon.push_back({x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[i].z});
+        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[k].z};
+
+        clipped_polygon.push_back(intersection);
+      }
+      // Caso 4: Ambos os pontos estão fora da janela, nenhum ponto é adicionado
+    }
+
+    return clipped_polygon;
+  }
+
+  /**
+   * @brief Realiza a clipagem de linha com interpolação de cores.
+   *
+   * @param polygon Polígono a ser clipado.
+   * @param x1 Coordenada x do primeiro ponto da linha.
+   * @param y1 Coordenada y do primeiro ponto da linha.
+   * @param x2 Coordenada x do segundo ponto da linha.
+   * @param y2 Coordenada y do segundo ponto da linha.
+   *
+   * @return std::vector<std::pair<core::Vector3, models::Color>> Polígono clipado.
+   *
+   * @note A função realiza a clipagem de um polígono em relação a uma janela de visualização.
+   * @note A função utiliza o algoritmo de Sutherland-Hodgman.
+
+   */
+  std::vector<std::pair<core::Vector3, models::Color>> clip_line_gouraud(const std::vector<std::pair<core::Vector3, models::Color>> &polygon, float x1, float y1, float x2, float y2)
+  {
+    std::vector<std::pair<core::Vector3, models::Color>> clipped_polygon;
+
+    for (int i = 0; i < polygon.size(); i++)
+    {
+      int k = (i + 1) % polygon.size();
+      float ix = polygon[i].first.x, iy = polygon[i].first.y;
+      float kx = polygon[k].first.x, ky = polygon[k].first.y;
+
+      // Calcula a posição dos pontos em relação à janela
+      float i_pos = (x2 - x1) * (iy - y1) - (y2 - y1) * (ix - x1);
+      float k_pos = (x2 - x1) * (ky - y1) - (y2 - y1) * (kx - x1);
+
+      // Calcula o código de saída dos pontos
+      int i_outcode = compute_outcode(polygon[i].first, {x1, y1}, {x2, y2});
+      int k_outcode = compute_outcode(polygon[k].first, {x1, y1}, {x2, y2});
+
+      // Caso 1: Ambos os pontos estão dentro da janela
+      if (i_pos < 0 && k_pos < 0)
+      {
+        // Apenas o segundo ponto é adicionado
+        clipped_polygon.push_back(polygon[k]);
+      }
+      // Caso 2: Apenas o primeiro ponto está fora da janela
+      else if (i_pos >= 0 && k_pos < 0)
+      {
+        // Adiciona o ponto de interseção e o segundo ponto
+        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[i].first.z};
+
+        // Interpola a cor do ponto de interseção com a janela
+        float t;
+
+        if (i_outcode & TOP || i_outcode & BOTTOM)
+          t = (intersection.y - iy) / (ky - iy);
+        else
+          t = (intersection.x - ix) / (kx - ix);
+
+        models::Color intersection_color = models::InterpolateColors(polygon[i].second, polygon[k].second, t);
+
+        clipped_polygon.push_back(std::make_pair(intersection, intersection_color));
+        clipped_polygon.push_back(polygon[k]);
+      }
+      // Caso 3: Apenas o segundo ponto está fora da janela
+      else if (i_pos < 0 && k_pos >= 0)
+      {
+        // Adiciona o ponto de interseção com a janela
+        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[k].first.z};
+
+        // Interpola a cor do ponto de interseção com a janela
+        float t;
+
+        if (k_outcode & TOP || k_outcode & BOTTOM)
+          t = (intersection.y - iy) / (ky - iy);
+        else
+          t = (intersection.x - ix) / (kx - ix);
+
+        models::Color intersection_color = models::InterpolateColors(polygon[i].second, polygon[k].second, t);
+
+        clipped_polygon.push_back(std::make_pair(intersection, intersection_color));
+      }
+      // Caso 4: Ambos os pontos estão fora da janela, nenhum ponto é adicionado
+    }
+
+    return clipped_polygon;
+  }
+
+  /**
+   * @brief Realiza a clipagem de linha com interpolação de cores.
+   *
+   * @param polygon Polígono a ser clipado.
+   * @param x1 Coordenada x do primeiro ponto da linha.
+   * @param y1 Coordenada y do primeiro ponto da linha.
+   * @param x2 Coordenada x do segundo ponto da linha.
+   * @param y2 Coordenada y do segundo ponto da linha.
+   *
+   * @return std::vector<std::pair<core::Vector3, core::Vector3>> Polígono clipado.
+   *
+   * @note A função realiza a clipagem de um polígono em relação a uma janela de visualização.
+   * @note A função utiliza o algoritmo de Sutherland-Hodgman.
+   */
+  std::vector<std::pair<core::Vector3, core::Vector3>> clip_line_phong(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, float x1, float y1, float x2, float y2)
+  {
+    std::vector<std::pair<core::Vector3, core::Vector3>> clipped_polygon;
+
+    for (int i = 0; i < polygon.size(); i++)
+    {
+      int k = (i + 1) % polygon.size();
+      float ix = polygon[i].first.x, iy = polygon[i].first.y;
+      float kx = polygon[k].first.x, ky = polygon[k].first.y;
+
+      // Calcula a posição dos pontos em relação à janela
+      float i_pos = (x2 - x1) * (iy - y1) - (y2 - y1) * (ix - x1);
+      float k_pos = (x2 - x1) * (ky - y1) - (y2 - y1) * (kx - x1);
+
+      // Calcula o código de saída dos pontos
+      int i_outcode = compute_outcode(polygon[i].first, {x1, y1}, {x2, y2});
+      int k_outcode = compute_outcode(polygon[k].first, {x1, y1}, {x2, y2});
+
+      // Caso 1: Ambos os pontos estão dentro da janela
+      if (i_pos < 0 && k_pos < 0)
+      {
+        // Apenas o segundo ponto é adicionado
+        clipped_polygon.push_back(polygon[k]);
+      }
+      // Caso 2: Apenas o primeiro ponto está fora da janela
+      else if (i_pos >= 0 && k_pos < 0)
+      {
+        // Adiciona o ponto de interseção e o segundo ponto
+        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[i].first.z};
+
+        // Interpola a cor do ponto de interseção com a janela
+        float t;
+
+        if (i_outcode & TOP || i_outcode & BOTTOM)
+          t = (intersection.y - iy) / (ky - iy);
+        else
+          t = (intersection.x - ix) / (kx - ix);
+
+        float n_i = math::Lerp(polygon[i].second.x, polygon[k].second.x, t);
+        float n_j = math::Lerp(polygon[i].second.y, polygon[k].second.y, t);
+        float n_k = math::Lerp(polygon[i].second.z, polygon[k].second.z, t);
+
+        clipped_polygon.push_back(std::make_pair(intersection, core::Vector3{n_i, n_j, n_k}));
+
+        clipped_polygon.push_back(polygon[k]);
+      }
+      // Caso 3: Apenas o segundo ponto está fora da janela
+      else if (i_pos < 0 && k_pos >= 0)
+      {
+        // Adiciona o ponto de interseção com a janela
+        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[k].first.z};
+
+        // Interpola a cor do ponto de interseção com a janela
+        float t;
+
+        if (k_outcode & TOP || k_outcode & BOTTOM)
+          t = (intersection.y - iy) / (ky - iy);
+        else
+          t = (intersection.x - ix) / (kx - ix);
+
+        float n_i = math::Lerp(polygon[i].second.x, polygon[k].second.x, t);
+        float n_j = math::Lerp(polygon[i].second.y, polygon[k].second.y, t);
+        float n_k = math::Lerp(polygon[i].second.z, polygon[k].second.z, t);
+
+        clipped_polygon.push_back(std::make_pair(intersection, core::Vector3{n_i, n_j, n_k}));
       }
       // Caso 4: Ambos os pontos estão fora da janela, nenhum ponto é adicionado
     }
@@ -366,7 +579,7 @@ namespace math
    * @note A função realiza a clipagem de um polígono em relação a uma janela de visualização.
    * @note A função utiliza o algoritmo de Sutherland-Hodgman.
    */
-  std::vector<core::Vector3> sutherland_hodgman(const std::vector<core::Vector3> &polygon, const core::Vector2 &min, const core::Vector2 &max)
+  std::vector<core::Vector3> clip_polygon(const std::vector<core::Vector3> &polygon, const core::Vector2 &min, const core::Vector2 &max)
   {
     std::vector<core::Vector3> result = polygon;
 
@@ -381,6 +594,71 @@ namespace math
 
     // Clip against the top edge
     result = clip_line(result, max.x, min.y, min.x, min.y);
+
+    return result;
+  }
+
+  /**
+   * @brief Realiza a clipagem de um polígono com interpolação de cores.
+   *
+   * @param polygon Polígono a ser clipado.
+   * @param min Coordenadas mínimas da janela de visualização.
+   * @param max Coordenadas máximas da janela de visualização.
+   *
+   * @return std::vector<std::pair<core::Vector3, models::Color>> Polígono clipado.
+   *
+   * @note A função realiza a clipagem de um polígono em relação a uma janela de visualização.
+   * @note A função utiliza o algoritmo de Sutherland-Hodgman.
+   * @note Utilizado para o modelo de sombreamento Gouraud.
+   */
+  std::vector<std::pair<core::Vector3, models::Color>> clip_polygon_gouraud(const std::vector<std::pair<core::Vector3, models::Color>> &polygon, const core::Vector2 &min, const core::Vector2 &max)
+  {
+
+    std::vector<std::pair<core::Vector3, models::Color>> result = polygon;
+
+    // Clip against the left edge
+    result = clip_line_gouraud(result, min.x, min.y, min.x, max.y);
+
+    // Clip against the bottom edge
+    result = clip_line_gouraud(result, min.x, max.y, max.x, max.y);
+
+    // Clip against the right edge
+    result = clip_line_gouraud(result, max.x, max.y, max.x, min.y);
+
+    // Clip against the top edge
+    result = clip_line_gouraud(result, max.x, min.y, min.x, min.y);
+
+    return result;
+  }
+
+  /**
+   * @brief Realiza a clipagem de um polígono com interpolação de normais.
+   *
+   * @param polygon Polígono a ser clipado.
+   * @param min Coordenadas mínimas da janela de visualização.
+   * @param max Coordenadas máximas da janela de visualização.
+   *
+   * @return std::vector<std::pair<core::Vector3, core::Vector3>> Polígono clipado.
+   *
+   * @note A função realiza a clipagem de um polígono em relação a uma janela de visualização.
+   * @note A função utiliza o algoritmo de Sutherland-Hodgman.
+   * @note Utilizado para o modelo de sombreamento Phong.
+   */
+  std::vector<std::pair<core::Vector3, core::Vector3>> clip_polygon_phong(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max)
+  {
+    std::vector<std::pair<core::Vector3, core::Vector3>> result = polygon;
+
+    // Clip against the left edge
+    result = clip_line_phong(result, min.x, min.y, min.x, max.y);
+
+    // Clip against the bottom edge
+    result = clip_line_phong(result, min.x, max.y, max.x, max.y);
+
+    // Clip against the right edge
+    result = clip_line_phong(result, max.x, max.y, max.x, min.y);
+
+    // Clip against the top edge
+    result = clip_line_phong(result, max.x, min.y, min.x, min.y);
 
     return result;
   }
@@ -535,37 +813,59 @@ namespace math
         }
       }
     }
-
-    scanlines.clear();
   }
 
   /**
    * @brief Preenche um polígono com sombreamento de Gourand
    *
    * @param vertexes Vertices da face do polígono
-   * @param vertexes_normal Vetores normais dos vértices
-   * @param global_light Luz global
-   * @param omni_lights Luzes omni
-   * @param eye Posição do observador
-   * @param face_centroid Centroide da face
-   * @param object_material Material do objeto
    * @param z_buffer Buffer de profundidade
    * @param color_buffer Buffer de cores
    *
    */
-  void fill_polygon_gourand(const std::vector<std::pair<core::Vector3, core::Vector3>> &_vertexes, const models::Light &global_light, const std::vector<models::Omni> &omni_lights, const core::Vector3 &eye, const models::Material &object_material, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
+  void fill_polygon_gourand(const std::vector<std::pair<core::Vector3, models::Color>> &_vertexes, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer)
   {
     // Usando para associar cada vértice com sua cor calculada
-    std::vector<std::pair<core::Vector3, models::Color>> vertexes;
+    std::vector<std::pair<core::Vector3, models::Color>> vertexes = _vertexes;
 
-    for (auto vertex : _vertexes)
-    {
-      // utiliza o vertice nas coordenadas SRU para calcular a cor
-      core::Vector3 v = vertex.first;
-      core::Vector3 n = vertex.second;
-      models::Color color = models::GouraudShading(global_light, omni_lights, std::make_pair(v, n), eye, object_material);
-      vertexes.push_back(std::make_pair(vertex.first, color));
-    }
+    // std::vector<models::Color> colors;
+
+    // // Calcula a cor de cada vértice
+    // for (auto vertex : _vertexes)
+    // {
+    //   core::Vector3 v = vertex.first;
+    //   core::Vector3 n = vertex.second->getNormal();
+    //   models::Color color = models::GouraudShading(global_light, omni_lights, std::make_pair(v, n), eye, object_material);
+    //   colors.push_back(color);
+    // }
+
+    // // Recalcula a cor de cada vértice clipado
+    // for (int i = 0; i < _vertexes.size(); i++)
+    // {
+    //   // utiliza o vértice nas coordenadas SRU para calcular a cor
+    //   int k = (i + 1) % _vertexes.size();
+
+    //   if (_vertexes[i].second->getClipped())
+    //   {
+    //     float original_x = _vertexes[i].second->getX(true);
+    //     float end_x = _vertexes[k].second->getX(true);
+    //     float clipped_x = _vertexes[i].first.x;
+
+    //     float t = (clipped_x - original_x) / (end_x - original_x);
+
+    //     colors[i] = models::InterpolateColors(colors[i], colors[k], t);
+
+    //     float original_y = _vertexes[i].second->getY(true);
+    //     float end_y = _vertexes[k].second->getY(true);
+    //     float clipped_y = _vertexes[i].first.y;
+
+    //     t = (clipped_y - original_y) / (end_y - original_y);
+
+    //     colors[i] = models::InterpolateColors(colors[i], colors[k], t);
+    //   }
+
+    //   vertexes.push_back(std::make_pair(_vertexes[i].first, colors[i]));
+    // }
 
     int y_min = std::numeric_limits<int>::max();
     int y_max = std::numeric_limits<int>::min();
@@ -585,13 +885,15 @@ namespace math
     std::vector<std::vector<std::pair<core::Vector3, models::Color>>> scanlines(y_max - y_min);
 
     // Como a lista de vertices é composta pelo inicio e fim da aresta, o incremento é de 2
-    for (int i = 0; i < vertexes.size(); i += 2)
+    for (int i = 0; i < vertexes.size(); i++)
     {
-      core::Vector3 start = vertexes[i].first;
-      core::Vector3 end = vertexes[i + 1].first;
+      int k = (i + 1) % vertexes.size();
 
-      models::Color start_color = vertexes[i % vertexes.size()].second;
-      models::Color end_color = vertexes[(i + 1) % vertexes.size()].second;
+      core::Vector3 start = vertexes[i].first;
+      core::Vector3 end = vertexes[k].first;
+
+      models::Color start_color = vertexes[i].second;
+      models::Color end_color = vertexes[k].second;
 
       // Se a linha for horizontal, não faz nada
       if (start.y == end.y)
@@ -704,13 +1006,14 @@ namespace math
     // 2º parâmetro do par: vetor normal do pixel (interpolado)
     std::vector<std::vector<std::tuple<core::Vector3, core::Vector3>>> scanlines(y_max - y_min);
 
-    for (int count = 0; count < _vertexes.size(); count += 2)
+    for (int l = 0; l < _vertexes.size(); l++)
     {
-      core::Vector3 start = _vertexes[count].first;
-      core::Vector3 end = _vertexes[count + 1].first;
+      int m = (l + 1) % _vertexes.size();
+      core::Vector3 start = _vertexes[l].first;
+      core::Vector3 end = _vertexes[m].first;
 
-      core::Vector3 start_normal = _vertexes[count].second;
-      core::Vector3 end_normal = _vertexes[count + 1].second;
+      core::Vector3 start_normal = _vertexes[l].second;
+      core::Vector3 end_normal = _vertexes[m].second;
 
       // Se a linha for horizontal, não faz nada
       if (start.y == end.y)
