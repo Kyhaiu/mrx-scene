@@ -74,6 +74,7 @@ namespace math
     // OBS.: O pipeline é simplificado
     core::Matrix clipping_transformation(const float d, const float far, const core::Vector2 center_window, const core::Vector2 size_window);
     core::Matrix perspective_transformation(const float near, const float far);
+    core::Matrix src_to_srt(const core::Vector2 min_viewport, const core::Vector2 max_viewport, const float near, const float far);
   }
 
   //-------------------------------------------------------------------------------------------------

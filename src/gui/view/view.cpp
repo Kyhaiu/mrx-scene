@@ -150,26 +150,26 @@ void GUI::UI::render()
   }
   else
   {
-    // ImGui::SetNextWindowPos(ImVec2(0, 20));
-    // ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, ImGui::GetWindowSize().y));
-    // ImGui::Begin("left-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
+    ImGui::SetNextWindowPos(ImVec2(0, 20));
+    ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, ImGui::GetWindowSize().y));
+    ImGui::Begin("left-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-    // ImGui::SetNextWindowPos(ImVec2(0, 20));
-    // ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f));
-    // ImGui::BeginChild("hierarchy", ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f), false);
-    // this->hierarchy(this->controller->getScene());
-    // ImGui::EndChild();
+    ImGui::SetNextWindowPos(ImVec2(0, 20));
+    ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f));
+    ImGui::BeginChild("hierarchy", ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f), false);
+    this->hierarchy(this->controller->getScene());
+    ImGui::EndChild();
 
-    // ImGui::SetNextWindowPos(ImVec2(0, this->controller->windowHeight * 0.5f));
-    // ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f));
-    // ImGui::BeginChild("actions", ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f), false);
-    // this->object_properties();
-    // ImGui::EndChild();
+    ImGui::SetNextWindowPos(ImVec2(0, this->controller->windowHeight * 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f));
+    ImGui::BeginChild("actions", ImVec2(this->controller->windowWidth * 0.2f, this->controller->windowHeight * 0.5f), false);
+    this->object_properties();
+    ImGui::EndChild();
 
-    // ImGui::End();
+    ImGui::End();
 
-    ImGui::SetNextWindowPos(ImVec2((float)this->controller->windowWidth, 20));
-    ImGui::SetNextWindowSize(ImVec2((float)this->controller->windowWidth, (float)this->controller->windowHeight));
+    ImGui::SetNextWindowPos(ImVec2((float)this->controller->windowWidth * 0.2f, 20));
+    ImGui::SetNextWindowSize(ImVec2((float)this->controller->windowWidth * 0.8f, (float)this->controller->windowHeight));
     ImGui::Begin("viewport", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
     this->controller->updateScene();

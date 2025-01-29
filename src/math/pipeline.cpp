@@ -206,39 +206,68 @@ namespace math
     // Realiza a transformação de perspectiva => H
     // A matriz resultante I é igual à H * G * F
 
-    // Matriz I
-    // | 1 0 0                                  0     |
-    // | 0 1 0                                  0     |
-    // | 0 0 (-z_min^2 + 2*z_min)/(-z_min + 1) -z_min |
-    // | 0 0 (-z_min + 1)/z_min                 1     |
     float z_min = near / far;
-    core::Matrix result = core::Flota16ToMatrix({1, 0, 0, 0,
-                                                 0, 1, 0, 0,
-                                                 0, 0, (-std::powf(z_min, 2) + 2 * z_min) / (-z_min + 1), -z_min,
-                                                 0, 0, (-z_min + 1) / z_min, 1});
+
+    core::Matrix F = math::MatrixTranslate({0.0f, 0.0f, -z_min});
+
+    core::Matrix G = math::MatrixScale({1.0f, 1.0f, 1.0f / (1 - z_min)});
+
+    core::Matrix H = core::Flota16ToMatrix({1, 0, 0, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            0, 0, (1 - z_min) / z_min, 0});
+
+    core::Matrix result = math::MatrixMultiply(H, G);
+    result = math::MatrixMultiply(result, F);
+
+    float inv_z_min = 1 / z_min;
 
     // multiplicar as 3 primeira linhas da matriz I por 1/z_min.
     // Leva o tronco da piramide no prisma com dimensões 2*z_min em x, y e em z_min em z.
     // linha 1
-    result.m0 *= 1 / z_min;
-    result.m4 *= 1 / z_min;
-    result.m8 *= 1 / z_min;
-    result.m12 *= 1 / z_min;
+    result.m0 *= inv_z_min;
+    result.m4 *= inv_z_min;
+    result.m8 *= inv_z_min;
+    result.m12 *= inv_z_min;
     // linha 2
-    result.m1 *= 1 / z_min;
-    result.m5 *= 1 / z_min;
-    result.m9 *= 1 / z_min;
-    result.m13 *= 1 / z_min;
+    result.m1 *= inv_z_min;
+    result.m5 *= inv_z_min;
+    result.m9 *= inv_z_min;
+    result.m13 *= inv_z_min;
     // linha 3
-    result.m2 *= 1 / z_min;
-    result.m6 *= 1 / z_min;
-    result.m10 *= 1 / z_min;
-    result.m14 *= 1 / z_min;
+    result.m2 *= inv_z_min;
+    result.m6 *= inv_z_min;
+    result.m10 *= inv_z_min;
+    result.m14 *= inv_z_min;
 
     // multiplicar a matriz pelo escalar z_min
     // Faz a projeção perspectiva levando o VRP para o infinito.
     // A projeção passa a ser uma proj. paralela ortográfica ao ignorar a coordenada z.
     result = math::MatrixMultiplyValue(result, z_min);
+
+    return result;
+  }
+
+  core::Matrix pipeline_smith::src_to_srt(const core::Vector2 min_viewport, const core::Vector2 max_viewport, const float near, const float far)
+  {
+
+    core::Matrix K = core::Flota16ToMatrix({0.5f, 0.0f, 0.0f, 0.5f,
+                                            0.0f, 0.5f, 0.0f, 0.5f,
+                                            0.0f, 0.0f, 1.0f, 0.0f,
+                                            0.0f, 0.0f, 0.0f, 1.0f});
+    float dx = max_viewport.x - min_viewport.x;
+    float dy = max_viewport.y - min_viewport.y;
+    float dz = far - near;
+
+    core::Matrix L = core::Flota16ToMatrix({dx, 0, 0, min_viewport.x,
+                                            0, dy, 0, min_viewport.y,
+                                            0, 0, dz, near,
+                                            0, 0, 0, 1});
+
+    core::Matrix M = K;
+
+    core::Matrix result = math::MatrixMultiply(M, L);
+    result = math::MatrixMultiply(result, K);
 
     return result;
   }
@@ -827,45 +856,6 @@ namespace math
   {
     // Usando para associar cada vértice com sua cor calculada
     std::vector<std::pair<core::Vector3, models::Color>> vertexes = _vertexes;
-
-    // std::vector<models::Color> colors;
-
-    // // Calcula a cor de cada vértice
-    // for (auto vertex : _vertexes)
-    // {
-    //   core::Vector3 v = vertex.first;
-    //   core::Vector3 n = vertex.second->getNormal();
-    //   models::Color color = models::GouraudShading(global_light, omni_lights, std::make_pair(v, n), eye, object_material);
-    //   colors.push_back(color);
-    // }
-
-    // // Recalcula a cor de cada vértice clipado
-    // for (int i = 0; i < _vertexes.size(); i++)
-    // {
-    //   // utiliza o vértice nas coordenadas SRU para calcular a cor
-    //   int k = (i + 1) % _vertexes.size();
-
-    //   if (_vertexes[i].second->getClipped())
-    //   {
-    //     float original_x = _vertexes[i].second->getX(true);
-    //     float end_x = _vertexes[k].second->getX(true);
-    //     float clipped_x = _vertexes[i].first.x;
-
-    //     float t = (clipped_x - original_x) / (end_x - original_x);
-
-    //     colors[i] = models::InterpolateColors(colors[i], colors[k], t);
-
-    //     float original_y = _vertexes[i].second->getY(true);
-    //     float end_y = _vertexes[k].second->getY(true);
-    //     float clipped_y = _vertexes[i].first.y;
-
-    //     t = (clipped_y - original_y) / (end_y - original_y);
-
-    //     colors[i] = models::InterpolateColors(colors[i], colors[k], t);
-    //   }
-
-    //   vertexes.push_back(std::make_pair(_vertexes[i].first, colors[i]));
-    // }
 
     int y_min = std::numeric_limits<int>::max();
     int y_max = std::numeric_limits<int>::min();
