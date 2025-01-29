@@ -54,12 +54,86 @@
 #include <core/vertex.hpp>
 #include <core/halfedge.hpp>
 
+#include <math/math.hpp>
+
 #include <utils/nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
 namespace core
 {
+
+  typedef struct Plane
+  {
+    core::Vector3 normal;                // Vetor normal ao plano
+    float d;                             // Distância do plano à origem
+    std::vector<core::Vector3> vertices; // Vértices que definem o plano
+
+    // Construtor com normal e d
+    Plane(core::Vector3 normal, float d) : normal(normal), d(d) {}
+
+    // Construtor a partir de uma lista de vértices
+    Plane(const std::vector<core::Vector3> &vertices) : vertices(vertices)
+    {
+      if (vertices.size() < 3)
+      {
+        throw std::invalid_argument("Um plano precisa de pelo menos 3 pontos.");
+      }
+
+      // Calcular a normal usando os três primeiros vértices
+      core::Vector3 p1 = vertices[0];
+      core::Vector3 p2 = vertices[1];
+      core::Vector3 p3 = vertices[2];
+
+      this->normal = math::Vector3Normalize(math::Vector3CrossProduct((p2 - p1), (p3 - p1)));
+      this->d = -math::Vector3DotProduct(this->normal, p1);
+    }
+
+    // Calcula o ponto de interseção entre uma linha e o plano
+    core::Vector3 intersectionPoint(core::Vector3 p1, core::Vector3 p2)
+    {
+      return p1 + (p2 - p1) * (-distance(p1) / math::Vector3DotProduct(normal, p2 - p1));
+    }
+
+    // Inverter o sentido da normal
+    void invertNormal()
+    {
+      normal = math::Vector3Negate(normal);
+      d = -d;
+    }
+
+    // Calcula a distância de um ponto ao plano
+    float distance(core::Vector3 p) const
+    {
+      return math::Vector3DotProduct(normal, p) - d;
+    }
+
+    // Verifica se todos os vértices estão no mesmo plano
+    bool isCoplanar() const
+    {
+      for (const auto &vertex : vertices)
+      {
+        if (std::abs(distance(vertex)) > EPSILON) // Tolerância para flutuações numéricas
+        {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    friend std::ostream &operator<<(std::ostream &os, const Plane &plane)
+    {
+      os << "Normal: " << plane.normal << std::endl;
+      os << "D: " << plane.d << std::endl;
+      os << "Vertices: " << std::endl;
+      for (const auto &vertex : plane.vertices)
+      {
+        os << vertex << std::endl;
+      }
+      return os;
+    }
+  } Plane;
+
   class Face
   {
   private:
@@ -140,6 +214,8 @@ namespace core
     bool isVisible(const core::Vector3 camera_position);
     void getFaceNormal();
     core::Vector3 getFaceCentroid(bool screen_coords = false);
+
+    core::Plane face2plane();
 
     // Friend functions
     friend std::ostream &operator<<(std::ostream &os, const Face &face);

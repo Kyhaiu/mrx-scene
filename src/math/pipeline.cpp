@@ -206,39 +206,68 @@ namespace math
     // Realiza a transformação de perspectiva => H
     // A matriz resultante I é igual à H * G * F
 
-    // Matriz I
-    // | 1 0 0                                  0     |
-    // | 0 1 0                                  0     |
-    // | 0 0 (-z_min^2 + 2*z_min)/(-z_min + 1) -z_min |
-    // | 0 0 (-z_min + 1)/z_min                 1     |
     float z_min = near / far;
-    core::Matrix result = core::Flota16ToMatrix({1, 0, 0, 0,
-                                                 0, 1, 0, 0,
-                                                 0, 0, (-std::powf(z_min, 2) + 2 * z_min) / (-z_min + 1), -z_min,
-                                                 0, 0, (-z_min + 1) / z_min, 1});
+
+    core::Matrix F = math::MatrixTranslate({0.0f, 0.0f, -z_min});
+
+    core::Matrix G = math::MatrixScale({1.0f, 1.0f, 1.0f / (1 - z_min)});
+
+    core::Matrix H = core::Flota16ToMatrix({1, 0, 0, 0,
+                                            0, 1, 0, 0,
+                                            0, 0, 1, 0,
+                                            0, 0, (1 - z_min) / z_min, 0});
+
+    core::Matrix result = math::MatrixMultiply(H, G);
+    result = math::MatrixMultiply(result, F);
+
+    float inv_z_min = 1 / z_min;
 
     // multiplicar as 3 primeira linhas da matriz I por 1/z_min.
     // Leva o tronco da piramide no prisma com dimensões 2*z_min em x, y e em z_min em z.
     // linha 1
-    result.m0 *= 1 / z_min;
-    result.m4 *= 1 / z_min;
-    result.m8 *= 1 / z_min;
-    result.m12 *= 1 / z_min;
+    result.m0 *= inv_z_min;
+    result.m4 *= inv_z_min;
+    result.m8 *= inv_z_min;
+    result.m12 *= inv_z_min;
     // linha 2
-    result.m1 *= 1 / z_min;
-    result.m5 *= 1 / z_min;
-    result.m9 *= 1 / z_min;
-    result.m13 *= 1 / z_min;
+    result.m1 *= inv_z_min;
+    result.m5 *= inv_z_min;
+    result.m9 *= inv_z_min;
+    result.m13 *= inv_z_min;
     // linha 3
-    result.m2 *= 1 / z_min;
-    result.m6 *= 1 / z_min;
-    result.m10 *= 1 / z_min;
-    result.m14 *= 1 / z_min;
+    result.m2 *= inv_z_min;
+    result.m6 *= inv_z_min;
+    result.m10 *= inv_z_min;
+    result.m14 *= inv_z_min;
 
     // multiplicar a matriz pelo escalar z_min
     // Faz a projeção perspectiva levando o VRP para o infinito.
     // A projeção passa a ser uma proj. paralela ortográfica ao ignorar a coordenada z.
     result = math::MatrixMultiplyValue(result, z_min);
+
+    return result;
+  }
+
+  core::Matrix pipeline_smith::src_to_srt(const core::Vector2 min_viewport, const core::Vector2 max_viewport, const float near, const float far)
+  {
+
+    core::Matrix K = core::Flota16ToMatrix({0.5f, 0.0f, 0.0f, 0.5f,
+                                            0.0f, 0.5f, 0.0f, 0.5f,
+                                            0.0f, 0.0f, 1.0f, 0.0f,
+                                            0.0f, 0.0f, 0.0f, 1.0f});
+    float dx = max_viewport.x - min_viewport.x;
+    float dy = max_viewport.y - min_viewport.y;
+    float dz = far - near;
+
+    core::Matrix L = core::Flota16ToMatrix({dx, 0, 0, min_viewport.x,
+                                            0, dy, 0, min_viewport.y,
+                                            0, 0, dz, near,
+                                            0, 0, 0, 1});
+
+    core::Matrix M = K;
+
+    core::Matrix result = math::MatrixMultiply(M, L);
+    result = math::MatrixMultiply(result, K);
 
     return result;
   }
@@ -286,6 +315,72 @@ namespace math
     }
 
     return code;
+  }
+
+  /**
+   * @brief Computa um novo valor de tE ou tL para uma interseção interior de um segmento de linha com uma aresta.
+   *
+   * Esta função é usada em algoritmos de recorte de linhas (Liang-Barsky) para determinar
+   * se um segmento de linha intersecta uma aresta do volume de recorte e ajustar os parâmetros tE (ponto de entrada)
+   * e tL (ponto de saída) conforme necessário.
+   *
+   * @param denom Representa -(Ni • D), onde Ni é a normal da aresta e D é a direção da linha. Para retângulos
+   *              alinhados aos eixos, este valor se reduz a ±Ax ou ±Ay. O sinal de `denom` determina se a
+   *              interseção é um ponto de entrada (PE) ou um ponto de saída (PL).
+   * @param num Representa Nz • (Po - Pe), onde Po é um ponto da linha e Pe é um ponto da aresta. Para retângulos
+   *            alinhados aos eixos, este valor se reduz a distâncias horizontais ou verticais direcionais de Po
+   *            até a aresta. O sinal de `num` determina a visibilidade de Po e é usado para rejeitar trivialmente
+   *            linhas horizontais ou verticais.
+   * @param tE Referência para o parâmetro t do ponto de entrada (PE). Este valor é atualizado se uma interseção
+   *           de entrada válida for encontrada.
+   * @param tL Referência para o parâmetro t do ponto de saída (PL). Este valor é atualizado se uma interseção
+   *           de saída válida for encontrada.
+   *
+   * @return Retorna `false` se o segmento de linha pode ser trivialmente rejeitado (ou seja, está completamente
+   *         fora do volume de recorte). Retorna `true` se o segmento não pode ser rejeitado e ajusta tE ou tL,
+   *         se necessário, para representar a porção do segmento que está dentro da aresta.
+   *
+   * @details
+   * - Se `denom > 0`, a interseção é um ponto de entrada (PE). O valor de `t` é calculado, e:
+   *   - Se `t > tL`, a linha está completamente fora do volume de recorte e é rejeitada.
+   *   - Se `t > tE`, o valor de `tE` é atualizado para `t`.
+   * - Se `denom < 0`, a interseção é um ponto de saída (PL). O valor de `t` é calculado, e:
+   *   - Se `t < tE`, a linha está completamente fora do volume de recorte e é rejeitada.
+   *   - Se `t < tL`, o valor de `tL` é atualizado para `t`.
+   * - Se `denom == 0`, a linha é paralela à aresta:
+   *   - Se `num < 0`, a linha está completamente fora do volume de recorte e é rejeitada.
+   *   - Se `num >= 0`, a linha está completamente dentro do volume de recorte.
+   *
+   * @note
+   * - `tE` e `tL` devem ser inicializados com valores que representem o intervalo completo da linha (por exemplo,
+   *   `tE = 0` e `tL = 1`).
+   * - Esta função é geralmente chamada para cada aresta do volume de recorte durante o processo de recorte.
+   */
+  bool clip_test(float denom, float num, float &tE, float &tL)
+  {
+    float t;
+    if (denom > 0)
+    {
+      t = num / denom;
+      if (t > tL)
+        return false;
+      else if (t > tE)
+        tE = t;
+    }
+    else if (denom < 0)
+    {
+      t = num / denom;
+      if (t < tE)
+        return false;
+      else
+        tL = t;
+    }
+    else if (num > 0)
+    {
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -525,7 +620,7 @@ namespace math
         // Adiciona o ponto de interseção e o segundo ponto
         core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[i].first.z};
 
-        // Interpola a cor do ponto de interseção com a janela
+        // Interpola a normal do vértice de interseção
         float t;
 
         if (i_outcode & TOP || i_outcode & BOTTOM)
@@ -547,7 +642,7 @@ namespace math
         // Adiciona o ponto de interseção com a janela
         core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[k].first.z};
 
-        // Interpola a cor do ponto de interseção com a janela
+        // Interpola a normal do vértice de interseção
         float t;
 
         if (k_outcode & TOP || k_outcode & BOTTOM)
@@ -661,6 +756,242 @@ namespace math
     result = clip_line_phong(result, max.x, min.y, min.x, min.y);
 
     return result;
+  }
+
+  void clip3d_line(core::Vector3 &p0, core::Vector3 &p1, const float z_min, bool &accept)
+  {
+
+    float dx = p1.x - p0.x, dz = p1.z - p0.z;
+    float tmin = 0.0f, tmax = 1.0f;
+
+    // Inicialmente, assume que a linha está completamente fora do volume
+    accept = false;
+
+    // std::cout << "dx = " << dx << ", dz = " << dz << std::endl;
+    // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
+
+    if (clip_test(-dx - dz, p0.x + p0.z, tmin, tmax)) // Lado direito
+    {
+      // std::cout << "Lado direito" << std::endl;
+      // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
+      if (clip_test(dx - dz, -p0.x + p0.z, tmin, tmax)) // Lado esquerdo
+      {
+        // Se chegou atC) aqui, parte da linha estC! dentro do volume -z <= x <= z
+        float dy = p1.y - p0.y;
+
+        // std::cout << "Lado esquerdo" << std::endl;
+        // std::cout << "dy = " << dy << std::endl;
+        // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
+        if (clip_test(dy - dz, -p0.y + p0.z, tmin, tmax)) // Base
+        {
+          // std::cout << "Base" << std::endl;
+          // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
+          if (clip_test(-dy - dz, p0.y + p0.z, tmin, tmax)) // Topo
+          {
+            // std::cout << "Topo" << std::endl;
+            // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
+
+            // Se chegou atC) aqui, a linha estC! dentro do volume -z <= x <= z; -z <= y <= z
+            if (clip_test(-dz, p0.z - z_min, tmin, tmax)) // Perto
+            {
+              // std::cout << "Perto" << std::endl;
+              // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
+
+              if (clip_test(dz, -p0.z - 1, tmin, tmax)) // Longe
+              {
+                // std::cout << "Longe" << std::endl;
+                // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
+
+                // Se chegou atC) aqui, a linha estC! dentro do volume -z <= x <= z; -z <= y <= z; -z <= z <= z
+                accept = true;
+                // Se a extremidade (t = 1) estC! fora do volume, computa a interseC'C#o
+                if (tmax < 1.0f)
+                {
+                  p1.x = p0.x + (p1.x - p0.x) * tmax;
+                  p1.y = p0.y + (p1.y - p0.y) * tmax;
+                  p1.z = p0.z + (p1.z - p0.z) * tmax;
+                }
+                // Se a extremidade (t = 0) estC! fora do volume, computa a interseC'C#o
+                if (tmin > 0.0f)
+                {
+                  p0.x += tmin * dx;
+                  p0.y += tmin * dy;
+                  p0.z += tmin * dz;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  std::vector<core::Vector3> clip3d_polygon(const std::vector<core::Vector3> &polygon, const float near, const float far)
+  {
+    // std::vector<core::Vector3> clipped_polygon;
+
+    // models::Mesh *canonical_volume = shapes::canonical_volume(near / far);
+
+    // std::vector<core::Plane> planes;
+
+    // for (auto f : canonical_volume->getFaces())
+    //   planes.push_back(f->face2plane());
+
+    // float d1 = 0, d2 = 0;
+
+    // for (int c = 0; c < planes.size(); c++)
+    // {
+    //   if (polygon.size() == 0)
+    //     return polygon;
+
+    //   for (int i = 0; i < polygon.size(); i++)
+    //   {
+    //     d1 = planes[c].distance(polygon[i]);
+    //     d2 = planes[c].distance(polygon[(i + 1) % polygon.size()]);
+
+    //     if ((d1 <= 0) && (d2 <= 0))
+    //     {
+    //       clipped_polygon.push_back(polygon[(i + 1) % polygon.size()]);
+    //     }
+    //     else if ((d1 > 0) && ((d2 > -EPSILON) && (d2 > 0)))
+    //     {
+    //       clipped_polygon.push_back(polygon[(i + 1) % polygon.size()]);
+    //     }
+    //     else if (((d1 > -EPSILON) && (d1 < EPSILON)) && (d2 > 0))
+    //     {
+    //       continue;
+    //     }
+    //     else if ((d1 <= 0) && (d2 > 0))
+    //     {
+    //       core::Vector3 intersection = planes[c].intersectionPoint(polygon[i], polygon[(i + 1) % polygon.size()]);
+
+    //       clipped_polygon.push_back(intersection);
+    //     }
+    //     else if ((d1 > 0) && (d2 <= 0))
+    //     {
+    //       core::Vector3 intersection = planes[c].intersectionPoint(polygon[i], polygon[(i + 1) % polygon.size()]);
+
+    //       clipped_polygon.push_back(intersection);
+    //       clipped_polygon.push_back(polygon[(i + 1) % polygon.size()]);
+    //     }
+    //   }
+    // }
+
+    // return clipped_polygon;
+
+    // std::cout << "Near: " << near << ", Far: " << far << std::endl;
+    std::cout << "Vertex Polygon" << std::endl;
+    for (auto v : polygon)
+    {
+      std::cout << v << std::endl;
+    }
+
+    std::vector<core::Vector3> result = polygon;
+
+    for (int i = 0; i < polygon.size(); i++)
+    {
+      int k = (i + 1) % polygon.size();
+      core::Vector3 p1 = polygon[i];
+      core::Vector3 p2 = polygon[k];
+
+      bool accept = false;
+
+      // std::cout << "---------" << std::endl;
+
+      // std::cout << "Clipping line " << p1 << " -> " << p2 << std::endl;
+      // std::cout << "Accept: " << accept << std::endl;
+
+      clip3d_line(p1, p2, near / far, accept);
+
+      // std::cout << "Accept: " << accept << std::endl;
+      if (accept)
+      {
+        // std::cout << "Clipped line " << p1 << " -> " << p2 << std::endl;
+        result.push_back(p1);
+        result.push_back(p2);
+      }
+    }
+
+    std::cout << "Clipped Polygon" << std::endl;
+    for (auto v : result)
+    {
+      std::cout << v << std::endl;
+    }
+
+    return result;
+  }
+
+  std::vector<core::Vector3> sutherland_hodgman(const std::vector<core::Vector3> &polygon, const core::Vector3 &plane_normal, const core::Vector3 &plane_point, const float d)
+  {
+    float d1, d2 = 0;
+
+    if (polygon.size() == 0)
+      return polygon;
+
+    std::vector<core::Vector3> clipped_polygon;
+
+    for (int i = 0; i < polygon.size(); i++)
+    {
+      int k = (i + 1) % polygon.size();
+      d1 = math::Vector3DotProduct(plane_normal, polygon[i]) + d;
+      d2 = math::Vector3DotProduct(plane_normal, polygon[k]) + d;
+
+      std::cout << "d1 = " << d1 << ", d2 = " << d2 << std::endl;
+
+      // Caso 1: Ambos os pontos estão dentro do volume de recorte
+      if ((d1 <= 0) && (d2 <= 0))
+      {
+        std::cout << "Caso 1" << std::endl;
+        // Adiciona o segundo ponto
+        clipped_polygon.push_back(polygon[k]);
+      }
+      // Caso 2: Apenas o primeiro ponto está fora do volume de recorte
+      else if ((d1 > 0) && ((d2 > -EPSILON) && (d2 < EPSILON)))
+      {
+        std::cout << "Caso 2" << std::endl;
+        clipped_polygon.push_back(polygon[k]);
+      }
+      else if (((d1 > -EPSILON) && (d1 < EPSILON)) && (d2 > 0))
+      {
+        std::cout << "Caso 3" << std::endl;
+        continue;
+      }
+      else if ((d1 <= 0) && (d2 > 0))
+      {
+        std::cout << "Caso 4" << std::endl;
+        core::Vector3 intersection;
+
+        // Calcula a interseção
+        // Distancia do ponto i ao plano
+        float dp1 = math::Vector3DotProduct(plane_normal, polygon[i]) + d;
+        // vetor entre os pontos
+        core::Vector3 p = polygon[k] - polygon[i];
+        float np = math::Vector3DotProduct(plane_normal, p);
+
+        intersection = polygon[i] + (polygon[k] - polygon[i]) * (dp1 / np);
+
+        clipped_polygon.push_back(intersection);
+      }
+      else if (d1 > 0 && d2 <= 0)
+      {
+        std::cout << "Caso 5" << std::endl;
+        core::Vector3 intersection;
+
+        // Calcula a interseção
+        // Distancia do ponto i ao plano
+        float dp1 = math::Vector3DotProduct(plane_normal, polygon[i]) + d;
+        // vetor entre os pontos
+        core::Vector3 p = polygon[k] - polygon[i];
+        float np = math::Vector3DotProduct(plane_normal, p);
+
+        intersection = polygon[i] + (polygon[k] - polygon[i]) * (dp1 / np);
+
+        clipped_polygon.push_back(intersection);
+        clipped_polygon.push_back(polygon[k]);
+      }
+    }
+
+    return clipped_polygon;
   }
 
   //-------------------------------------------------------------------------------------------------

@@ -58,6 +58,7 @@
 namespace shapes
 {
   models::Mesh *cube();
+  models::Mesh *canonical_volume(float z_min);
   models::Mesh *pyramid(float base = 3.0f, float height = 3.0f);
   models::Mesh *sphere(float radius, int rings = 30, int segments = 30);
   models::Mesh *icosphere(float radius, int subdivisions = 3);

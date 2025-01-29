@@ -481,32 +481,83 @@ namespace models
     core::Matrix clipping_transformation_matrix = math::pipeline_smith::clipping_transformation(camera->d, camera->far, core::Vector2{0.0f, 0.0f}, window_size);
     core::Matrix perspective_transformation_matrix = math::pipeline_smith::perspective_transformation(camera->near, camera->far);
     // Esta etapa é idêntica ao pipeline de Adair
-    core::Matrix viewport_matrix = math::pipeline_adair::src_to_srt(
-        this->getMinWindow(),
+    core::Matrix viewport_matrix = math::pipeline_smith::src_to_srt(
         this->getMinViewport(),
-        this->getMaxWindow(),
         this->getMaxViewport(),
-        false);
+        this->getCamera()->near,
+        this->getCamera()->far);
+    // core::Matrix viewport_matrix = math::pipeline_adair::src_to_srt(
+    //     this->getMinWindow(),
+    //     this->getMinViewport(),
+    //     this->getMaxWindow(),
+    //     this->getMaxViewport(),
+    //     true);
 
-    core::Matrix result = math::MatrixMultiply(viewport_matrix, perspective_transformation_matrix);
-    result = math::MatrixMultiply(result, clipping_transformation_matrix);
+    core::Matrix result = math::MatrixMultiply(perspective_transformation_matrix, clipping_transformation_matrix);
     result = math::MatrixMultiply(result, sru_src_matrix);
+    // result = math::MatrixMultiply(result, sru_src_matrix);
+
+    std::vector<core::Vector3> vertexes_clipped;
 
     core::Vector4 vectorResult = {0.0f, 0.0f, 0.0f, 0.0f};
 
-    for (auto object : this->objects)
+    for (auto object : this->getObjects())
     {
       for (auto vertex : object->getVertices())
       {
         vectorResult = math::MatrixMultiplyVector(result, vertex->getVector());
 
-        vertex->setVectorScreen({vectorResult.x / vectorResult.w, vectorResult.y / vectorResult.w, vectorResult.z});
-      }
+        vertex->setVectorScreen({vectorResult.x / vectorResult.w, vectorResult.y / vectorResult.w, vectorResult.z / vectorResult.w});
 
+        for (auto face : object->getFaces())
+        {
+          face->setVisible(face->isVisible(camera->position));
+        }
+      }
+    }
+
+    for (auto object : this->getObjects())
+    {
       for (auto face : object->getFaces())
       {
-        face->setVisible(face->isVisible(camera->position));
+        if (!face->getVisible())
+          continue;
+
+        core::HalfEdge *he = face->getHalfEdge();
+
+        std::vector<core::Vector3> vertexes;
+
+        while (true)
+        {
+          vertexes.push_back(he->getOrigin()->getVectorScreen());
+
+          he = he->getNext();
+          if (he == face->getHalfEdge())
+            break;
+        }
+
+        vertexes_clipped = math::clip3d_polygon(vertexes, this->getCamera()->near, this->getCamera()->far);
       }
+    }
+
+    // result = math::MatrixMultiply(result, viewport_matrix);
+
+    for (auto object : this->objects)
+    {
+      for (auto vertex : object->getVertices())
+      {
+        core::Vector4 v = {vertex->getVectorScreen().x, vertex->getVectorScreen().y, vertex->getVectorScreen().z, 1.0f};
+        vectorResult = math::MatrixMultiplyVector(viewport_matrix, v);
+
+        vertex->setVectorScreen({vectorResult.x, vectorResult.y, vectorResult.z});
+
+        // std::cout << vertex->getVectorScreen() << std::endl;
+      }
+
+      // for (auto face : object->getFaces())
+      // {
+      //   face->setVisible(face->isVisible(camera->position));
+      // }
 
       if (this->lighting_model != FLAT_SHADING)
         object->determineNormals();
@@ -544,15 +595,14 @@ namespace models
         face->clipped_vertex.clear();
 
         // Vetor que armazena os vetores normais médios dos vértices da face
-        std::vector<core::Vertex *> vertexes;
+        std::vector<core::Vector3> vertexes;
 
         while (true)
         {
 
           // clipped_vertex = math::clip_line(he->getOrigin()->getVectorScreen(), he->getNext()->getOrigin()->getVectorScreen(), min_viewport, max_viewport);
 
-          vertexes.push_back(he->getOrigin());
-          vertexes.push_back(he->getNext()->getOrigin());
+          vertexes.push_back(he->getOrigin()->getVectorScreen());
 
           he = he->getNext();
           if (he == face->getHalfEdge())
@@ -563,8 +613,8 @@ namespace models
         // precisa recortar o vetor normal do vertice também (assim simplifica o calculo de interpolação)
         // usar excel como base
 
-        // if (this->lighting_model == FLAT_SHADING)
-        //   utils::DrawFaceBufferFlatShading(vertexes, this->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        if (this->lighting_model == FLAT_SHADING)
+          utils::DrawFaceBufferFlatShading(vertexes, this->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
         // else if (this->lighting_model == GOURAUD_SHADING)
         //   utils::DrawFaceBufferGouraudShading(vertexes, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
         // else if (this->lighting_model == PHONG_SHADING)
@@ -765,6 +815,22 @@ namespace models
     {
       core::Vector4 vector = vertex->getVector();
       core::Vector4 result = math::MatrixMultiplyVector(rotateMatrix, vector);
+
+      vertex->setVector(result);
+    }
+  }
+
+  void Scene::scaleObject(core::Vector3 scale)
+  {
+    if (this->selected_object == nullptr) // Nada a fazer
+      return;
+
+    core::Matrix scaleMatrix = math::MatrixScale(scale);
+
+    for (auto vertex : this->selected_object->getVertices())
+    {
+      core::Vector4 vector = vertex->getVector();
+      core::Vector4 result = math::MatrixMultiplyVector(scaleMatrix, vector);
 
       vertex->setVector(result);
     }

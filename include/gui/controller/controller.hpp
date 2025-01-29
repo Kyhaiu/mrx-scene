@@ -111,6 +111,12 @@ namespace GUI
      */
     std::map<models::Mesh *, core::Vector3> previousRotation;
     /**
+     * @brief Mapa para armazenar escalas anteriores por objeto
+     *
+     * @note TODO: BUSCAR NÃO DEPENDER DE DOIS ESTADOS PARA REPRESENTAR A MESMA COISA
+     */
+    std::map<models::Mesh *, core::Vector3> previousScale;
+    /**
      * @brief
      *
      * @param canvasWidth
@@ -133,6 +139,7 @@ namespace GUI
     void newScene();
     void translate_object(models::Mesh *object, core::Vector3 translation);
     void rotate_object(models::Mesh *object, core::Vector3 rotation);
+    void scale_object(models::Mesh *object, core::Vector3 scale);
 
     // Events
     void on_hierarchy_item_selected(int index);

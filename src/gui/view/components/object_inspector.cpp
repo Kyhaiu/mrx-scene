@@ -87,5 +87,33 @@ namespace GUI
 
       ImGui::TreePop();
     }
+
+    if (ImGui::TreeNode("Escala"))
+    {
+      static core::Vector3 scale = {1.0f, 1.0f, 1.0f};
+
+      ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 1.0f, 1.0f));
+      ImGui::Button("X");
+      ImGui::PopStyleColor(1);
+      ImGui::SameLine();
+      if (ImGui::InputFloat("##scale-x", &scale.x))
+        controller->scale_object(object, scale);
+
+      ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.33f, 1.0f, 1.0f));
+      ImGui::Button("Y");
+      ImGui::PopStyleColor(1);
+      ImGui::SameLine();
+      if (ImGui::InputFloat("##scale-y", &scale.y))
+        controller->scale_object(object, scale);
+
+      ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.66f, 1.0f, 1.0f));
+      ImGui::Button("Z");
+      ImGui::PopStyleColor(1);
+      ImGui::SameLine();
+      if (ImGui::InputFloat("##scale-z", &scale.z))
+        controller->scale_object(object, scale);
+
+      ImGui::TreePop();
+    }
   }
 }

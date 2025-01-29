@@ -334,4 +334,33 @@ namespace core
     return centroid;
   }
 
+  core::Plane Face::face2plane()
+  {
+    std::vector<core::Plane> planes;
+
+    int n = this->vertex.size();
+    planes.reserve(n + 1);
+
+    core::Vector3 centroid = this->getFaceCentroid();
+    std::vector<core::Vector3> vertexes;
+
+    core::HalfEdge *he = this->getHalfEdge();
+
+    while (true)
+    {
+      vertexes.push_back(he->getOrigin()->getVector().toVector3());
+
+      he = he->getNext();
+      if (he == this->getHalfEdge())
+        break;
+    }
+
+    core::Plane p = core::Plane(vertexes);
+
+    if (p.distance(centroid) < 0)
+      p.invertNormal();
+
+    return p;
+  }
+
 } // namespace core

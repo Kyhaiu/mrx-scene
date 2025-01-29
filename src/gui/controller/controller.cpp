@@ -7,7 +7,7 @@ GUI::Controller::Controller(float canvasWidth, float canvasHeight)
   this->windowWidth = static_cast<int>(canvasWidth);
 
   this->scene = new models::Scene(
-      models::CreateCamera3D({10, 10, 20}, {0, 0, 0}, {0, 1, 0}, 20, 15, 40),
+      models::CreateCamera3D({10, 10, 20}, {0, 0, 0}, {0, 1, 0}, 20, 4, 2),
       {},
       // The canvas don't start at the left corner
       // If the layout changes it will be necessary to change this values
@@ -159,6 +159,22 @@ void GUI::Controller::rotate_object(models::Mesh *object, core::Vector3 rotation
   object->rotation.z = rotation.z;
 
   previousRotation[object] = rotation;
+}
+
+void GUI::Controller::scale_object(models::Mesh *object, core::Vector3 scale)
+{
+  core::Vector3 actualScale = {
+      scale.x - (this->previousScale.count(object) ? previousScale[object].x : 0.0f),
+      scale.y - (previousScale.count(object) ? previousScale[object].y : 0.0f),
+      scale.z - (previousScale.count(object) ? previousScale[object].z : 0.0f)};
+
+  this->getScene()->scaleObject(actualScale);
+
+  object->scale.x = scale.x;
+  object->scale.y = scale.y;
+  object->scale.z = scale.z;
+
+  previousScale[object] = scale;
 }
 
 //-----------------------------------------------------------------------------

@@ -125,6 +125,21 @@ namespace core
     {
       return ((float *)this)[i];
     }
+
+    Vector3 operator+(const Vector3 &v) const
+    {
+      return {x + v.x, y + v.y, z + v.z};
+    }
+
+    Vector3 operator-(const Vector3 &v) const
+    {
+      return {x - v.x, y - v.y, z - v.z};
+    }
+
+    Vector3 operator*(const float &f) const
+    {
+      return {x * f, y * f, z * f};
+    }
   } Vector3;
 
   std::ostream &operator<<(std::ostream &os, const Vector3 &v);

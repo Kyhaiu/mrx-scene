@@ -51,6 +51,7 @@
 #include <core/vertex.hpp>
 #include <models/colors.hpp>
 #include <models/light.hpp>
+#include <shapes/shapes.hpp>
 
 #include <tuple>
 #include <vector>
@@ -74,6 +75,7 @@ namespace math
     // OBS.: O pipeline é simplificado
     core::Matrix clipping_transformation(const float d, const float far, const core::Vector2 center_window, const core::Vector2 size_window);
     core::Matrix perspective_transformation(const float near, const float far);
+    core::Matrix src_to_srt(const core::Vector2 min_viewport, const core::Vector2 max_viewport, const float near, const float far);
   }
 
   //-------------------------------------------------------------------------------------------------
@@ -88,6 +90,8 @@ namespace math
 
   int compute_outcode(core::Vector3 p, core::Vector2 min, core::Vector2 max);
 
+  bool clip_test(float denom, float num, float &tE, float &tL);
+
   float y_intersection(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
   float x_intersection(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
 
@@ -99,6 +103,11 @@ namespace math
   std::vector<std::pair<core::Vector3, models::Color>> clip_polygon_gouraud(const std::vector<std::pair<core::Vector3, models::Color>> &polygon, const core::Vector2 &min, const core::Vector2 &max);
   std::vector<std::pair<core::Vector3, core::Vector3>> clip_polygon_phong(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max);
 
+  void clip3d_line(core::Vector3 &p0, core::Vector3 &p1, const float z_min, bool &accept);
+
+  std::vector<core::Vector3> clip3d_polygon(const std::vector<core::Vector3> &polygon, const float near, const float far);
+
+  std::vector<core::Vector3> sutherland_hodgman(const std::vector<core::Vector3> &polygon, const core::Vector3 &plane_normal, const core::Vector3 &point_plane, const float d);
   //-------------------------------------------------------------------------------------------------
   // Funções de Preenchimento de Polígonos e Desenho de Linhas
   //-------------------------------------------------------------------------------------------------

@@ -1236,6 +1236,27 @@ namespace math
   }
 
   /**
+   * @brief Obtém uma matriz de escala com fatores de escala em x, y e z.
+   *
+   * @param scale Vetor 3D com fatores de escala em x, y e z.
+   * @return core::Matrix
+   */
+  core::Matrix MatrixScale(core::Vector3 scale)
+  {
+    core::Matrix result = {1, 0, 0, 0,
+                           0, 1, 0, 0,
+                           0, 0, 1, 0,
+                           0, 0, 0, 1}; // MatrixIdentity()
+
+    result.m0 = scale.x;
+    result.m5 = scale.y;
+    result.m10 = scale.z;
+    result.m15 = 1.0f;
+
+    return result;
+  }
+
+  /**
    * @brief Obtém uma matriz de rotação em torno do eixo X.
    *
    * @param angle O ângulo de rotação.
