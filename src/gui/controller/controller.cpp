@@ -7,7 +7,7 @@ GUI::Controller::Controller(float canvasWidth, float canvasHeight)
   this->windowWidth = static_cast<int>(canvasWidth);
 
   this->scene = new models::Scene(
-      models::CreateCamera3D({10, 10, 20}, {0, 0, 0}, {0, 1, 0}, 20, 15, 40),
+      models::CreateCamera3D({10, 10, 20}, {0, 0, 0}, {0, 1, 0}, 30, 20, 40),
       {},
       // The canvas don't start at the left corner
       // If the layout changes it will be necessary to change this values
@@ -110,7 +110,7 @@ void GUI::Controller::newScene()
   float canvasHeight = static_cast<float>(this->windowHeight);
 
   this->scene = new models::Scene(
-      models::CreateCamera3D({10, 10, 20}, {0, 0, 0}, {0, 1, 0}, 20, 15, 40),
+      models::CreateCamera3D({10, 10, 20}, {0, 0, 0}, {0, 1, 0}, 30, 20, 40),
       {},
       // The canvas don't start at the left corner
       // If the layout changes it will be necessary to change this values

@@ -659,7 +659,7 @@ namespace math
     float dx = b.x - a.x;
     float dy = b.y - a.y;
     float dz = b.z - a.z;
-    result = dx * dx + dy * dy + dz * dz;
+    result = sqrtf(dx * dx + dy * dy + dz * dz);
 
     return result;
   }

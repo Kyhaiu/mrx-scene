@@ -311,6 +311,30 @@ namespace models
 
     models::Camera3D *camera = this->getCamera();
 
+    // Pré computação da visibilidade dos objetos
+    // Se o objeto estiver dentro do intervalo de near e far da câmera, ele é visível
+    // Caso contrário, ele é invisível
+    for (auto object : this->objects)
+    {
+      core::Vector3 centroid = this->centroid_algorithm == CENTROID_BY_MEAN ? object->getCentroidByMean() : object->getCentroidByWrapBox();
+      core::Vector3 vrp = camera->position;
+      core::Vector3 target = camera->target;
+
+      // Direção da câmera (eixo Z do espaço da câmera)
+      core::Vector3 camera_forward = math::Vector3Normalize(math::Vector3Subtract(target, vrp));
+      // Vetor do centroid para a câmera
+      core::Vector3 centroid_to_camera = centroid - vrp;
+
+      // Projeção na direção da câmera (depth)
+      float depth = math::Vector3DotProduct(camera_forward, centroid_to_camera);
+
+      // Verifica se está fora do near/far
+      if (depth < camera->near || depth > camera->far)
+        object->is_visible = false;
+      else
+        object->is_visible = true;
+    }
+
     // Obtém as matrizes de transformação
     core::Matrix sru_src_matrix = math::pipeline_adair::sru_to_src(camera->position, camera->target);
     core::Matrix projection_matrix = math::pipeline_adair::projection(
@@ -333,6 +357,9 @@ namespace models
     // Rasteriza todos os objetos da cena
     for (auto object : this->objects)
     {
+      if (!object->is_visible)
+        continue;
+
       for (auto vertex : object->getVertices())
       {
         vectorResult = math::MatrixMultiplyVector(result, vertex->getVector());
@@ -367,6 +394,9 @@ namespace models
 
     for (auto object : this->getObjects())
     {
+      if (!object->is_visible)
+        continue;
+
       // Desenha a caixa envolvente do objeto se ele estiver selecionado
       if (object == this->getSelectedObject())
       {
@@ -462,8 +492,7 @@ namespace models
 
     // Resetar a clipping flag de cada vértice para a próxima iteração
     for (auto object : this->getObjects())
-      for (auto vertex : object->getVertices())
-        vertex->setClipped(false);
+      object->is_visible = true;
   }
 
   void Scene::smith_pipeline()
