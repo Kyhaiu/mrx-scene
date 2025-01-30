@@ -47,6 +47,9 @@ int main(int argc, char *argv[])
   IMGUI_CHECKVERSION();
   ImGui::CreateContext();
   ImGuiIO &io = ImGui::GetIO();
+
+  ImFont *font = io.Fonts->AddFontFromFileTTF("./assets/fonts/Kroftsmann.ttf", 16.0f); // Fonte personalizada
+
   (void)io;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard Controls
 
@@ -54,6 +57,10 @@ int main(int argc, char *argv[])
   ImGui::CreateContext();
   ImGui_ImplSDL2_InitForSDLRenderer(window, renderer);
   ImGui_ImplSDLRenderer2_Init(renderer);
+
+  // Recria as texturas do renderizador
+  ImGui_ImplSDLRenderer2_DestroyDeviceObjects();
+  ImGui_ImplSDLRenderer2_CreateDeviceObjects();
 
   GUI::UI *ui = new GUI::UI(window, renderer);
 

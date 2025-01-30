@@ -93,13 +93,13 @@ namespace models
      */
     float d;
     /**
-     * @brief Distância do plano de projeção mais distante
-     */
-    float far;
-    /**
      * @brief Distância do plano de projeção mais próximo
      */
     float near;
+    /**
+     * @brief Distância do plano de projeção mais distante
+     */
+    float far;
     /**
      * @brief Flag que indica se a câmera deve rotacionar em torno do ponto alvo
      */
@@ -115,7 +115,13 @@ namespace models
 
     json to_json()
     {
-      return json{{"position", position.to_json()}, {"target", target.to_json()}, {"up", up.to_json()}, {"d", d}};
+      return json{
+          {"position", position.to_json()},
+          {"target", target.to_json()},
+          {"up", up.to_json()},
+          {"d", d},
+          {"far", far},
+          {"near", near}};
     }
 
     static Camera3D *from_json(json json_data)
@@ -124,7 +130,10 @@ namespace models
           core::Vector3::from_json(json_data["position"]),
           core::Vector3::from_json(json_data["target"]),
           core::Vector3::from_json(json_data["up"]),
-          json_data["d"], false, false, false};
+          json_data["d"],
+          json_data["near"],
+          json_data["far"],
+          false, false, false};
     }
   } Camera3D;
 

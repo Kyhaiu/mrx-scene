@@ -1159,45 +1159,6 @@ namespace math
     // Usando para associar cada vértice com sua cor calculada
     std::vector<std::pair<core::Vector3, models::Color>> vertexes = _vertexes;
 
-    // std::vector<models::Color> colors;
-
-    // // Calcula a cor de cada vértice
-    // for (auto vertex : _vertexes)
-    // {
-    //   core::Vector3 v = vertex.first;
-    //   core::Vector3 n = vertex.second->getNormal();
-    //   models::Color color = models::GouraudShading(global_light, omni_lights, std::make_pair(v, n), eye, object_material);
-    //   colors.push_back(color);
-    // }
-
-    // // Recalcula a cor de cada vértice clipado
-    // for (int i = 0; i < _vertexes.size(); i++)
-    // {
-    //   // utiliza o vértice nas coordenadas SRU para calcular a cor
-    //   int k = (i + 1) % _vertexes.size();
-
-    //   if (_vertexes[i].second->getClipped())
-    //   {
-    //     float original_x = _vertexes[i].second->getX(true);
-    //     float end_x = _vertexes[k].second->getX(true);
-    //     float clipped_x = _vertexes[i].first.x;
-
-    //     float t = (clipped_x - original_x) / (end_x - original_x);
-
-    //     colors[i] = models::InterpolateColors(colors[i], colors[k], t);
-
-    //     float original_y = _vertexes[i].second->getY(true);
-    //     float end_y = _vertexes[k].second->getY(true);
-    //     float clipped_y = _vertexes[i].first.y;
-
-    //     t = (clipped_y - original_y) / (end_y - original_y);
-
-    //     colors[i] = models::InterpolateColors(colors[i], colors[k], t);
-    //   }
-
-    //   vertexes.push_back(std::make_pair(_vertexes[i].first, colors[i]));
-    // }
-
     int y_min = std::numeric_limits<int>::max();
     int y_max = std::numeric_limits<int>::min();
 

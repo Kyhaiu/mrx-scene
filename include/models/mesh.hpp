@@ -120,6 +120,10 @@ namespace models
      */
     models::Material material;
     /**
+     * @brief Flag para indicar se o objeto está dentro do plano near e far
+     */
+    bool is_visible = true;
+    /**
      * @brief Posição do objeto no espaço
      *
      * @note A posição do objeto é dada em coordenadas do SRU (Sistema de Referência do Universo)

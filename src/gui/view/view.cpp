@@ -134,7 +134,131 @@ void GUI::UI::render()
     ImGui::SetNextWindowSize(ImVec2(static_cast<float>(this->controller->windowWidth), static_cast<float>(this->controller->windowHeight)));
     ImGui::Begin("benchmark", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-    models::CameraOrbital(this->controller->getScene()->getCamera(), this->controller->camera_rotation_sensitivity);
+    // models::CameraOrbital(this->controller->getScene()->getCamera(), this->controller->camera_rotation_sensitivity);
+    models::CameraMoveForward(this->controller->getScene()->getCamera(), 1.0f, true);
+
+    core::Vector3 vrp = this->controller->getScene()->getCamera()->position;
+    core::Vector3 eye = this->controller->getScene()->getCamera()->target;
+
+    // Container com 20% da largura da tela
+    ImGui::SetNextWindowPos(ImVec2(0, 20));
+    ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, ImGui::GetWindowSize().y));
+    ImGui::Begin("left-container", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
+
+    // Desenha os fps na tela
+    ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::YELLOW)), "FPS: %.1f", ImGui::GetIO().Framerate);
+
+    ImGui::Text("VRP");
+    ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::RED)), "X: ");
+    ImGui::SameLine();
+    ImGui::Text("%d", static_cast<int>(vrp.x));
+    ImGui::SameLine();
+    ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::BLUE)), "Y: ");
+    ImGui::SameLine();
+    ImGui::Text("%d", static_cast<int>(vrp.y));
+    ImGui::SameLine();
+    ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::GREEN)), "Z: ");
+    ImGui::SameLine();
+    ImGui::Text("%d", static_cast<int>(vrp.z));
+
+    ImGui::Text("Eye");
+    ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::RED)), "X: ");
+    ImGui::SameLine();
+    ImGui::Text("%d", static_cast<int>(eye.x));
+    ImGui::SameLine();
+    ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::BLUE)), "Y: ");
+    ImGui::SameLine();
+    ImGui::Text("%d", static_cast<int>(eye.y));
+    ImGui::SameLine();
+    ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::GREEN)), "Z: ");
+    ImGui::SameLine();
+    ImGui::Text("%d", static_cast<int>(eye.z));
+
+    // padding de 50px verticalmente
+    ImGui::Dummy(ImVec2(0, 50));
+
+    // Grafico do tempo de rasterização
+    // Converte os doubles para float (necessário para PlotLines)
+    static std::vector<float> frame_times_float;
+    frame_times_float.clear();
+    for (double time : this->controller->benchmark_results.frame_times)
+    {
+      frame_times_float.push_back(static_cast<float>(time));
+    }
+
+    char overlay[32];
+    snprintf(
+        overlay,
+        sizeof(overlay),
+        "Frame Times (ms) - Total (%d)",
+        static_cast<int>(this->controller->benchmark_results.total_frames) // Converte para int
+    );
+
+    float available_width = ImGui::GetContentRegionAvail().x;
+    // Plot do gráfico
+    ImGui::PlotLines(
+        "",                                         // Label do gráfico
+        frame_times_float.data(),                   // Dados (array de floats)
+        static_cast<int>(frame_times_float.size()), // Número de pontos
+        0,                                          // Offset para início dos dados
+        overlay,                                    // Rótulo overlay (opcional)
+        0.0f,                                       // Escala mínima (0 = auto)
+        FLT_MAX,                                    // Escala máxima (FLT_MAX = auto)
+        ImVec2(available_width, 150)                // Tamanho do gráfico (largura, altura)
+    );
+
+    // Mostra estatísticas adicionais (opcional)
+    if (!this->controller->benchmark_results.frame_times.empty())
+    {
+      double current_time = this->controller->benchmark_results.frame_times.back();
+      ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::YELLOW)), "Current frame time:");
+      ImGui::SameLine();
+      ImGui::Text("%.4f ms", current_time);
+      ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::YELLOW)), "Average frame time:");
+      ImGui::SameLine();
+      ImGui::Text("%.4f ms", this->controller->benchmark_results.average_frame_time * 1000);
+
+      ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::GREEN)), "Min frame time:");
+      ImGui::SameLine();
+      ImGui::Text("%.4f ms", this->controller->benchmark_results.min_frame_time);
+      ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::RED)), "Max frame time:");
+      ImGui::SameLine();
+      ImGui::Text("%.4f ms", this->controller->benchmark_results.max_frame_time);
+    }
+
+    ImGui::Dummy(ImVec2(0, 50));
+
+    // Grafico dos 10% piores frames
+
+    // Converte os doubles para float (necessário para PlotLines)
+    static std::vector<float> worst_10_percentile_float;
+    worst_10_percentile_float.clear();
+    for (double time : this->controller->benchmark_results.worst_10_percentile)
+    {
+      worst_10_percentile_float.push_back(static_cast<float>(time));
+    }
+
+    char overlay_2[64];
+    snprintf(
+        overlay_2,
+        sizeof(overlay_2),
+        "Worst 10%% Frame Times (ms) - Total (%d)",
+        static_cast<int>(this->controller->benchmark_results.worst_10_percentile.size()) // Converte para int
+    );
+
+    // Plot do gráfico
+    ImGui::PlotLines(
+        "",                                                 // Label do gráfico
+        worst_10_percentile_float.data(),                   // Dados (array de floats)
+        static_cast<int>(worst_10_percentile_float.size()), // Número de pontos
+        0,                                                  // Offset para início dos dados
+        overlay_2,                                          // Rótulo overlay (opcional)
+        0.0f,                                               // Escala mínima (0 = auto)
+        FLT_MAX,                                            // Escala máxima (FLT_MAX = auto)
+        ImVec2(available_width, 150)                        // Tamanho do gráfico (largura, altura)
+    );
+
+    ImGui::End();
 
     // Mede o tempo de rasterização
     auto start_time = std::chrono::high_resolution_clock::now();
@@ -168,8 +292,8 @@ void GUI::UI::render()
 
     ImGui::End();
 
-    ImGui::SetNextWindowPos(ImVec2((float)this->controller->windowWidth, 20));
-    ImGui::SetNextWindowSize(ImVec2((float)this->controller->windowWidth, (float)this->controller->windowHeight));
+    ImGui::SetNextWindowPos(ImVec2((float)this->controller->windowWidth * 0.2f, 20));
+    ImGui::SetNextWindowSize(ImVec2((float)this->controller->windowWidth * 0.8f, (float)this->controller->windowHeight));
     ImGui::Begin("viewport", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
 
     this->controller->updateScene();
