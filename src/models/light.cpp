@@ -133,6 +133,8 @@ namespace models
     models::Color diffuse_illumination = models::BLACK;
     models::Color specular_illumination = models::BLACK;
 
+    core::Vector3 pixel_normal_normalized = math::Vector3Normalize(pixel_normal);
+
     // Passo 1: Calcular a iluminação ambiente
     ambient_illumination.r = static_cast<models::Uint8>(math::Clamp(light.intensity.r * material.ambient.r, 0, 255));
     ambient_illumination.g = static_cast<models::Uint8>(math::Clamp(light.intensity.g * material.ambient.g, 0, 255));
@@ -146,9 +148,9 @@ namespace models
     {
       // Passo 2: Calcular a iluminação difusa
       // Vetor da luz (direção da luz)
-      core::Vector3 L = math::Vector3Normalize(math::Vector3Subtract(lamp.position, pixel));
+      core::Vector3 L = math::Vector3Normalize(math::Vector3Subtract(lamp.position, centroid));
 
-      float cos_theta = math::Vector3DotProduct(pixel_normal, L);
+      float cos_theta = math::Vector3DotProduct(pixel_normal_normalized, L);
 
       models::ColorChannels kd = material.diffuse;
 
@@ -157,22 +159,22 @@ namespace models
         diffuse_illumination.r = static_cast<models::Uint8>(math::Clamp(diffuse_illumination.r + (lamp.intensity.r * kd.r * cos_theta), 0, 255));
         diffuse_illumination.g = static_cast<models::Uint8>(math::Clamp(diffuse_illumination.g + (lamp.intensity.g * kd.g * cos_theta), 0, 255));
         diffuse_illumination.b = static_cast<models::Uint8>(math::Clamp(diffuse_illumination.b + (lamp.intensity.b * kd.b * cos_theta), 0, 255));
-      }
 
-      // Passo 3: Calcular a iluminação especular
-      core::Vector3 LS = math::Vector3Add(L, S);
-      core::Vector3 H = math::Vector3Normalize(LS);
+        // Passo 3: Calcular a iluminação especular
+        core::Vector3 LS = math::Vector3Add(L, S);
+        core::Vector3 H = math::Vector3Normalize(LS);
 
-      float cos_alpha = math::Vector3DotProduct(pixel_normal, H);
+        float cos_alpha = math::Vector3DotProduct(pixel_normal_normalized, H);
 
-      models::ColorChannels ks = material.specular;
-      float n = material.shininess;
+        models::ColorChannels ks = material.specular;
+        float n = material.shininess;
 
-      if (cos_alpha > 0)
-      {
-        specular_illumination.b = static_cast<models::Uint8>(math::Clamp(specular_illumination.r + (lamp.intensity.r * ks.b * pow(cos_alpha, n)), 0, 255));
-        specular_illumination.r = static_cast<models::Uint8>(math::Clamp(specular_illumination.g + (lamp.intensity.g * ks.r * pow(cos_alpha, n)), 0, 255));
-        specular_illumination.g = static_cast<models::Uint8>(math::Clamp(specular_illumination.b + (lamp.intensity.b * ks.g * pow(cos_alpha, n)), 0, 255));
+        if (cos_alpha > 0)
+        {
+          specular_illumination.b = static_cast<models::Uint8>(math::Clamp(specular_illumination.r + (lamp.intensity.r * ks.b * pow(cos_alpha, n)), 0, 255));
+          specular_illumination.r = static_cast<models::Uint8>(math::Clamp(specular_illumination.g + (lamp.intensity.g * ks.r * pow(cos_alpha, n)), 0, 255));
+          specular_illumination.g = static_cast<models::Uint8>(math::Clamp(specular_illumination.b + (lamp.intensity.b * ks.g * pow(cos_alpha, n)), 0, 255));
+        }
       }
     }
 

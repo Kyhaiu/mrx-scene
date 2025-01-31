@@ -95,19 +95,20 @@ namespace math
   float y_intersection(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
   float x_intersection(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
 
-  std::vector<core::Vector3> clip_line(const std::vector<core::Vector3> &polygon, float x1, float y1, float x2, float y2);
-  std::vector<std::pair<core::Vector3, models::Color>> clip_line_gouraud(const std::vector<std::pair<core::Vector3, models::Color>> &polygon, float x1, float y1, float x2, float y2);
-  std::vector<std::pair<core::Vector3, core::Vector3>> clip_line_phong(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, float x1, float y1, float x2, float y2);
+  float x_intersection(core::Vector3 p1, core::Vector3 p2, core::Vector3 p3, core::Vector3 p4);
+  float y_intersection(core::Vector3 p1, core::Vector3 p2, core::Vector3 p3, core::Vector3 p4);
+  float z_intersection(core::Vector3 p1, core::Vector3 p2, core::Vector3 p3, core::Vector3 p4);
+
+  std::vector<core::Vector3> clip_lines(const std::vector<core::Vector3> &polygon, float x1, float y1, float x2, float y2);
+  std::vector<std::pair<core::Vector3, core::Vector3>> clip_lines(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, float x1, float y1, float x2, float y2);
 
   std::vector<core::Vector3> clip_polygon(const std::vector<core::Vector3> &polygon, const core::Vector2 &min, const core::Vector2 &max);
-  std::vector<std::pair<core::Vector3, models::Color>> clip_polygon_gouraud(const std::vector<std::pair<core::Vector3, models::Color>> &polygon, const core::Vector2 &min, const core::Vector2 &max);
-  std::vector<std::pair<core::Vector3, core::Vector3>> clip_polygon_phong(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max);
+  std::vector<std::pair<core::Vector3, core::Vector3>> clip_polygon(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max);
 
-  void clip3d_line(core::Vector3 &p0, core::Vector3 &p1, const float z_min, bool &accept);
+  void clip3d_line(core::Vector3 &p0, core::Vector3 &p1, const core::Vector3 &min, const core::Vector3 &max);
 
-  std::vector<core::Vector3> clip3d_polygon(const std::vector<core::Vector3> &polygon, const float near, const float far);
+  std::vector<core::Vector3> clip3d_polygon(const std::vector<core::Vector3> &polygon);
 
-  std::vector<core::Vector3> sutherland_hodgman(const std::vector<core::Vector3> &polygon, const core::Vector3 &plane_normal, const core::Vector3 &point_plane, const float d);
   //-------------------------------------------------------------------------------------------------
   // Funções de Preenchimento de Polígonos e Desenho de Linhas
   //-------------------------------------------------------------------------------------------------

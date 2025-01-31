@@ -456,7 +456,7 @@ namespace models
         {
           // No Gouraud Shading, a cor de cada vértice é calculada antes do recorte
 
-          std::vector<std::pair<core::Vector3, models::Color>> vertexes_gouraud;
+          std::vector<std::pair<core::Vector3, core::Vector3>> vertexes_gouraud;
 
           core::Vector3 eye = this->getCamera()->position;
           models::Material object_material = object->material;
@@ -465,21 +465,29 @@ namespace models
           {
             core::Vector3 v = vertex.first;
             core::Vector3 n = vertex.second;
-            models::Color color = models::GouraudShading(this->global_light, this->omni_lights, std::make_pair(v, n), eye, object_material);
+            models::Color c = models::GouraudShading(this->global_light, this->omni_lights, std::make_pair(v, n), eye, object_material);
+            core::Vector3 color = {static_cast<float>(c.r), static_cast<float>(c.g), static_cast<float>(c.b)};
             vertexes_gouraud.push_back(std::make_pair(v, color));
           }
 
-          vertexes_gouraud = math::clip_polygon_gouraud(vertexes_gouraud, min_viewport, max_viewport);
+          vertexes_gouraud = math::clip_polygon(vertexes_gouraud, min_viewport, max_viewport);
+
+          std::vector<std::pair<core::Vector3, models::Color>> clipped_vertexes;
+
+          for (auto vertex : vertexes_gouraud)
+          {
+            clipped_vertexes.push_back(std::make_pair(vertex.first, models::ChannelsToColor({vertex.second.x, vertex.second.y, vertex.second.z})));
+          }
 
           // Se o vetor de vértices for menor que 3, não é possível formar um polígono, então não é necessário desenhar
           if (vertexes_gouraud.size() < 3)
             continue;
 
-          utils::DrawFaceBufferGouraudShading(vertexes_gouraud, this->z_buffer, this->color_buffer);
+          utils::DrawFaceBufferGouraudShading(clipped_vertexes, this->z_buffer, this->color_buffer);
         }
         else if (this->lighting_model == PHONG_SHADING)
         {
-          std::vector<std::pair<core::Vector3, core::Vector3>> clipped_vertex = math::clip_polygon_phong(vertexes, min_viewport, max_viewport);
+          std::vector<std::pair<core::Vector3, core::Vector3>> clipped_vertex = math::clip_polygon(vertexes, min_viewport, max_viewport);
 
           // Se o vetor de vértices for menor que 3, não é possível formar um polígono, então não é necessário desenhar
           if (clipped_vertex.size() < 3)
@@ -522,12 +530,9 @@ namespace models
         this->getCamera()->near,
         this->getCamera()->far);
 
-    // core::Matrix result = math::MatrixMultiply(perspective_transformation_matrix, clipping_transformation_matrix);
-    // result = math::MatrixMultiply(result, sru_src_matrix);
-    core::Matrix result = math::MatrixMultiply(viewport_matrix, perspective_transformation_matrix);
-    result = math::MatrixMultiply(result, clipping_transformation_matrix);
+    // core::Matrix result = math::MatrixMultiply(viewport_matrix, perspective_transformation_matrix);
+    core::Matrix result = math::MatrixMultiply(perspective_transformation_matrix, clipping_transformation_matrix);
     result = math::MatrixMultiply(result, sru_src_matrix);
-    // result = math::MatrixMultiply(result, sru_src_matrix);
 
     std::vector<core::Vector3> vertexes_clipped;
 
@@ -549,8 +554,38 @@ namespace models
     }
 
     // result = math::MatrixMultiply(result, viewport_matrix);
+    std::vector<core::Vector3> clipped_vertex;
 
     for (auto object : this->objects)
+    {
+
+      for (auto face : object->getFaces())
+        face->setVisible(face->isVisible(camera->position));
+
+      if (this->lighting_model != FLAT_SHADING)
+        object->determineNormals();
+
+      for (auto face : object->getFaces())
+      {
+        if (!face->getVisible())
+          continue;
+
+        core::HalfEdge *he = face->getHalfEdge();
+
+        // first = Coordenadas de tela
+        // second = normal do vértice
+        while (true)
+        {
+          clipped_vertex.push_back(he->getOrigin()->getVectorScreen());
+
+          he = he->getNext();
+          if (he == face->getHalfEdge())
+            break;
+        }
+      }
+    }
+
+    for (auto object : this->getObjects())
     {
       for (auto vertex : object->getVertices())
       {
@@ -558,29 +593,8 @@ namespace models
         vectorResult = math::MatrixMultiplyVector(viewport_matrix, v);
 
         vertex->setVectorScreen({vectorResult.x, vectorResult.y, vectorResult.z});
-
-        // std::cout << vertex->getVectorScreen() << std::endl;
       }
-
-      // for (auto face : object->getFaces())
-      // {
-      //   face->setVisible(face->isVisible(camera->position));
-      // }
-
-      if (this->lighting_model != FLAT_SHADING)
-        object->determineNormals();
     }
-
-    // for (auto object : this->getObjects())
-    // {
-    //   for (auto vertex : object->getVertices())
-    //   {
-    //     core::Vector4 v = {vertex->getVectorScreen().x, vertex->getVectorScreen().y, vertex->getVectorScreen().z, 1.0f};
-    //     vectorResult = math::MatrixMultiplyVector(viewport_matrix, v);
-
-    //     vertex->setVectorScreen({vectorResult.x, vectorResult.y, vectorResult.z});
-    //   }
-    // }
 
     // Rasterização dos objetos
     this->initializeBuffers();

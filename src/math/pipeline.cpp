@@ -451,7 +451,7 @@ namespace math
    * @note A função realiza a clipagem de uma linha em relação a uma janela de visualização.
    * @note A função utiliza o algoritmo de Cohen-Sutherland.
    */
-  std::vector<core::Vector3> clip_line(const std::vector<core::Vector3> &polygon, float x1, float y1, float x2, float y2)
+  std::vector<core::Vector3> clip_lines(const std::vector<core::Vector3> &polygon, float x1, float y1, float x2, float y2)
   {
     std::vector<core::Vector3> clipped_polygon;
 
@@ -474,6 +474,10 @@ namespace math
       // Caso 2: Apenas o primeiro ponto está fora da janela
       else if (i_pos >= 0 && k_pos < 0)
       {
+
+        float t = i_pos / (i_pos - k_pos);
+        float z = math::Lerp(polygon[i].z, polygon[k].z, t);
+
         // Adiciona o ponto de interseção e o segundo ponto
         core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[i].z};
 
@@ -503,102 +507,20 @@ namespace math
    * @param x2 Coordenada x do segundo ponto da linha.
    * @param y2 Coordenada y do segundo ponto da linha.
    *
-   * @return std::vector<std::pair<core::Vector3, models::Color>> Polígono clipado.
-   *
-   * @note A função realiza a clipagem de um polígono em relação a uma janela de visualização.
-   * @note A função utiliza o algoritmo de Sutherland-Hodgman.
-
-   */
-  std::vector<std::pair<core::Vector3, models::Color>> clip_line_gouraud(const std::vector<std::pair<core::Vector3, models::Color>> &polygon, float x1, float y1, float x2, float y2)
-  {
-    std::vector<std::pair<core::Vector3, models::Color>> clipped_polygon;
-
-    for (int i = 0; i < polygon.size(); i++)
-    {
-      int k = (i + 1) % polygon.size();
-      float ix = polygon[i].first.x, iy = polygon[i].first.y;
-      float kx = polygon[k].first.x, ky = polygon[k].first.y;
-
-      // Calcula a posição dos pontos em relação à janela
-      float i_pos = (x2 - x1) * (iy - y1) - (y2 - y1) * (ix - x1);
-      float k_pos = (x2 - x1) * (ky - y1) - (y2 - y1) * (kx - x1);
-
-      // Calcula o código de saída dos pontos
-      int i_outcode = compute_outcode(polygon[i].first, {x1, y1}, {x2, y2});
-      int k_outcode = compute_outcode(polygon[k].first, {x1, y1}, {x2, y2});
-
-      // Caso 1: Ambos os pontos estão dentro da janela
-      if (i_pos < 0 && k_pos < 0)
-      {
-        // Apenas o segundo ponto é adicionado
-        clipped_polygon.push_back(polygon[k]);
-      }
-      // Caso 2: Apenas o primeiro ponto está fora da janela
-      else if (i_pos >= 0 && k_pos < 0)
-      {
-        // Adiciona o ponto de interseção e o segundo ponto
-        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[i].first.z};
-
-        // Interpola a cor do ponto de interseção com a janela
-        float t;
-
-        if (i_outcode & TOP || i_outcode & BOTTOM)
-          t = (intersection.y - iy) / (ky - iy);
-        else
-          t = (intersection.x - ix) / (kx - ix);
-
-        models::Color intersection_color = models::InterpolateColors(polygon[i].second, polygon[k].second, t);
-
-        clipped_polygon.push_back(std::make_pair(intersection, intersection_color));
-        clipped_polygon.push_back(polygon[k]);
-      }
-      // Caso 3: Apenas o segundo ponto está fora da janela
-      else if (i_pos < 0 && k_pos >= 0)
-      {
-        // Adiciona o ponto de interseção com a janela
-        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[k].first.z};
-
-        // Interpola a cor do ponto de interseção com a janela
-        float t;
-
-        if (k_outcode & TOP || k_outcode & BOTTOM)
-          t = (intersection.y - iy) / (ky - iy);
-        else
-          t = (intersection.x - ix) / (kx - ix);
-
-        models::Color intersection_color = models::InterpolateColors(polygon[i].second, polygon[k].second, t);
-
-        clipped_polygon.push_back(std::make_pair(intersection, intersection_color));
-      }
-      // Caso 4: Ambos os pontos estão fora da janela, nenhum ponto é adicionado
-    }
-
-    return clipped_polygon;
-  }
-
-  /**
-   * @brief Realiza a clipagem de linha com interpolação de cores.
-   *
-   * @param polygon Polígono a ser clipado.
-   * @param x1 Coordenada x do primeiro ponto da linha.
-   * @param y1 Coordenada y do primeiro ponto da linha.
-   * @param x2 Coordenada x do segundo ponto da linha.
-   * @param y2 Coordenada y do segundo ponto da linha.
-   *
    * @return std::vector<std::pair<core::Vector3, core::Vector3>> Polígono clipado.
    *
    * @note A função realiza a clipagem de um polígono em relação a uma janela de visualização.
    * @note A função utiliza o algoritmo de Sutherland-Hodgman.
    */
-  std::vector<std::pair<core::Vector3, core::Vector3>> clip_line_phong(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, float x1, float y1, float x2, float y2)
+  std::vector<std::pair<core::Vector3, core::Vector3>> clip_lines(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, float x1, float y1, float x2, float y2)
   {
     std::vector<std::pair<core::Vector3, core::Vector3>> clipped_polygon;
 
     for (int i = 0; i < polygon.size(); i++)
     {
       int k = (i + 1) % polygon.size();
-      float ix = polygon[i].first.x, iy = polygon[i].first.y;
-      float kx = polygon[k].first.x, ky = polygon[k].first.y;
+      float ix = polygon[i].first.x, iy = polygon[i].first.y, iz = polygon[i].first.z;
+      float kx = polygon[k].first.x, ky = polygon[k].first.y, kz = polygon[k].first.z;
 
       // Calcula a posição dos pontos em relação à janela
       float i_pos = (x2 - x1) * (iy - y1) - (y2 - y1) * (ix - x1);
@@ -617,11 +539,14 @@ namespace math
       // Caso 2: Apenas o primeiro ponto está fora da janela
       else if (i_pos >= 0 && k_pos < 0)
       {
+        // Interpola o valor de z do ponto de interseção
+        float t = i_pos / (i_pos - k_pos);
+        float z = math::Lerp(iz, kz, t);
+
         // Adiciona o ponto de interseção e o segundo ponto
-        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[i].first.z};
+        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), z};
 
         // Interpola a normal do vértice de interseção
-        float t;
 
         if (i_outcode & TOP || i_outcode & BOTTOM)
           t = (intersection.y - iy) / (ky - iy);
@@ -639,12 +564,14 @@ namespace math
       // Caso 3: Apenas o segundo ponto está fora da janela
       else if (i_pos < 0 && k_pos >= 0)
       {
+        // Interpola o valor de z do ponto de interseção
+        float t = i_pos / (i_pos - k_pos);
+        float z = math::Lerp(iz, kz, t);
+
         // Adiciona o ponto de interseção com a janela
-        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[k].first.z};
+        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), z};
 
         // Interpola a normal do vértice de interseção
-        float t;
-
         if (k_outcode & TOP || k_outcode & BOTTOM)
           t = (intersection.y - iy) / (ky - iy);
         else
@@ -679,49 +606,16 @@ namespace math
     std::vector<core::Vector3> result = polygon;
 
     // Clip against the left edge
-    result = clip_line(result, min.x, min.y, min.x, max.y);
+    result = clip_lines(result, min.x, min.y, min.x, max.y);
 
     // Clip against the bottom edge
-    result = clip_line(result, min.x, max.y, max.x, max.y);
+    result = clip_lines(result, min.x, max.y, max.x, max.y);
 
     // Clip against the right edge
-    result = clip_line(result, max.x, max.y, max.x, min.y);
+    result = clip_lines(result, max.x, max.y, max.x, min.y);
 
     // Clip against the top edge
-    result = clip_line(result, max.x, min.y, min.x, min.y);
-
-    return result;
-  }
-
-  /**
-   * @brief Realiza a clipagem de um polígono com interpolação de cores.
-   *
-   * @param polygon Polígono a ser clipado.
-   * @param min Coordenadas mínimas da janela de visualização.
-   * @param max Coordenadas máximas da janela de visualização.
-   *
-   * @return std::vector<std::pair<core::Vector3, models::Color>> Polígono clipado.
-   *
-   * @note A função realiza a clipagem de um polígono em relação a uma janela de visualização.
-   * @note A função utiliza o algoritmo de Sutherland-Hodgman.
-   * @note Utilizado para o modelo de sombreamento Gouraud.
-   */
-  std::vector<std::pair<core::Vector3, models::Color>> clip_polygon_gouraud(const std::vector<std::pair<core::Vector3, models::Color>> &polygon, const core::Vector2 &min, const core::Vector2 &max)
-  {
-
-    std::vector<std::pair<core::Vector3, models::Color>> result = polygon;
-
-    // Clip against the left edge
-    result = clip_line_gouraud(result, min.x, min.y, min.x, max.y);
-
-    // Clip against the bottom edge
-    result = clip_line_gouraud(result, min.x, max.y, max.x, max.y);
-
-    // Clip against the right edge
-    result = clip_line_gouraud(result, max.x, max.y, max.x, min.y);
-
-    // Clip against the top edge
-    result = clip_line_gouraud(result, max.x, min.y, min.x, min.y);
+    result = clip_lines(result, max.x, min.y, min.x, min.y);
 
     return result;
   }
@@ -737,261 +631,45 @@ namespace math
    *
    * @note A função realiza a clipagem de um polígono em relação a uma janela de visualização.
    * @note A função utiliza o algoritmo de Sutherland-Hodgman.
-   * @note Utilizado para o modelo de sombreamento Phong.
+   * @note Utilizado para o modelo de sombreamento Gouraud e Phong.
    */
-  std::vector<std::pair<core::Vector3, core::Vector3>> clip_polygon_phong(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max)
+  std::vector<std::pair<core::Vector3, core::Vector3>> clip_polygon(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max)
   {
     std::vector<std::pair<core::Vector3, core::Vector3>> result = polygon;
 
     // Clip against the left edge
-    result = clip_line_phong(result, min.x, min.y, min.x, max.y);
-
-    // Clip against the bottom edge
-    result = clip_line_phong(result, min.x, max.y, max.x, max.y);
+    result = clip_lines(result, min.x, min.y, min.x, max.y);
 
     // Clip against the right edge
-    result = clip_line_phong(result, max.x, max.y, max.x, min.y);
+    result = clip_lines(result, max.x, max.y, max.x, min.y);
+
+    // Clip against the bottom edge
+    result = clip_lines(result, min.x, max.y, max.x, max.y);
 
     // Clip against the top edge
-    result = clip_line_phong(result, max.x, min.y, min.x, min.y);
+    result = clip_lines(result, max.x, min.y, min.x, min.y);
 
     return result;
   }
 
-  void clip3d_line(core::Vector3 &p0, core::Vector3 &p1, const float z_min, bool &accept)
+  void clip3d_line(core::Vector3 &p0, core::Vector3 &p1, const core::Vector3 &min, const core::Vector3 &max)
   {
+    std::vector<core::Vector3> clipped_line;
 
-    float dx = p1.x - p0.x, dz = p1.z - p0.z;
-    float tmin = 0.0f, tmax = 1.0f;
-
-    // Inicialmente, assume que a linha está completamente fora do volume
-    accept = false;
-
-    // std::cout << "dx = " << dx << ", dz = " << dz << std::endl;
-    // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
-
-    if (clip_test(-dx - dz, p0.x + p0.z, tmin, tmax)) // Lado direito
-    {
-      // std::cout << "Lado direito" << std::endl;
-      // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
-      if (clip_test(dx - dz, -p0.x + p0.z, tmin, tmax)) // Lado esquerdo
-      {
-        // Se chegou atC) aqui, parte da linha estC! dentro do volume -z <= x <= z
-        float dy = p1.y - p0.y;
-
-        // std::cout << "Lado esquerdo" << std::endl;
-        // std::cout << "dy = " << dy << std::endl;
-        // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
-        if (clip_test(dy - dz, -p0.y + p0.z, tmin, tmax)) // Base
-        {
-          // std::cout << "Base" << std::endl;
-          // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
-          if (clip_test(-dy - dz, p0.y + p0.z, tmin, tmax)) // Topo
-          {
-            // std::cout << "Topo" << std::endl;
-            // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
-
-            // Se chegou atC) aqui, a linha estC! dentro do volume -z <= x <= z; -z <= y <= z
-            if (clip_test(-dz, p0.z - z_min, tmin, tmax)) // Perto
-            {
-              // std::cout << "Perto" << std::endl;
-              // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
-
-              if (clip_test(dz, -p0.z - 1, tmin, tmax)) // Longe
-              {
-                // std::cout << "Longe" << std::endl;
-                // std::cout << "tmin = " << tmin << ", tmax = " << tmax << std::endl;
-
-                // Se chegou atC) aqui, a linha estC! dentro do volume -z <= x <= z; -z <= y <= z; -z <= z <= z
-                accept = true;
-                // Se a extremidade (t = 1) estC! fora do volume, computa a interseC'C#o
-                if (tmax < 1.0f)
-                {
-                  p1.x = p0.x + (p1.x - p0.x) * tmax;
-                  p1.y = p0.y + (p1.y - p0.y) * tmax;
-                  p1.z = p0.z + (p1.z - p0.z) * tmax;
-                }
-                // Se a extremidade (t = 0) estC! fora do volume, computa a interseC'C#o
-                if (tmin > 0.0f)
-                {
-                  p0.x += tmin * dx;
-                  p0.y += tmin * dy;
-                  p0.z += tmin * dz;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+    // Compute outcodes for P0, P1, and initialize line segment endpoints
   }
 
-  std::vector<core::Vector3> clip3d_polygon(const std::vector<core::Vector3> &polygon, const float near, const float far)
+  std::vector<core::Vector3> clip3d_polygon(const std::vector<core::Vector3> &polygon)
   {
-    // std::vector<core::Vector3> clipped_polygon;
-
-    // models::Mesh *canonical_volume = shapes::canonical_volume(near / far);
-
-    // std::vector<core::Plane> planes;
-
-    // for (auto f : canonical_volume->getFaces())
-    //   planes.push_back(f->face2plane());
-
-    // float d1 = 0, d2 = 0;
-
-    // for (int c = 0; c < planes.size(); c++)
-    // {
-    //   if (polygon.size() == 0)
-    //     return polygon;
-
-    //   for (int i = 0; i < polygon.size(); i++)
-    //   {
-    //     d1 = planes[c].distance(polygon[i]);
-    //     d2 = planes[c].distance(polygon[(i + 1) % polygon.size()]);
-
-    //     if ((d1 <= 0) && (d2 <= 0))
-    //     {
-    //       clipped_polygon.push_back(polygon[(i + 1) % polygon.size()]);
-    //     }
-    //     else if ((d1 > 0) && ((d2 > -EPSILON) && (d2 > 0)))
-    //     {
-    //       clipped_polygon.push_back(polygon[(i + 1) % polygon.size()]);
-    //     }
-    //     else if (((d1 > -EPSILON) && (d1 < EPSILON)) && (d2 > 0))
-    //     {
-    //       continue;
-    //     }
-    //     else if ((d1 <= 0) && (d2 > 0))
-    //     {
-    //       core::Vector3 intersection = planes[c].intersectionPoint(polygon[i], polygon[(i + 1) % polygon.size()]);
-
-    //       clipped_polygon.push_back(intersection);
-    //     }
-    //     else if ((d1 > 0) && (d2 <= 0))
-    //     {
-    //       core::Vector3 intersection = planes[c].intersectionPoint(polygon[i], polygon[(i + 1) % polygon.size()]);
-
-    //       clipped_polygon.push_back(intersection);
-    //       clipped_polygon.push_back(polygon[(i + 1) % polygon.size()]);
-    //     }
-    //   }
-    // }
-
-    // return clipped_polygon;
-
-    // std::cout << "Near: " << near << ", Far: " << far << std::endl;
-    std::cout << "Vertex Polygon" << std::endl;
-    for (auto v : polygon)
-    {
-      std::cout << v << std::endl;
-    }
+    // Limites do volume de recorte
+    core::Vector3 min = {-1.0f, -1.0f, 0.0f};
+    core::Vector3 max = {1.0f, 1.0f, 1.0f};
 
     std::vector<core::Vector3> result = polygon;
 
-    for (int i = 0; i < polygon.size(); i++)
-    {
-      int k = (i + 1) % polygon.size();
-      core::Vector3 p1 = polygon[i];
-      core::Vector3 p2 = polygon[k];
-
-      bool accept = false;
-
-      // std::cout << "---------" << std::endl;
-
-      // std::cout << "Clipping line " << p1 << " -> " << p2 << std::endl;
-      // std::cout << "Accept: " << accept << std::endl;
-
-      clip3d_line(p1, p2, near / far, accept);
-
-      // std::cout << "Accept: " << accept << std::endl;
-      if (accept)
-      {
-        // std::cout << "Clipped line " << p1 << " -> " << p2 << std::endl;
-        result.push_back(p1);
-        result.push_back(p2);
-      }
-    }
-
-    std::cout << "Clipped Polygon" << std::endl;
-    for (auto v : result)
-    {
-      std::cout << v << std::endl;
-    }
+    // Clip against the left edge
 
     return result;
-  }
-
-  std::vector<core::Vector3> sutherland_hodgman(const std::vector<core::Vector3> &polygon, const core::Vector3 &plane_normal, const core::Vector3 &plane_point, const float d)
-  {
-    float d1, d2 = 0;
-
-    if (polygon.size() == 0)
-      return polygon;
-
-    std::vector<core::Vector3> clipped_polygon;
-
-    for (int i = 0; i < polygon.size(); i++)
-    {
-      int k = (i + 1) % polygon.size();
-      d1 = math::Vector3DotProduct(plane_normal, polygon[i]) + d;
-      d2 = math::Vector3DotProduct(plane_normal, polygon[k]) + d;
-
-      std::cout << "d1 = " << d1 << ", d2 = " << d2 << std::endl;
-
-      // Caso 1: Ambos os pontos estão dentro do volume de recorte
-      if ((d1 <= 0) && (d2 <= 0))
-      {
-        std::cout << "Caso 1" << std::endl;
-        // Adiciona o segundo ponto
-        clipped_polygon.push_back(polygon[k]);
-      }
-      // Caso 2: Apenas o primeiro ponto está fora do volume de recorte
-      else if ((d1 > 0) && ((d2 > -EPSILON) && (d2 < EPSILON)))
-      {
-        std::cout << "Caso 2" << std::endl;
-        clipped_polygon.push_back(polygon[k]);
-      }
-      else if (((d1 > -EPSILON) && (d1 < EPSILON)) && (d2 > 0))
-      {
-        std::cout << "Caso 3" << std::endl;
-        continue;
-      }
-      else if ((d1 <= 0) && (d2 > 0))
-      {
-        std::cout << "Caso 4" << std::endl;
-        core::Vector3 intersection;
-
-        // Calcula a interseção
-        // Distancia do ponto i ao plano
-        float dp1 = math::Vector3DotProduct(plane_normal, polygon[i]) + d;
-        // vetor entre os pontos
-        core::Vector3 p = polygon[k] - polygon[i];
-        float np = math::Vector3DotProduct(plane_normal, p);
-
-        intersection = polygon[i] + (polygon[k] - polygon[i]) * (dp1 / np);
-
-        clipped_polygon.push_back(intersection);
-      }
-      else if (d1 > 0 && d2 <= 0)
-      {
-        std::cout << "Caso 5" << std::endl;
-        core::Vector3 intersection;
-
-        // Calcula a interseção
-        // Distancia do ponto i ao plano
-        float dp1 = math::Vector3DotProduct(plane_normal, polygon[i]) + d;
-        // vetor entre os pontos
-        core::Vector3 p = polygon[k] - polygon[i];
-        float np = math::Vector3DotProduct(plane_normal, p);
-
-        intersection = polygon[i] + (polygon[k] - polygon[i]) * (dp1 / np);
-
-        clipped_polygon.push_back(intersection);
-        clipped_polygon.push_back(polygon[k]);
-      }
-    }
-
-    return clipped_polygon;
   }
 
   //-------------------------------------------------------------------------------------------------
@@ -1127,9 +805,9 @@ namespace math
       std::sort(scanline.begin(), scanline.end(), [](core::Vector3 a, core::Vector3 b)
                 { return a.x < b.x; });
 
-      for (int j = 0; j < scanline.size(); j++)
+      for (int j = 0; j < scanline.size(); j += 2)
       {
-        int k = (j + 1) % scanline.size();
+        int k = (j + 1);
         core::Vector3 start = scanline[j];
         core::Vector3 end = scanline[k];
 
