@@ -277,398 +277,248 @@ namespace math
   //-------------------------------------------------------------------------------------------------
 
   /**
-   * @brief Calcula o código de saída de um ponto em relação a uma janela de recorte.
+   * @brief Verifica se um ponto está antes ou depois de uma borda de uma janela de recorte.
    *
    * @param p Ponto a ser verificado
    * @param min Canto inferior esquerdo da janela de recorte
    * @param max Canto superior direito da janela de recorte
-   * @return Código de saída do ponto
+   * @param edge Borda da janela de recorte a ser verificada
    *
-   * @note O código de saída é uma combinação de bits que indicam a posição do ponto em relação à janela de recorte.
-   * @note O código de saída é calculado da seguinte forma:
-   * @note 0000: Ponto dentro da janela
-   * @note 0001: Ponto à esquerda da janela
-   * @note 0010: Ponto à direita da janela
-   * @note 0100: Ponto abaixo da janela
-   * @note 1000: Ponto acima da janela
+   * @return true Se o ponto está dentro da janela de recorte;
+   * @return false Se o ponto está fora da janela de recorte
    */
-  int compute_outcode(core::Vector3 p, core::Vector2 min, core::Vector2 max)
+  bool is_inside(core::Vector3 p, core::Vector2 min, core::Vector2 max, unsigned int edge)
   {
-    int code = INSIDE;
-
-    if (p.x < min.x) // to the left of rectangle
+    switch (edge)
     {
-      code |= LEFT;
+    case LEFT:
+      return p.x >= min.x; // Limite da borda da esquerda da janela de recorte é x_min
+    case RIGHT:
+      return p.x <= max.x; // Limite da borda da direita da janela de recorte é x_max
+    case BOTTOM:
+      return p.y >= min.y; // Limite da borda inferior da janela de recorte é y_min
+    case TOP:
+      return p.y <= max.y; // Limite da borda superior da janela de recorte é y_max
+    default:
+      return false; // Caso não seja nenhuma das bordas
     }
-    else if (p.x > max.x) // to the right of rectangle
-    {
-      code |= RIGHT;
-    }
-
-    if (p.y < min.y) // below the rectangle
-    {
-      code |= BOTTOM;
-    }
-    else if (p.y > max.y) // above the rectangle
-    {
-      code |= TOP;
-    }
-
-    return code;
   }
 
   /**
-   * @brief Computa um novo valor de tE ou tL para uma interseção interior de um segmento de linha com uma aresta.
+   * @brief Calcula o ponto de interseção de uma linha com uma janela de recorte.
    *
-   * Esta função é usada em algoritmos de recorte de linhas (Liang-Barsky) para determinar
-   * se um segmento de linha intersecta uma aresta do volume de recorte e ajustar os parâmetros tE (ponto de entrada)
-   * e tL (ponto de saída) conforme necessário.
-   *
-   * @param denom Representa -(Ni • D), onde Ni é a normal da aresta e D é a direção da linha. Para retângulos
-   *              alinhados aos eixos, este valor se reduz a ±Ax ou ±Ay. O sinal de `denom` determina se a
-   *              interseção é um ponto de entrada (PE) ou um ponto de saída (PL).
-   * @param num Representa Nz • (Po - Pe), onde Po é um ponto da linha e Pe é um ponto da aresta. Para retângulos
-   *            alinhados aos eixos, este valor se reduz a distâncias horizontais ou verticais direcionais de Po
-   *            até a aresta. O sinal de `num` determina a visibilidade de Po e é usado para rejeitar trivialmente
-   *            linhas horizontais ou verticais.
-   * @param tE Referência para o parâmetro t do ponto de entrada (PE). Este valor é atualizado se uma interseção
-   *           de entrada válida for encontrada.
-   * @param tL Referência para o parâmetro t do ponto de saída (PL). Este valor é atualizado se uma interseção
-   *           de saída válida for encontrada.
-   *
-   * @return Retorna `false` se o segmento de linha pode ser trivialmente rejeitado (ou seja, está completamente
-   *         fora do volume de recorte). Retorna `true` se o segmento não pode ser rejeitado e ajusta tE ou tL,
-   *         se necessário, para representar a porção do segmento que está dentro da aresta.
-   *
-   * @details
-   * - Se `denom > 0`, a interseção é um ponto de entrada (PE). O valor de `t` é calculado, e:
-   *   - Se `t > tL`, a linha está completamente fora do volume de recorte e é rejeitada.
-   *   - Se `t > tE`, o valor de `tE` é atualizado para `t`.
-   * - Se `denom < 0`, a interseção é um ponto de saída (PL). O valor de `t` é calculado, e:
-   *   - Se `t < tE`, a linha está completamente fora do volume de recorte e é rejeitada.
-   *   - Se `t < tL`, o valor de `tL` é atualizado para `t`.
-   * - Se `denom == 0`, a linha é paralela à aresta:
-   *   - Se `num < 0`, a linha está completamente fora do volume de recorte e é rejeitada.
-   *   - Se `num >= 0`, a linha está completamente dentro do volume de recorte.
-   *
-   * @note
-   * - `tE` e `tL` devem ser inicializados com valores que representem o intervalo completo da linha (por exemplo,
-   *   `tE = 0` e `tL = 1`).
-   * - Esta função é geralmente chamada para cada aresta do volume de recorte durante o processo de recorte.
+   * @param p1 Ponto inicial da linha
+   * @param p2 Ponto final da linha
+   * @param min Canto inferior esquerdo da janela de recorte
+   * @param max Canto superior direito da janela de recorte
+   * @param edge Borda da janela de recorte
+   * @return core::Vector3
    */
-  bool clip_test(float denom, float num, float &tE, float &tL)
+  core::Vector3 compute_intersection(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max, unsigned int edge)
   {
-    float t;
-    if (denom > 0)
+    float u = 0.0f;
+    core::Vector3 intersection;
+
+    if (edge == LEFT)
     {
-      t = num / denom;
-      if (t > tL)
-        return false;
-      else if (t > tE)
-        tE = t;
+      u = (min.x - p1.x) / (p2.x - p1.x);
+      intersection.x = min.x;
+      intersection.y = p1.y + u * (p2.y - p1.y);
+      intersection.z = p1.z + u * (p2.z - p1.z);
     }
-    else if (denom < 0)
+    else if (edge == RIGHT)
     {
-      t = num / denom;
-      if (t < tE)
-        return false;
-      else
-        tL = t;
+      u = (max.x - p1.x) / (p2.x - p1.x);
+      intersection.x = max.x;
+      intersection.y = p1.y + u * (p2.y - p1.y);
+      intersection.z = p1.z + u * (p2.z - p1.z);
     }
-    else if (num > 0)
+    else if (edge == BOTTOM)
     {
-      return false;
+      u = (min.y - p1.y) / (p2.y - p1.y);
+      intersection.x = p1.x + u * (p2.x - p1.x);
+      intersection.y = min.y;
+      intersection.z = p1.z + u * (p2.z - p1.z);
+    }
+    else if (edge == TOP)
+    {
+      u = (max.y - p1.y) / (p2.y - p1.y);
+      intersection.x = p1.x + u * (p2.x - p1.x);
+      intersection.y = max.y;
+      intersection.z = p1.z + u * (p2.z - p1.z);
     }
 
-    return true;
+    return intersection;
+  }
+
+  std::pair<core::Vector3, core::Vector3> compute_intersection(std::pair<core::Vector3, core::Vector3> p1, std::pair<core::Vector3, core::Vector3> p2, core::Vector2 min, core::Vector2 max, unsigned int edge)
+  {
+    float u = 0.0f;
+    std::pair<core::Vector3, core::Vector3> intersection;
+
+    if (edge == LEFT)
+    {
+      u = (min.x - p1.first.x) / (p2.first.x - p1.first.x);
+
+      intersection.first.x = min.x;
+      intersection.first.y = p1.first.y + u * (p2.first.y - p1.first.y);
+      intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
+
+      intersection.second.x = math::Lerp(p1.second.x, p2.second.x, u);
+      intersection.second.y = math::Lerp(p1.second.y, p2.second.y, u);
+      intersection.second.z = math::Lerp(p1.second.z, p2.second.z, u);
+    }
+    else if (edge == RIGHT)
+    {
+      u = (max.x - p1.first.x) / (p2.first.x - p1.first.x);
+
+      intersection.first.x = max.x;
+      intersection.first.y = p1.first.y + u * (p2.first.y - p1.first.y);
+      intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
+
+      intersection.second.x = math::Lerp(p1.second.x, p2.second.x, u);
+      intersection.second.y = math::Lerp(p1.second.y, p2.second.y, u);
+      intersection.second.z = math::Lerp(p1.second.z, p2.second.z, u);
+    }
+    else if (edge == BOTTOM)
+    {
+      u = (min.y - p1.first.y) / (p2.first.y - p1.first.y);
+
+      intersection.first.x = p1.first.x + u * (p2.first.x - p1.first.x);
+      intersection.first.y = min.y;
+      intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
+
+      intersection.second.x = math::Lerp(p1.second.x, p2.second.x, u);
+      intersection.second.y = math::Lerp(p1.second.y, p2.second.y, u);
+      intersection.second.z = math::Lerp(p1.second.z, p2.second.z, u);
+    }
+    else if (edge == TOP)
+    {
+      u = (max.y - p1.first.y) / (p2.first.y - p1.first.y);
+
+      intersection.first.x = p1.first.x + u * (p2.first.x - p1.first.x);
+      intersection.first.y = max.y;
+      intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
+
+      intersection.second.x = math::Lerp(p1.second.x, p2.second.x, u);
+      intersection.second.y = math::Lerp(p1.second.y, p2.second.y, u);
+      intersection.second.z = math::Lerp(p1.second.z, p2.second.z, u);
+    }
+
+    return intersection;
   }
 
   /**
-   * @brief Calcula a coordenada y do ponto de interseção entre duas linhas.
+   * @brief Clipa um polígono 2D
    *
-   * @param x1 Coordenada x do primeiro ponto da primeira linha.
-   * @param y1 Coordenada y do primeiro ponto da primeira linha.
-   * @param x2 Coordenada x do segundo ponto da primeira linha.
-   * @param y2 Coordenada y do segundo ponto da primeira linha.
-   * @param x3 Coordenada x do primeiro ponto da segunda linha.
-   * @param y3 Coordenada y do primeiro ponto da segunda linha.
-   * @param x4 Coordenada x do segundo ponto da segunda linha.
-   * @param y4 Coordenada y do segundo ponto da segunda linha.
+   * @param polygon Lista de vértices do polígono percorridos no sentido anti-horário
+   * @param min Limite inferior esquerdo da janela de recorte
+   * @param max Limite superior direito da janela de recorte
+   * @return std::vector<core::Vector3> Lista de vértices do polígono clipado
    *
-   * @return int Coordenada y do ponto de interseção.
-   *
-   * @note A função utiliza a fórmula da interseção de duas linhas no plano 2D.
-   * @note A interseção é calculada usando a regra de Cramer para resolver o sistema de equações lineares.
-   * @note Se as linhas forem paralelas, o denominador será zero, e o comportamento é indefinido.
+   * @note O algoritmo de Sutherland-Hodgman é utilizado
    */
-  float y_intersection(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
-  {
-    float num = (x1 * y2 - y1 * x2) * (y3 - y4) -
-                (y1 - y2) * (x3 * y4 - y3 * x4);
-    float den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-
-    return floorf(num / den);
-  }
-
-  /**
-   * @brief Calcula a coordenada x do ponto de interseção entre duas linhas.
-   *
-   * @param x1 Coordenada x do primeiro ponto da primeira linha.
-   * @param y1 Coordenada y do primeiro ponto da primeira linha.
-   * @param x2 Coordenada x do segundo ponto da primeira linha.
-   * @param y2 Coordenada y do segundo ponto da primeira linha.
-   * @param x3 Coordenada x do primeiro ponto da segunda linha.
-   * @param y3 Coordenada y do primeiro ponto da segunda linha.
-   * @param x4 Coordenada x do segundo ponto da segunda linha.
-   * @param y4 Coordenada y do segundo ponto da segunda linha.
-   *
-   * @return int Coordenada x do ponto de interseção.
-   *
-   * @note A função utiliza a fórmula da interseção de duas linhas no plano 2D.
-   * @note A interseção é calculada usando a regra de Cramer para resolver o sistema de equações lineares.
-   * @note Se as linhas forem paralelas, o denominador será zero, e o comportamento é indefinido.
-   */
-  float x_intersection(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4)
-  {
-    float num = (x1 * y2 - y1 * x2) * (x3 - x4) -
-                (x1 - x2) * (x3 * y4 - y3 * x4);
-    float den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-
-    return floorf(num / den);
-  }
-
-  /**
-   * @brief Realiza a clipagem de uma linha.
-   *
-   * @param polygon Polígono a ser clipado.
-   * @param x1 Coordenada x do primeiro ponto da linha.
-   * @param y1 Coordenada y do primeiro ponto da linha.
-   * @param x2 Coordenada x do segundo ponto da linha.
-   * @param y2 Coordenada y do segundo ponto da linha.
-   *
-   * @return std::vector<core::Vector3> Polígono clipado.
-   *
-   * @note A função realiza a clipagem de uma linha em relação a uma janela de visualização.
-   * @note A função utiliza o algoritmo de Cohen-Sutherland.
-   */
-  std::vector<core::Vector3> clip_lines(const std::vector<core::Vector3> &polygon, float x1, float y1, float x2, float y2)
-  {
-    std::vector<core::Vector3> clipped_polygon;
-
-    for (int i = 0; i < polygon.size(); i++)
-    {
-      int k = (i + 1) % polygon.size();
-      float ix = polygon[i].x, iy = polygon[i].y;
-      float kx = polygon[k].x, ky = polygon[k].y;
-
-      float i_pos = (x2 - x1) * (iy - y1) - (y2 - y1) * (ix - x1);
-
-      float k_pos = (x2 - x1) * (ky - y1) - (y2 - y1) * (kx - x1);
-
-      // Caso 1: Ambos os pontos estão dentro da janela
-      if (i_pos < 0 && k_pos < 0)
-      {
-        // Apenas o segundo ponto é adicionado
-        clipped_polygon.push_back(polygon[k]);
-      }
-      // Caso 2: Apenas o primeiro ponto está fora da janela
-      else if (i_pos >= 0 && k_pos < 0)
-      {
-
-        float t = i_pos / (i_pos - k_pos);
-        float z = math::Lerp(polygon[i].z, polygon[k].z, t);
-
-        // Adiciona o ponto de interseção e o segundo ponto
-        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[i].z};
-
-        clipped_polygon.push_back(intersection);
-        clipped_polygon.push_back(polygon[k]);
-      }
-      // Caso 3: Apenas o segundo ponto está fora da janela
-      else if (i_pos < 0 && k_pos >= 0)
-      {
-        // Adiciona o ponto de interseção com a janela
-        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), polygon[k].z};
-
-        clipped_polygon.push_back(intersection);
-      }
-      // Caso 4: Ambos os pontos estão fora da janela, nenhum ponto é adicionado
-    }
-
-    return clipped_polygon;
-  }
-
-  /**
-   * @brief Realiza a clipagem de linha com interpolação de cores.
-   *
-   * @param polygon Polígono a ser clipado.
-   * @param x1 Coordenada x do primeiro ponto da linha.
-   * @param y1 Coordenada y do primeiro ponto da linha.
-   * @param x2 Coordenada x do segundo ponto da linha.
-   * @param y2 Coordenada y do segundo ponto da linha.
-   *
-   * @return std::vector<std::pair<core::Vector3, core::Vector3>> Polígono clipado.
-   *
-   * @note A função realiza a clipagem de um polígono em relação a uma janela de visualização.
-   * @note A função utiliza o algoritmo de Sutherland-Hodgman.
-   */
-  std::vector<std::pair<core::Vector3, core::Vector3>> clip_lines(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, float x1, float y1, float x2, float y2)
-  {
-    std::vector<std::pair<core::Vector3, core::Vector3>> clipped_polygon;
-
-    for (int i = 0; i < polygon.size(); i++)
-    {
-      int k = (i + 1) % polygon.size();
-      float ix = polygon[i].first.x, iy = polygon[i].first.y, iz = polygon[i].first.z;
-      float kx = polygon[k].first.x, ky = polygon[k].first.y, kz = polygon[k].first.z;
-
-      // Calcula a posição dos pontos em relação à janela
-      float i_pos = (x2 - x1) * (iy - y1) - (y2 - y1) * (ix - x1);
-      float k_pos = (x2 - x1) * (ky - y1) - (y2 - y1) * (kx - x1);
-
-      // Calcula o código de saída dos pontos
-      int i_outcode = compute_outcode(polygon[i].first, {x1, y1}, {x2, y2});
-      int k_outcode = compute_outcode(polygon[k].first, {x1, y1}, {x2, y2});
-
-      // Caso 1: Ambos os pontos estão dentro da janela
-      if (i_pos < 0 && k_pos < 0)
-      {
-        // Apenas o segundo ponto é adicionado
-        clipped_polygon.push_back(polygon[k]);
-      }
-      // Caso 2: Apenas o primeiro ponto está fora da janela
-      else if (i_pos >= 0 && k_pos < 0)
-      {
-        // Interpola o valor de z do ponto de interseção
-        float t = i_pos / (i_pos - k_pos);
-        float z = math::Lerp(iz, kz, t);
-
-        // Adiciona o ponto de interseção e o segundo ponto
-        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), z};
-
-        // Interpola a normal do vértice de interseção
-
-        if (i_outcode & TOP || i_outcode & BOTTOM)
-          t = (intersection.y - iy) / (ky - iy);
-        else
-          t = (intersection.x - ix) / (kx - ix);
-
-        float n_i = math::Lerp(polygon[i].second.x, polygon[k].second.x, t);
-        float n_j = math::Lerp(polygon[i].second.y, polygon[k].second.y, t);
-        float n_k = math::Lerp(polygon[i].second.z, polygon[k].second.z, t);
-
-        clipped_polygon.push_back(std::make_pair(intersection, core::Vector3{n_i, n_j, n_k}));
-
-        clipped_polygon.push_back(polygon[k]);
-      }
-      // Caso 3: Apenas o segundo ponto está fora da janela
-      else if (i_pos < 0 && k_pos >= 0)
-      {
-        // Interpola o valor de z do ponto de interseção
-        float t = i_pos / (i_pos - k_pos);
-        float z = math::Lerp(iz, kz, t);
-
-        // Adiciona o ponto de interseção com a janela
-        core::Vector3 intersection = {x_intersection(x1, y1, x2, y2, ix, iy, kx, ky), y_intersection(x1, y1, x2, y2, ix, iy, kx, ky), z};
-
-        // Interpola a normal do vértice de interseção
-        if (k_outcode & TOP || k_outcode & BOTTOM)
-          t = (intersection.y - iy) / (ky - iy);
-        else
-          t = (intersection.x - ix) / (kx - ix);
-
-        float n_i = math::Lerp(polygon[i].second.x, polygon[k].second.x, t);
-        float n_j = math::Lerp(polygon[i].second.y, polygon[k].second.y, t);
-        float n_k = math::Lerp(polygon[i].second.z, polygon[k].second.z, t);
-
-        clipped_polygon.push_back(std::make_pair(intersection, core::Vector3{n_i, n_j, n_k}));
-      }
-      // Caso 4: Ambos os pontos estão fora da janela, nenhum ponto é adicionado
-    }
-
-    return clipped_polygon;
-  }
-
-  /**
-   * @brief Realiza a clipagem de um polígono.
-   *
-   * @param polygon Polígono a ser clipado.
-   * @param min Coordenadas mínimas da janela de visualização.
-   * @param max Coordenadas máximas da janela de visualização.
-   *
-   * @return std::vector<core::Vector3> Polígono clipado.
-   *
-   * @note A função realiza a clipagem de um polígono em relação a uma janela de visualização.
-   * @note A função utiliza o algoritmo de Sutherland-Hodgman.
-   */
-  std::vector<core::Vector3> clip_polygon(const std::vector<core::Vector3> &polygon, const core::Vector2 &min, const core::Vector2 &max)
+  std::vector<core::Vector3> clip2D_polygon(const std::vector<core::Vector3> &polygon, const core::Vector2 &min, const core::Vector2 &max)
   {
     std::vector<core::Vector3> result = polygon;
 
-    // Clip against the left edge
-    result = clip_lines(result, min.x, min.y, min.x, max.y);
+    const std::vector<unsigned int> edges = {LEFT, RIGHT, BOTTOM, TOP};
 
-    // Clip against the bottom edge
-    result = clip_lines(result, min.x, max.y, max.x, max.y);
+    // A cada iteração, uma nova lista de vertices é gerada
+    for (auto edge : edges)
+    {
+      if (result.empty())
+        break;
 
-    // Clip against the right edge
-    result = clip_lines(result, max.x, max.y, max.x, min.y);
+      std::vector<core::Vector3> input = result;
+      result.clear();
 
-    // Clip against the top edge
-    result = clip_lines(result, max.x, min.y, min.x, min.y);
+      for (int i = 0; i < input.size(); i++)
+      {
+        int k = (i + 1) % input.size();
+        core::Vector3 p1 = input[i];
+        core::Vector3 p2 = input[k];
 
+        // Testa se os pontos estão dentro da janela de recorte
+        bool p1_inside = is_inside(p1, min, max, edge);
+        bool p2_inside = is_inside(p2, min, max, edge);
+
+        // Ambos os pontos estão dentro da janela, então adiciona o ponto final
+        if (p1_inside && p2_inside)
+          result.push_back(p2);
+        // Nenhum dos pontos está dentro da janela, então não adiciona nenhum ponto
+        else if (!p1_inside && !p2_inside)
+          continue;
+        // Não é possível aceitar ou rejeitar trivialmente a linha
+        else
+        {
+          // Calcula o ponto de interseção
+          core::Vector3 intersection = compute_intersection(p1, p2, min, max, edge);
+
+          // Somente o primeiro ponto está fora da janela, então adiciona o ponto de interseção e o ponto final
+          if (!p1_inside && p2_inside)
+          {
+            result.push_back(intersection);
+            result.push_back(p2);
+          }
+          // Somente o segundo ponto está fora da janela, então adiciona o ponto de interseção
+          else if (p1_inside && !p2_inside)
+            result.push_back(intersection);
+        }
+      }
+    }
     return result;
   }
 
-  /**
-   * @brief Realiza a clipagem de um polígono com interpolação de normais.
-   *
-   * @param polygon Polígono a ser clipado.
-   * @param min Coordenadas mínimas da janela de visualização.
-   * @param max Coordenadas máximas da janela de visualização.
-   *
-   * @return std::vector<std::pair<core::Vector3, core::Vector3>> Polígono clipado.
-   *
-   * @note A função realiza a clipagem de um polígono em relação a uma janela de visualização.
-   * @note A função utiliza o algoritmo de Sutherland-Hodgman.
-   * @note Utilizado para o modelo de sombreamento Gouraud e Phong.
-   */
-  std::vector<std::pair<core::Vector3, core::Vector3>> clip_polygon(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max)
+  std::vector<std::pair<core::Vector3, core::Vector3>> clip2D_polygon(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max)
   {
     std::vector<std::pair<core::Vector3, core::Vector3>> result = polygon;
 
-    // Clip against the left edge
-    result = clip_lines(result, min.x, min.y, min.x, max.y);
+    const std::vector<unsigned int> edges = {LEFT, RIGHT, BOTTOM, TOP};
 
-    // Clip against the right edge
-    result = clip_lines(result, max.x, max.y, max.x, min.y);
+    // A cada iteração, uma nova lista de vertices é gerada
+    for (auto edge : edges)
+    {
+      if (result.empty())
+        break;
 
-    // Clip against the bottom edge
-    result = clip_lines(result, min.x, max.y, max.x, max.y);
+      std::vector<std::pair<core::Vector3, core::Vector3>> input = result;
+      result.clear();
 
-    // Clip against the top edge
-    result = clip_lines(result, max.x, min.y, min.x, min.y);
+      for (int i = 0; i < input.size(); i++)
+      {
+        int k = (i + 1) % input.size();
+        std::pair<core::Vector3, core::Vector3> p1 = input[i];
+        std::pair<core::Vector3, core::Vector3> p2 = input[k];
 
-    return result;
-  }
+        // Testa se os pontos estão dentro da janela de recorte
+        bool p1_inside = is_inside(p1.first, min, max, edge);
+        bool p2_inside = is_inside(p2.first, min, max, edge);
 
-  void clip3d_line(core::Vector3 &p0, core::Vector3 &p1, const core::Vector3 &min, const core::Vector3 &max)
-  {
-    std::vector<core::Vector3> clipped_line;
+        // Ambos os pontos estão dentro da janela, então adiciona o ponto final
+        if (p1_inside && p2_inside)
+          result.push_back(p2);
+        // Nenhum dos pontos está dentro da janela, então não adiciona nenhum ponto
+        else if (!p1_inside && !p2_inside)
+          continue;
+        // Não é possível aceitar ou rejeitar trivialmente a linha
+        else
+        {
+          // Calcula o ponto de interseção
+          std::pair<core::Vector3, core::Vector3> intersection = compute_intersection(p1, p2, min, max, edge);
 
-    // Compute outcodes for P0, P1, and initialize line segment endpoints
-  }
-
-  std::vector<core::Vector3> clip3d_polygon(const std::vector<core::Vector3> &polygon)
-  {
-    // Limites do volume de recorte
-    core::Vector3 min = {-1.0f, -1.0f, 0.0f};
-    core::Vector3 max = {1.0f, 1.0f, 1.0f};
-
-    std::vector<core::Vector3> result = polygon;
-
-    // Clip against the left edge
-
+          // Somente o primeiro ponto está fora da janela, então adiciona o ponto de interseção e o ponto final
+          if (!p1_inside && p2_inside)
+          {
+            result.push_back(intersection);
+            result.push_back(p2);
+          }
+          // Somente o segundo ponto está fora da janela, então adiciona o ponto de interseção
+          else if (p1_inside && !p2_inside)
+            result.push_back(intersection);
+        }
+      }
+    }
     return result;
   }
 

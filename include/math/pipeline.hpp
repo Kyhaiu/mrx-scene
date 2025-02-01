@@ -89,25 +89,13 @@ namespace math
 #define TOP 0b1000
 
   int compute_outcode(core::Vector3 p, core::Vector2 min, core::Vector2 max);
+  bool is_inside(core::Vector3 p, core::Vector2 min, core::Vector2 max, unsigned int edge);
 
-  bool clip_test(float denom, float num, float &tE, float &tL);
+  core::Vector3 compute_intersection(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max, unsigned int edge);
+  std::pair<core::Vector3, core::Vector3> compute_intersection(std::pair<core::Vector3, core::Vector3> p1, std::pair<core::Vector3, core::Vector3>, core::Vector2 min, core::Vector2 max, unsigned int edge);
 
-  float y_intersection(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
-  float x_intersection(float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4);
-
-  float x_intersection(core::Vector3 p1, core::Vector3 p2, core::Vector3 p3, core::Vector3 p4);
-  float y_intersection(core::Vector3 p1, core::Vector3 p2, core::Vector3 p3, core::Vector3 p4);
-  float z_intersection(core::Vector3 p1, core::Vector3 p2, core::Vector3 p3, core::Vector3 p4);
-
-  std::vector<core::Vector3> clip_lines(const std::vector<core::Vector3> &polygon, float x1, float y1, float x2, float y2);
-  std::vector<std::pair<core::Vector3, core::Vector3>> clip_lines(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, float x1, float y1, float x2, float y2);
-
-  std::vector<core::Vector3> clip_polygon(const std::vector<core::Vector3> &polygon, const core::Vector2 &min, const core::Vector2 &max);
-  std::vector<std::pair<core::Vector3, core::Vector3>> clip_polygon(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max);
-
-  void clip3d_line(core::Vector3 &p0, core::Vector3 &p1, const core::Vector3 &min, const core::Vector3 &max);
-
-  std::vector<core::Vector3> clip3d_polygon(const std::vector<core::Vector3> &polygon);
+  std::vector<core::Vector3> clip2D_polygon(const std::vector<core::Vector3> &polygon, const core::Vector2 &min, const core::Vector2 &max);
+  std::vector<std::pair<core::Vector3, core::Vector3>> clip2D_polygon(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max);
 
   //-------------------------------------------------------------------------------------------------
   // Funções de Preenchimento de Polígonos e Desenho de Linhas

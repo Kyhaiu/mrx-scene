@@ -438,19 +438,19 @@ namespace models
 
         if (this->lighting_model == FLAT_SHADING)
         {
-          std::vector<core::Vector3> clipped_vertex;
+          std::vector<core::Vector3> clipped_vertexes;
 
-          // Flat shading não precisa da normal do vértice
+          // O Flat shading precisa apenas dos vértices, sem os vetores normais
           for (auto vertex : vertexes)
-            clipped_vertex.push_back(vertex.first);
+            clipped_vertexes.push_back(vertex.first);
 
-          clipped_vertex = math::clip_polygon(clipped_vertex, min_viewport, max_viewport);
+          clipped_vertexes = math::clip2D_polygon(clipped_vertexes, min_viewport, max_viewport);
 
           // Se o vetor de vértices for menor que 3, não é possível formar um polígono, então não é necessário desenhar
-          if (clipped_vertex.size() < 3)
+          if (clipped_vertexes.size() < 3)
             continue;
 
-          utils::DrawFaceBufferFlatShading(clipped_vertex, this->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+          utils::DrawFaceBufferFlatShading(clipped_vertexes, this->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
         }
         else if (this->lighting_model == GOURAUD_SHADING)
         {
@@ -470,7 +470,7 @@ namespace models
             vertexes_gouraud.push_back(std::make_pair(v, color));
           }
 
-          vertexes_gouraud = math::clip_polygon(vertexes_gouraud, min_viewport, max_viewport);
+          vertexes_gouraud = math::clip2D_polygon(vertexes_gouraud, min_viewport, max_viewport);
 
           std::vector<std::pair<core::Vector3, models::Color>> clipped_vertexes;
 
@@ -487,7 +487,7 @@ namespace models
         }
         else if (this->lighting_model == PHONG_SHADING)
         {
-          std::vector<std::pair<core::Vector3, core::Vector3>> clipped_vertex = math::clip_polygon(vertexes, min_viewport, max_viewport);
+          std::vector<std::pair<core::Vector3, core::Vector3>> clipped_vertex = math::clip2D_polygon(vertexes, min_viewport, max_viewport);
 
           // Se o vetor de vértices for menor que 3, não é possível formar um polígono, então não é necessário desenhar
           if (clipped_vertex.size() < 3)

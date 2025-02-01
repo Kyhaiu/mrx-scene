@@ -98,6 +98,28 @@ namespace core
     {
       return {j["x"], j["y"]};
     }
+
+    // operator << - Overloads the << operator to print the Vector2
+    friend std::ostream &operator<<(std::ostream &os, const Vector2 &v)
+    {
+      os << v.x << ", " << v.y;
+      return os;
+    }
+
+    Vector2 operator+(const Vector2 &v) const
+    {
+      return {x + v.x, y + v.y};
+    }
+
+    Vector2 operator-(const Vector2 &v) const
+    {
+      return {x - v.x, y - v.y};
+    }
+
+    Vector2 operator*(const float &f) const
+    {
+      return {x * f, y * f};
+    }
   } Vector2;
 
   typedef struct Vector3
