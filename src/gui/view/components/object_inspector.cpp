@@ -59,12 +59,15 @@ namespace GUI
     if (ImGui::TreeNode("Material"))
     {
       ImGui::Text("Ka:");
+
       ImGui::ColorEdit3("##ambient", reinterpret_cast<float *>(&object->material.ambient));
 
       ImGui::Text("Kd:");
+
       ImGui::ColorEdit3("##diffuse", reinterpret_cast<float *>(&object->material.diffuse));
 
       ImGui::Text("Ks:");
+
       ImGui::ColorEdit3("##specular", reinterpret_cast<float *>(&object->material.specular));
 
       ImGui::Text("Brilho:");
@@ -181,6 +184,11 @@ namespace GUI
     ImGui::InputFloat("##position-z", &omni_light->position.z);
 
     ImGui::Text("Intensidade:");
-    ImGui::ColorEdit3("##intensity", reinterpret_cast<float *>(&omni_light->intensity));
+
+    float intensity[3] = {omni_light->intensity.r / 255.0f, omni_light->intensity.g / 255.0f, omni_light->intensity.b / 255.0f};
+    ImGui::ColorEdit3("##intensity", intensity);
+    omni_light->intensity.r = static_cast<models::Uint8>(intensity[0] * 255);
+    omni_light->intensity.g = static_cast<models::Uint8>(intensity[1] * 255);
+    omni_light->intensity.b = static_cast<models::Uint8>(intensity[2] * 255);
   }
 } // namespace GUI

@@ -47,9 +47,6 @@
 namespace models
 {
 
-#define MAX_COLOR_VALUE 255
-#define MIN_COLOR_VALUE 0
-
   // Uint8 é um tipo de dado que armazena valores inteiros de 0 a 255 (usado para cores)
   typedef unsigned char Uint8;
 
