@@ -181,8 +181,8 @@ namespace math
     float su = size_window.x / 2;
     float sv = size_window.y / 2;
 
-    core::Matrix result = core::Flota16ToMatrix({d / (su * far), 0, -(cu / d * far), 0,
-                                                 0, d / (sv * far), -(cv / d * far), 0,
+    core::Matrix result = core::Flota16ToMatrix({d / (su * far), 0, (-(cu / d) * far), 0,
+                                                 0, d / (sv * far), (-(cv / d) * far), 0,
                                                  0, 0, 1 / far, 0,
                                                  0, 0, 0, 1});
 

@@ -13,8 +13,8 @@ GUI::Controller::Controller(float canvasWidth, float canvasHeight)
       // If the layout changes it will be necessary to change this values
       {canvasWidth * 0.2f, 0},
       {canvasWidth, canvasHeight},
-      {-3, -3},
-      {3, 3});
+      {-2, -2},
+      {2, 2});
 
   this->insertionOptions = {1, 1.0f, 1.0f, 10, 10};
 }
@@ -260,10 +260,7 @@ void GUI::Controller::handleEvents(const SDL_Event &event, SDL_Window *window, f
       float dx = static_cast<float>(this->lastMousePosition.x - this->mousePosition.x);
       float dy = static_cast<float>(this->lastMousePosition.y - this->mousePosition.y);
 
-      if (SDL_GetModState() & KMOD_CTRL)
-        this->scene->translateObject({-dx, 0, -dy});
-      else
-        this->scene->translateObject({-dx, -dy, 0});
+      this->scene->translateObject({-dx, -dy, 0});
 
       this->lastMousePosition = this->mousePosition;
     }
@@ -295,17 +292,38 @@ void GUI::Controller::handleEvents(const SDL_Event &event, SDL_Window *window, f
     break;
 
   case SDL_MOUSEWHEEL:
-    if (event.wheel.y > 0) // scroll up
+
+    if (this->scene->getSelectedObject() != nullptr)
     {
-      models::Camera3D *camera = this->scene->getCamera();
-      camera->d -= 0.1f;
+      // Verifica se há um objeto selecionado
+      if (this->scene->getSelectedObject() != nullptr)
+      {
+        // Obtém a direção do scroll
+        int scrollY = event.wheel.y;
+
+        // Define a sensibilidade do scroll (ajuste conforme necessário)
+        float sensitivity = 1.0f;
+
+        // Aplica a translação no eixo Z
+        this->scene->translateObject({0, 0, static_cast<float>(-scrollY) * sensitivity});
+      }
+      break;
     }
-    else if (event.wheel.y < 0) // scroll down
+    else
     {
-      models::Camera3D *camera = this->scene->getCamera();
-      camera->d += 0.1f;
+
+      if (event.wheel.y > 0) // scroll up
+      {
+        models::Camera3D *camera = this->scene->getCamera();
+        camera->d -= 0.1f;
+      }
+      else if (event.wheel.y < 0) // scroll down
+      {
+        models::Camera3D *camera = this->scene->getCamera();
+        camera->d += 0.1f;
+      }
+      break;
     }
-    break;
   }
 }
 
