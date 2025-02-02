@@ -96,7 +96,12 @@ void GUI::Controller::selectObject(models::Mesh *object)
 {
   this->scene->setSelectedObject(object);
 
-  this->previousTranslations[object] = object->position;
+  if (object != nullptr)
+  {
+    this->previousRotation[object] = object->rotation;
+    this->previousScale[object] = object->scale;
+    this->previousTranslations[object] = object->position;
+  }
 }
 
 /**

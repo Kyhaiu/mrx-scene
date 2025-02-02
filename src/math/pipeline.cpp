@@ -304,6 +304,27 @@ namespace math
     }
   }
 
+  bool is_inside(core::Vector4 p, core::Vector3 min, core::Vector3 max, unsigned int plane)
+  {
+    switch (plane)
+    {
+    case LEFT:
+      return p.x >= min.x; // Limite da borda da esquerda da janela de recorte é x_min
+    case RIGHT:
+      return p.x <= max.x; // Limite da borda da direita da janela de recorte é x_max
+    case BOTTOM:
+      return p.y >= min.y; // Limite da borda inferior da janela de recorte é y_min
+    case TOP:
+      return p.y <= max.y; // Limite da borda superior da janela de recorte é y_max
+    case NEAR:
+      return p.z >= min.z; // Limite da borda inferior da janela de recorte é z_min
+    case FAR:
+      return p.z <= max.z; // Limite da borda superior da janela de recorte é z_max
+    default:
+      return false; // Caso não seja nenhuma das bordas
+    }
+  }
+
   /**
    * @brief Calcula o ponto de interseção de uma linha com uma janela de recorte.
    *
@@ -347,6 +368,59 @@ namespace math
       intersection.y = max.y;
       intersection.z = p1.z + u * (p2.z - p1.z);
     }
+
+    return intersection;
+  }
+
+  core::Vector4 compute_intersection(core::Vector4 p1, core::Vector4 p2, core::Vector3 min, core::Vector3 max, unsigned int plane)
+  {
+    float u = 0.0f;
+    core::Vector4 intersection;
+
+    if (plane == LEFT)
+    {
+      u = (min.x - p1.x) / (p2.x - p1.x);
+      intersection.x = min.x;
+      intersection.y = p1.y + u * (p2.y - p1.y);
+      intersection.z = p1.z + u * (p2.z - p1.z);
+    }
+    else if (plane == RIGHT)
+    {
+      u = (max.x - p1.x) / (p2.x - p1.x);
+      intersection.x = max.x;
+      intersection.y = p1.y + u * (p2.y - p1.y);
+      intersection.z = p1.z + u * (p2.z - p1.z);
+    }
+    else if (plane == BOTTOM)
+    {
+      u = (min.y - p1.y) / (p2.y - p1.y);
+      intersection.x = p1.x + u * (p2.x - p1.x);
+      intersection.y = min.y;
+      intersection.z = p1.z + u * (p2.z - p1.z);
+    }
+    else if (plane == TOP)
+    {
+      u = (max.y - p1.y) / (p2.y - p1.y);
+      intersection.x = p1.x + u * (p2.x - p1.x);
+      intersection.y = max.y;
+      intersection.z = p1.z + u * (p2.z - p1.z);
+    }
+    else if (plane == NEAR)
+    {
+      u = (min.z - p1.z) / (p2.z - p1.z);
+      intersection.x = p1.x + u * (p2.x - p1.x);
+      intersection.y = p1.y + u * (p2.y - p1.y);
+      intersection.z = min.z;
+    }
+    else if (plane == FAR)
+    {
+      u = (max.z - p1.z) / (p2.z - p1.z);
+      intersection.x = p1.x + u * (p2.x - p1.x);
+      intersection.y = p1.y + u * (p2.y - p1.y);
+      intersection.z = max.z;
+    }
+
+    intersection.w = p1.w + u * (p2.w - p1.w);
 
     return intersection;
   }
@@ -520,6 +594,110 @@ namespace math
       }
     }
     return result;
+  }
+
+  std::vector<std::pair<core::Vector4, core::Vertex *>> clip3D_polygon(const std::vector<std::pair<core::Vector4, core::Vertex *>> &polygon)
+  {
+    // Define volume de recorte fixo (coordenadas normalizadas)
+    const core::Vector3 min = {-1, -1, 0};
+    const core::Vector3 max = {1, 1, 1};
+
+    std::vector<std::pair<core::Vector4, core::Vertex *>> result = polygon;
+
+    // Lista de planos de recorte 3D (6 faces do cubo)
+    const std::vector<std::tuple<core::Vector3, core::Vector3, unsigned int>> planes = {
+        {{min.x, min.y, min.z}, {min.x, max.y, max.z}, LEFT},   // Plano esquerdo (x = -1)
+        {{max.x, min.y, min.z}, {max.x, max.y, max.z}, RIGHT},  // Plano direito (x = 1)
+        {{min.x, min.y, min.z}, {max.x, min.y, max.z}, BOTTOM}, // Plano inferior (y = -1)
+        {{min.x, max.y, min.z}, {max.x, max.y, max.z}, TOP},    // Plano superior (y = 1)
+        {{min.x, min.y, min.z}, {max.x, max.y, min.z}, NEAR},   // Plano near (z = 0)
+        {{min.x, min.y, max.z}, {max.x, max.y, max.z}, FAR}     // Plano far (z = 1)
+    };
+
+    // std::cout << "Polygon before clipping: " << std::endl;
+    // std::cout << polygon.size() << std::endl;
+    // for (const auto &p : polygon)
+    //   std::cout << p << std::endl;
+
+    // Itera sobre cada plano de recorte
+    for (const auto &plane_def : planes)
+    {
+      // Extrai parâmetros do plano atual
+      const core::Vector3 &plane_min = std::get<0>(plane_def);
+      const core::Vector3 &plane_max = std::get<1>(plane_def);
+      unsigned int plane_type = std::get<2>(plane_def);
+
+      // std::cout << "Plane type: " << (plane_type == LEFT ? "LEFT" : plane_type == RIGHT ? "RIGHT"
+      //                                                           : plane_type == BOTTOM  ? "BOTTOM"
+      //                                                           : plane_type == TOP     ? "TOP"
+      //                                                           : plane_type == NEAR    ? "NEAR"
+      //                                                                                   : "FAR")
+      //           << std::endl;
+      // std::cout << "Plane min: " << plane_min << std::endl;
+      // std::cout << "Plane max: " << plane_max << std::endl;
+
+      std::vector<std::pair<core::Vector4, core::Vertex *>> input = result;
+      result.clear();
+
+      // Itera sobre cada aresta do polígono
+      for (size_t i = 0; i < input.size(); i++)
+      {
+        size_t k = (i + 1) % input.size();
+        core::Vector4 p1 = input[i].first;
+        core::Vector4 p2 = input[k].first;
+
+        // std::cout << "P1: " << p1 << std::endl;
+        // std::cout << "P2: " << p2 << std::endl;
+
+        // Testa se os pontos estão dentro da janela de recorte
+        bool p1_inside = is_inside(p1, plane_min, plane_max, plane_type);
+        bool p2_inside = is_inside(p2, plane_min, plane_max, plane_type);
+
+        // std::cout << "P1 inside: " << p1_inside << std::endl;
+        // std::cout << "P2 inside: " << p2_inside << std::endl;
+
+        // Ambos os pontos estão dentro da janela, então adiciona o ponto final
+        if (p1_inside && p2_inside)
+        {
+          result.push_back(std::make_pair(p2, input[k].second));
+        }
+        // Nenhum dos pontos está dentro da janela, então não adiciona nenhum ponto
+        else if (!p1_inside && !p2_inside)
+        {
+          continue;
+        }
+        // Não é possível aceitar ou rejeitar trivialmente a linha
+        else
+        {
+          // Calcula o ponto de interseção
+          core::Vector4 intersection = compute_intersection(p1, p2, plane_min, plane_max, plane_type);
+
+          // Somente o primeiro ponto está fora da janela, então adiciona o ponto de interseção e o ponto final
+          if (!p1_inside && p2_inside)
+          {
+            result.push_back(std::make_pair(intersection, input[i].second));
+            result.push_back(input[k]);
+          }
+          // Somente o segundo ponto está fora da janela, então adiciona o ponto de interseção
+          else if (p1_inside && !p2_inside)
+          {
+            result.push_back(std::make_pair(intersection, input[k].second));
+          }
+        }
+      }
+
+      // std::cout << "Processou plano" << std::endl;
+      // std::cout << "---" << std::endl;
+    }
+
+    // std::cout << "Polygon after clipping: " << std::endl;
+    // std::cout << result.size() << std::endl;
+    // for (const auto &p : result)
+    //   std::cout << p << std::endl;
+
+    // std::cout << "---------------------------------" << std::endl;
+
+    return result; // Retorna o polígono clipado
   }
 
   //-------------------------------------------------------------------------------------------------

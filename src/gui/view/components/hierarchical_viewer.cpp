@@ -45,6 +45,11 @@ namespace GUI
         this->selected_index = index;
         this->controller->selectObject(object);
       }
+      if (ImGui::MenuItem("Deselecionar"))
+      {
+        this->selected_index = -1;
+        this->controller->selectObject(nullptr);
+      }
       if (ImGui::MenuItem("Remover"))
       {
         this->controller->removeObject(object);

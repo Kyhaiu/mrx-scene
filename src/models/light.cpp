@@ -18,7 +18,7 @@ namespace models
   void LightOrbital(models::Omni *omni, float orbitalSpeed)
   {
     // (0, 1, 0) é o vetor up (eixo de rotação)
-    core::Matrix rotation = math::MatrixRotate(math::Vector3Normalize({1, 1, 0}), orbitalSpeed);
+    core::Matrix rotation = math::MatrixRotate(math::Vector3Normalize({0, 1, 0}), orbitalSpeed);
     // (0, 0, 0) é o centro da cena já que a luz não possui ponto focal (raio de visão)
     core::Vector3 view = math::Vector3Subtract(omni->position, {0, 0, 0});
     view = math::Vector3Transform(view, rotation);

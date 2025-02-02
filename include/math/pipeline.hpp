@@ -82,21 +82,26 @@ namespace math
   // Funções de Clipping (Clipagem de Linha)
   //-------------------------------------------------------------------------------------------------
 
-#define INSIDE 0b0000
-#define LEFT 0b0001
-#define RIGHT 0b0010
-#define BOTTOM 0b0100
-#define TOP 0b1000
+#define INSIDE 0b000000
+#define LEFT 0b000001
+#define RIGHT 0b000010
+#define BOTTOM 0b000100
+#define TOP 0b001000
+#define NEAR 0b010000
+#define FAR 0b100000
 
-  int compute_outcode(core::Vector3 p, core::Vector2 min, core::Vector2 max);
   bool is_inside(core::Vector3 p, core::Vector2 min, core::Vector2 max, unsigned int edge);
+  bool is_inside(core::Vector4 p, core::Vector3 min, core::Vector3 max, unsigned int plane);
 
   core::Vector3 compute_intersection(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max, unsigned int edge);
+  core::Vector4 compute_intersection(core::Vector4 p1, core::Vector4 p2, core::Vector3 min, core::Vector3 max, unsigned int plane);
+
   std::pair<core::Vector3, core::Vector3> compute_intersection(std::pair<core::Vector3, core::Vector3> p1, std::pair<core::Vector3, core::Vector3>, core::Vector2 min, core::Vector2 max, unsigned int edge);
 
   std::vector<core::Vector3> clip2D_polygon(const std::vector<core::Vector3> &polygon, const core::Vector2 &min, const core::Vector2 &max);
   std::vector<std::pair<core::Vector3, core::Vector3>> clip2D_polygon(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max);
 
+  std::vector<std::pair<core::Vector4, core::Vertex *>> clip3D_polygon(const std::vector<std::pair<core::Vector4, core::Vertex *>> &polygon);
   //-------------------------------------------------------------------------------------------------
   // Funções de Preenchimento de Polígonos e Desenho de Linhas
   //-------------------------------------------------------------------------------------------------

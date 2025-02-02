@@ -182,7 +182,7 @@ namespace core
     // operator << - Overloads the << operator to print the Vector4
     friend std::ostream &operator<<(std::ostream &os, const Vector4 &v)
     {
-      os << v.x << ", " << v.y << ", " << v.z << ", " << v.w;
+      os << "x: " << v.x << ", y: " << v.y << ", z: " << v.z << ", w: " << v.w;
       return os;
     }
 
