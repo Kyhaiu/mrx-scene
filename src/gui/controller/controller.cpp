@@ -312,38 +312,40 @@ void GUI::Controller::handleEvents(const SDL_Event &event, SDL_Window *window, f
 /**
  * @brief Callback para quando um item da hierarquia é selecionado
  *
- * @param index Índice do item selecionado
+ * @param item_type Tipo do item selecionado
+ * @param object_index Índice do objeto selecionado
  *
  * @note Este método é chamado quando um item da hierarquia é selecionado
- * @note O índice -1 é reservado para a câmera
- * @note O índice -2 é reservado para a luz
  */
-void GUI::Controller::on_hierarchy_item_selected(int index)
+void GUI::Controller::on_hierarchy_item_selected(int item_type, int object_index)
 {
-  if (index == -1)
+  if (item_type == GUI::ItemSelected::NONE)
   {
-    // Rise the flag to show that the camera is selected
-    this->camera_is_selected = true;
+    this->selected_element_index = -1;
+    this->scene->setSelectedObject(nullptr);
+    this->element_selected_type = GUI::ItemSelected::NONE;
   }
-  else if (index == -2)
+  else if (item_type == GUI::ItemSelected::OBJECT)
   {
-    this->camera_is_selected = false;
+    this->selected_element_index = object_index;
+    this->scene->setSelectedObject(this->scene->getObjects()[object_index]);
+    this->element_selected_type = GUI::ItemSelected::OBJECT;
   }
-  else
+  else if (item_type == GUI::ItemSelected::OMNI_LIGHT)
   {
-    this->camera_is_selected = false;
-
-    int i = 0;
-
-    for (auto object : this->scene->getObjects())
-    {
-      if (i == index)
-      {
-        this->scene->setSelectedObject(object);
-        break;
-      }
-      i++;
-    }
+    this->element_selected_type = GUI::ItemSelected::OMNI_LIGHT;
+    this->selected_element_index = object_index;
+    this->scene->selected_omni_light = &this->scene->omni_lights[object_index];
+  }
+  else if (item_type == GUI::ItemSelected::CAMERA)
+  {
+    this->element_selected_type = GUI::ItemSelected::CAMERA;
+    this->selected_element_index = object_index;
+  }
+  else if (item_type == GUI::ItemSelected::GLOBAL_LIGHT)
+  {
+    this->element_selected_type = GUI::ItemSelected::GLOBAL_LIGHT;
+    this->selected_element_index = object_index;
   }
 }
 

@@ -42,6 +42,15 @@ namespace GUI
     int rings;
   } insertion_options_parameters;
 
+  enum ItemSelected
+  {
+    NONE,
+    OBJECT,
+    GLOBAL_LIGHT,
+    OMNI_LIGHT,
+    CAMERA
+  };
+
   class Controller
   {
   private:
@@ -117,11 +126,24 @@ namespace GUI
      */
     std::map<models::Mesh *, core::Vector3> previousScale;
     /**
-     * @brief
+     * @brief Resultados do benchmarking
      *
-     * @param canvasWidth
      */
     models::Benchmark benchmark_results;
+    /**
+     * @brief Tipo do elemento selecionado na cena
+     *
+     * @note NONE - 0, OBJECT - 2, LIGHT - 3, CAMERA - 4
+     */
+    int element_selected_type = ItemSelected::NONE;
+    /**
+     * @brief Indice do elemento selecionado
+     *
+     * @note -1 para nenhum elemento selecionado
+     * @note -2 para câmera
+     * @note -3 para luz global
+     */
+    int selected_element_index = -1;
 
     // Constructor and Destructor
     Controller(float canvasWidth, float canvasHeight);
@@ -142,7 +164,7 @@ namespace GUI
     void scale_object(models::Mesh *object, core::Vector3 scale);
 
     // Events
-    void on_hierarchy_item_selected(int index);
+    void on_hierarchy_item_selected(int item_type, int object_index);
     void handleEvents(const SDL_Event &event, SDL_Window *window, float deltaTime);
     void on_file_dialog_open(const std::string &file);
     void save_scene();

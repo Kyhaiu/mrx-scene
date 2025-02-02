@@ -53,5 +53,9 @@ namespace GUI
     void objectInspector(GUI::Controller *controller);
     void objectInspector(models::Camera3D *camera);
     void objectInspector(models::Light *light);
+
+    void objectInspector(models::Mesh *object, GUI::Controller *controller);
+    void objectInspector(models::Omni *omni_lights, GUI::Controller *controller);
+
   }
 }

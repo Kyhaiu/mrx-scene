@@ -130,6 +130,11 @@ namespace models
      */
     std::vector<models::Omni> omni_lights;
     /**
+     * @brief Ponteiro para a luz omnidirecional selecionada
+     *
+     */
+    models::Omni *selected_omni_light;
+    /**
      * @brief Flag que determina qual modelo de iluminação será utilizado
      *
      * @note 0 - Flat Shading (Padrão)

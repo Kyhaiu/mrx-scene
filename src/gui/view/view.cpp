@@ -100,7 +100,15 @@ void GUI::UI::object_properties()
   {
     if (ImGui::BeginTabItem("Propriedades do objeto"))
     {
-      GUI::components::objectInspector(this->controller);
+      if (this->controller->element_selected_type == GUI::ItemSelected::OBJECT)
+        GUI::components::objectInspector(this->controller);
+      if (this->controller->element_selected_type == GUI::ItemSelected::OMNI_LIGHT)
+        GUI::components::objectInspector(this->controller);
+      else if (this->controller->element_selected_type == GUI::ItemSelected::CAMERA)
+        GUI::components::objectInspector(this->controller->getScene()->getCamera());
+      else if (this->controller->element_selected_type == GUI::ItemSelected::GLOBAL_LIGHT)
+        GUI::components::objectInspector(&this->controller->getScene()->global_light);
+
       ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

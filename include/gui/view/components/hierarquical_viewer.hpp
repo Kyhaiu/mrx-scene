@@ -62,7 +62,8 @@ namespace GUI
     public:
       void objectRenderingNode(models::Mesh *object, int index);
       void cameraRenderingNode(models::Camera3D *camera);
-      void lightRenderingNode(models::Light *light, int index);
+      void lightRenderingNode(models::Light *light);
+      void omnidirectionalLightRenderingNode(models::Omni *light, int index);
 
       HierarchyViewer(GUI::Controller *_controller);
       void render(models::Scene *scene);

@@ -4,9 +4,47 @@ namespace GUI
 {
   void components::objectInspector(GUI::Controller *controller)
   {
-
     models::Mesh *object = controller->getScene()->getSelectedObject();
 
+    if (controller->element_selected_type == GUI::ItemSelected::OBJECT)
+    {
+      object = controller->getScene()->getObjects()[controller->selected_element_index];
+      objectInspector(object, controller);
+    }
+    else if (controller->element_selected_type == GUI::ItemSelected::OMNI_LIGHT)
+    {
+      models::Omni *omni_light = &controller->getScene()->omni_lights[controller->selected_element_index];
+      objectInspector(omni_light, controller);
+    }
+  }
+
+  void components::objectInspector(models::Camera3D *camera)
+  {
+
+    ImGui::Text("Posição:");
+    ImGui::InputFloat3("##position", &camera->position.x);
+
+    ImGui::Text("Foco:");
+    ImGui::InputFloat3("##target", &camera->target.x);
+
+    ImGui::Text("D:");
+    ImGui::InputFloat("##d", &camera->d);
+
+    ImGui::Text("Near:");
+    ImGui::InputFloat("##near", &camera->near);
+
+    ImGui::Text("Far:");
+    ImGui::InputFloat("##far", &camera->far);
+  }
+
+  void components::objectInspector(models::Light *light)
+  {
+    ImGui::Text("Intensidade:");
+    ImGui::ColorEdit3("##intensity", reinterpret_cast<float *>(&light->intensity));
+  }
+
+  void components::objectInspector(models::Mesh *object, GUI::Controller *controller)
+  {
     if (controller->getScene()->getSelectedObject() == nullptr)
       return;
 
@@ -20,13 +58,13 @@ namespace GUI
 
     if (ImGui::TreeNode("Material"))
     {
-      ImGui::Text("Iluminação ambiente:");
+      ImGui::Text("Ka:");
       ImGui::ColorEdit3("##ambient", reinterpret_cast<float *>(&object->material.ambient));
 
-      ImGui::Text("Iluminação difusa:");
+      ImGui::Text("Kd:");
       ImGui::ColorEdit3("##diffuse", reinterpret_cast<float *>(&object->material.diffuse));
 
-      ImGui::Text("Iluminação especular:");
+      ImGui::Text("Ks:");
       ImGui::ColorEdit3("##specular", reinterpret_cast<float *>(&object->material.specular));
 
       ImGui::Text("Brilho:");
@@ -116,4 +154,33 @@ namespace GUI
       ImGui::TreePop();
     }
   }
-}
+
+  void components::objectInspector(models::Omni *omni_light, GUI::Controller *controller)
+  {
+    if (controller->getScene()->selected_omni_light == nullptr)
+      return;
+
+    ImGui::Text("Posição");
+
+    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.0f, 1.0f, 1.0f));
+    ImGui::Button("X");
+    ImGui::PopStyleColor(1);
+    ImGui::SameLine();
+    ImGui::InputFloat("##position-x", &omni_light->position.x);
+
+    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.33f, 1.0f, 1.0f));
+    ImGui::Button("Y");
+    ImGui::PopStyleColor(1);
+    ImGui::SameLine();
+    ImGui::InputFloat("##position-y", &omni_light->position.y);
+
+    ImGui::PushStyleColor(ImGuiCol_Button, (ImVec4)ImColor::HSV(0.66f, 1.0f, 1.0f));
+    ImGui::Button("Z");
+    ImGui::PopStyleColor(1);
+    ImGui::SameLine();
+    ImGui::InputFloat("##position-z", &omni_light->position.z);
+
+    ImGui::Text("Intensidade:");
+    ImGui::ColorEdit3("##intensity", reinterpret_cast<float *>(&omni_light->intensity));
+  }
+} // namespace GUI
