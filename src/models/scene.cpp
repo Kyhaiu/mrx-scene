@@ -560,10 +560,15 @@ namespace models
         else
           object->determineNormalsByAverage();
 
+      // std::cout << "Objeto: " << object->getName() << std::endl;
+
       core::Vector3 centroid = this->centroid_algorithm == CENTROID_BY_MEAN ? object->getCentroidByMean() : object->getCentroidByWrapBox();
 
       // usado como variável temporária pro flat shading e pro bounding box
       std::vector<core::Vector3> vertexes_object;
+
+      vertexes_object.clear();
+      int num_clipped_faces = 0;
       for (auto face : object->getFaces())
       {
 
@@ -606,6 +611,12 @@ namespace models
         if (this->clipping)
           clipped_vertices = math::clip3D_polygon(clipped_vertices);
 
+        if (clipped_vertices.size() < 3)
+        {
+          num_clipped_faces++;
+          continue;
+        }
+
         for (auto &v : clipped_vertices)
         {
           core::Vector4 v_screen = math::MatrixMultiplyVector(viewport_matrix, v.first);
@@ -617,6 +628,8 @@ namespace models
           v.first = v_screen;
         }
 
+        // std::cout << "-----------------" << std::endl;
+
         face->setVisible(face->isVisible(camera->position));
 
         if (!face->getVisible())
@@ -624,11 +637,11 @@ namespace models
 
         if (this->lighting_model == FLAT_SHADING)
         {
-          if (clipped_vertices.size() < 3)
-            continue;
 
           // usado como variável temporária pro flat shading e pro bounding box
           std::vector<core::Vector3> vertexes;
+
+          vertexes.clear();
 
           for (auto vertex : clipped_vertices)
           {
@@ -643,25 +656,22 @@ namespace models
 
           std::vector<std::pair<core::Vector3, models::Color>> clipped_gouraud_vertexes;
 
+          clipped_gouraud_vertexes.clear();
+
           for (auto vertex : clipped_vertices)
           {
             clipped_gouraud_vertexes.push_back(std::make_pair(vertex.first.toVector3(), models::ChannelsToColor({vertex.second.x, vertex.second.y, vertex.second.z})));
             vertexes_object.push_back({vertex.first.x, vertex.first.y, vertex.first.z});
           }
-          // Se o vetor de vértices for menor que 3, não é possível formar um polígono, então não é necessário desenhar
-          if (clipped_gouraud_vertexes.size() < 3)
-            continue;
 
           utils::DrawFaceBufferGouraudShading(clipped_gouraud_vertexes, this->z_buffer, this->color_buffer);
         }
         else if (this->lighting_model == PHONG_SHADING)
         {
 
-          // Se o vetor de vértices for menor que 3, não é possível formar um polígono, então não é necessário desenhar
-          if (clipped_vertices.size() < 3)
-            continue;
-
           std::vector<std::pair<core::Vector3, core::Vector3>> vertexes;
+
+          vertexes.clear();
 
           for (auto v : clipped_vertices)
           {
@@ -675,6 +685,10 @@ namespace models
 
       if (object == this->getSelectedObject())
       {
+        // Todas as faces foram recortadas
+        // #TODO Achar um jeito de indicar se o objeto foi totalmente recortado
+        if (num_clipped_faces == object->getFaces().size())
+          continue;
         core::Vector4 box = utils::GetBoundingBox(vertexes_object);
         utils::DrawBoundingBox({box.x, box.y}, {box.z, box.w}, models::YELLOW, this->z_buffer, this->color_buffer);
       }
