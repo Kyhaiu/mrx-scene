@@ -303,6 +303,7 @@ namespace models
    *
    * @note A rasterização da cena é responsável por renderizar todos os objetos
    * da cena na tela
+   * @todo REFATORAR ESTA FUNÇÃO E SEPARAR EM FUNÇÕES PARA CADA MODELO DE ILUMINAÇÃO
    */
   void Scene::adair_pipeline()
   {
@@ -503,6 +504,11 @@ namespace models
       object->is_visible = true;
   }
 
+  /**
+   * @brief Função para rasterizar a cena utilizando o pipeline de Smith
+   *
+   * @todo REFATORAR ESTA FUNÇÃO E SEPARAR EM FUNÇÕES PARA CADA MODELO DE ILUMINAÇÃO
+   */
   void Scene::smith_pipeline()
   {
     models::Camera3D *camera = this->getCamera();
@@ -510,7 +516,7 @@ namespace models
     models::LightOrbital(&this->omni_lights[0], 0.02f);
 
     // Esta etapa é idêntica ao pipeline de Adair
-    core::Matrix sru_src_matrix = math::pipeline_adair::sru_to_src(camera->position, camera->target);
+    core::Matrix sru_src_matrix = math::pipeline_adair::sru_to_src(camera->position, camera->target, LEFT_HANDED);
 
     core::Vector2 window_size = this->getMaxWindow();
 
@@ -536,7 +542,9 @@ namespace models
     core::Matrix result = math::MatrixMultiply(perspective_transformation_matrix, clipping_transformation_matrix);
     result = math::MatrixMultiply(result, sru_src_matrix);
 
-    std::vector<std::pair<core::Vector4, core::Vertex *>> clipped_vertices;
+    // first = Vértice no SRC (sistema de câmera)
+    // second = normal/cor do vértice (usado no gouraud/phong)
+    std::vector<std::pair<core::Vector4, core::Vector3>> clipped_vertices;
 
     core::Vector4 vectorResult = {0.0f, 0.0f, 0.0f, 0.0f};
 
@@ -545,6 +553,17 @@ namespace models
 
     for (auto object : this->getObjects())
     {
+      // Só calcula os vetores unitários normais se o modelo de iluminação for diferente de FLAT_SHADING
+      if (this->lighting_model != FLAT_SHADING)
+        if (this->normal_algorithm == FOLEY_UNIT_NORMAL_VECTOR)
+          object->determineNormals();
+        else
+          object->determineNormalsByAverage();
+
+      core::Vector3 centroid = this->centroid_algorithm == CENTROID_BY_MEAN ? object->getCentroidByMean() : object->getCentroidByWrapBox();
+
+      // usado como variável temporária pro flat shading e pro bounding box
+      std::vector<core::Vector3> vertexes_object;
       for (auto face : object->getFaces())
       {
 
@@ -557,17 +576,35 @@ namespace models
 
           vectorResult = math::MatrixMultiplyVector(result, v);
 
-          vectorResult.x = vectorResult.x / vectorResult.w;
-          vectorResult.y = vectorResult.y / vectorResult.w;
-          vectorResult.z = vectorResult.z / vectorResult.w;
-          clipped_vertices.push_back(std::make_pair(vectorResult, he->getOrigin()));
+          vectorResult.x = vectorResult.x;
+          vectorResult.y = vectorResult.y;
+          vectorResult.z = vectorResult.z;
+          clipped_vertices.push_back(std::make_pair(vectorResult, he->getOrigin()->getNormal()));
 
           he = he->getNext();
           if (he == face->getHalfEdge())
             break;
         }
 
-        clipped_vertices = math::clip3D_polygon(clipped_vertices);
+        if (this->lighting_model == GOURAUD_SHADING)
+        {
+          // No Gouraud Shading, a cor de cada vértice é calculada antes do recorte
+
+          core::Vector3 eye = this->getCamera()->position;
+          models::Material object_material = object->material;
+
+          for (auto &vertex : clipped_vertices)
+          {
+            core::Vector4 v = vertex.first;
+            core::Vector3 n = vertex.second;
+            models::Color c = models::GouraudShading(this->global_light, this->omni_lights, std::make_pair(v.toVector3(), n), eye, object_material);
+            core::Vector3 color = {static_cast<float>(c.r), static_cast<float>(c.g), static_cast<float>(c.b)};
+            vertex = std::make_pair(v, color);
+          }
+        }
+
+        if (this->clipping)
+          clipped_vertices = math::clip3D_polygon(clipped_vertices);
 
         for (auto &v : clipped_vertices)
         {
@@ -577,10 +614,7 @@ namespace models
           v_screen.y = v_screen.y / v_screen.w;
           v_screen.z = v_screen.z / v_screen.w;
 
-          // std::cout << v_screen << std::endl;
-
           v.first = v_screen;
-          v.second->setVectorScreen({v_screen.x, v_screen.y, v_screen.z});
         }
 
         face->setVisible(face->isVisible(camera->position));
@@ -593,18 +627,55 @@ namespace models
           if (clipped_vertices.size() < 3)
             continue;
 
+          // usado como variável temporária pro flat shading e pro bounding box
           std::vector<core::Vector3> vertexes;
 
           for (auto vertex : clipped_vertices)
+          {
             vertexes.push_back({vertex.first.x, vertex.first.y, vertex.first.z});
+            vertexes_object.push_back({vertex.first.x, vertex.first.y, vertex.first.z});
+          }
 
           utils::DrawFaceBufferFlatShading(vertexes, this->getCamera()->position, face->getFaceCentroid(), face->getNormal(), object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
+        }
+        else if (this->lighting_model == GOURAUD_SHADING)
+        {
+
+          std::vector<std::pair<core::Vector3, models::Color>> clipped_gouraud_vertexes;
+
+          for (auto vertex : clipped_vertices)
+          {
+            clipped_gouraud_vertexes.push_back(std::make_pair(vertex.first.toVector3(), models::ChannelsToColor({vertex.second.x, vertex.second.y, vertex.second.z})));
+            vertexes_object.push_back({vertex.first.x, vertex.first.y, vertex.first.z});
+          }
+          // Se o vetor de vértices for menor que 3, não é possível formar um polígono, então não é necessário desenhar
+          if (clipped_gouraud_vertexes.size() < 3)
+            continue;
+
+          utils::DrawFaceBufferGouraudShading(clipped_gouraud_vertexes, this->z_buffer, this->color_buffer);
+        }
+        else if (this->lighting_model == PHONG_SHADING)
+        {
+
+          // Se o vetor de vértices for menor que 3, não é possível formar um polígono, então não é necessário desenhar
+          if (clipped_vertices.size() < 3)
+            continue;
+
+          std::vector<std::pair<core::Vector3, core::Vector3>> vertexes;
+
+          for (auto v : clipped_vertices)
+          {
+            vertexes.push_back({v.first.toVector3(), v.second});
+            vertexes_object.push_back({v.first.x, v.first.y, v.first.z});
+          }
+
+          utils::DrawFaceBufferPhongShading(vertexes, centroid, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
         }
       }
 
       if (object == this->getSelectedObject())
       {
-        core::Vector4 box = object->getBox(true);
+        core::Vector4 box = utils::GetBoundingBox(vertexes_object);
         utils::DrawBoundingBox({box.x, box.y}, {box.z, box.w}, models::YELLOW, this->z_buffer, this->color_buffer);
       }
     }
@@ -751,30 +822,7 @@ namespace models
 
     core::Vector3 transformedTranslation;
 
-    if (this->pipeline_model == SMITH_PIPELINE)
-    {
-      core::Matrix perspective_transformation_inv = math::MatrixInvert(
-          math::pipeline_smith::perspective_transformation(this->camera->near, this->camera->far));
-
-      core::Vector2 window_size = this->getMaxWindow();
-
-      window_size.x = window_size.x - this->getMinWindow().x;
-      window_size.y = window_size.y - this->getMinWindow().y;
-
-      core::Matrix clipping_transformation_inv = math::MatrixInvert(
-          math::pipeline_smith::clipping_transformation(this->camera->d, this->camera->far, core::Vector2{0.0f, 0.0f}, window_size));
-
-      core::Matrix sru_src_matrix_inv = math::MatrixInvert(
-          math::pipeline_adair::sru_to_src(this->camera->position, this->camera->target));
-
-      core::Matrix result = viewportInv;
-
-      transformedTranslation = math::Vector3Transform({translation}, result);
-    }
-    else
-    {
-      transformedTranslation = math::Vector3Transform({translation}, viewportInv);
-    }
+    transformedTranslation = math::Vector3Transform({translation}, viewportInv);
 
     for (auto vertex : this->selected_object->getVertices())
     {

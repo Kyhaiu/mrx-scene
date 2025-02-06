@@ -70,4 +70,5 @@ namespace utils
   void DrawString(const char *text, const core::Vector3 &position, const models::Color &color);
   void DrawBoundingBox(const core::Vector2 &min, const core::Vector2 &max, const models::Color &color, std::vector<std::vector<float>> &z_buffer, std::vector<std::vector<models::Color>> &color_buffer);
 
+  core::Vector4 GetBoundingBox(const std::vector<core::Vector3> &vertexes);
 }

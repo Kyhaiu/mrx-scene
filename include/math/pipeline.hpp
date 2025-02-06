@@ -60,11 +60,14 @@
 
 namespace math
 {
+// Constantes para determinar se o sistema de coordenadas é destro ou canhoto (regra da mão direita ou esquerda)
+#define LEFT_HANDED 0
+#define RIGHT_HANDED 1
 
   namespace pipeline_adair
   {
     // Funções do Pipeline de Visualização 3D	- Adair Santa Catarina
-    core::Matrix sru_to_src(const core::Vector3 &vrp, const core::Vector3 fp);
+    core::Matrix sru_to_src(const core::Vector3 &vrp, const core::Vector3 fp, unsigned int handed = RIGHT_HANDED);
     core::Matrix projection(const core::Vector3 &vrp, const core::Vector3 p, const float d);
     core::Matrix src_to_srt(const core::Vector2 min_window, const core::Vector2 min_viewport, const core::Vector2 max_window, const core::Vector2 max_viewport, bool reflected);
   }
@@ -94,14 +97,13 @@ namespace math
   bool is_inside(core::Vector4 p, core::Vector3 min, core::Vector3 max, unsigned int plane);
 
   core::Vector3 compute_intersection(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max, unsigned int edge);
-  core::Vector4 compute_intersection(core::Vector4 p1, core::Vector4 p2, core::Vector3 min, core::Vector3 max, unsigned int plane);
-
   std::pair<core::Vector3, core::Vector3> compute_intersection(std::pair<core::Vector3, core::Vector3> p1, std::pair<core::Vector3, core::Vector3>, core::Vector2 min, core::Vector2 max, unsigned int edge);
+  std::pair<core::Vector4, core::Vector3> compute_intersection(std::pair<core::Vector4, core::Vector3> p1, std::pair<core::Vector4, core::Vector3> p2, core::Vector3 min, core::Vector3 max, unsigned int plane);
 
   std::vector<core::Vector3> clip2D_polygon(const std::vector<core::Vector3> &polygon, const core::Vector2 &min, const core::Vector2 &max);
   std::vector<std::pair<core::Vector3, core::Vector3>> clip2D_polygon(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max);
 
-  std::vector<std::pair<core::Vector4, core::Vertex *>> clip3D_polygon(const std::vector<std::pair<core::Vector4, core::Vertex *>> &polygon);
+  std::vector<std::pair<core::Vector4, core::Vector3>> clip3D_polygon(const std::vector<std::pair<core::Vector4, core::Vector3>> &polygon);
   //-------------------------------------------------------------------------------------------------
   // Funções de Preenchimento de Polígonos e Desenho de Linhas
   //-------------------------------------------------------------------------------------------------

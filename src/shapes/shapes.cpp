@@ -304,6 +304,8 @@ models::Mesh *shapes::icosphere(float radius, int subdivisions)
   // Constantes do Icosaedro
   const float t = (1.0f + std::sqrtf(5.0)) / 2.0f;
 
+  std::cout << t << std::endl;
+
   // Definir os 12 vértices iniciais de um Icosaedro
   vertices.push_back(new core::Vertex(-1, t, 0, 1.0f, nullptr, "v0"));
   vertices.push_back(new core::Vertex(1, t, 0, 1.0f, nullptr, "v1"));

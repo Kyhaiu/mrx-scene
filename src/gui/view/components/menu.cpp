@@ -138,6 +138,12 @@ namespace GUI
           ImGui::EndMenu();
         }
 
+        if (ImGui::BeginMenu("Recorte de linhas"))
+        {
+          ImGui::Checkbox("Recorte de linhas", &controller->getScene()->clipping);
+          ImGui::EndMenu();
+        }
+
         if (ImGui::MenuItem("Benchmark"))
         {
           if (!controller->benchmarking)

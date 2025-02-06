@@ -20,12 +20,19 @@ namespace math
    *
    * @param vrp Vetor de posição da câmera
    * @param fp Ponto para onde a câmera está olhando
+   * @param handed Flag que indica se o sistema de coordenadas é destro ou canhoto (Padrão: RIGHT_HANDED)
    * @return Matriz de transformação de SRU para SRC
    */
-  core::Matrix pipeline_adair::sru_to_src(const core::Vector3 &vrp, const core::Vector3 fp)
+  core::Matrix pipeline_adair::sru_to_src(const core::Vector3 &vrp, const core::Vector3 fp, unsigned int handed)
   {
     // Define the n vector.
-    core::Vector3 n = {vrp.x - fp.x, vrp.y - fp.y, vrp.z - fp.z};
+    core::Vector3 n;
+
+    if (handed == LEFT_HANDED)
+      n = {fp.x - vrp.x, fp.y - vrp.y, fp.z - vrp.z};
+    else
+      n = {vrp.x - fp.x, vrp.y - fp.y, vrp.z - fp.z};
+
     core::Vector3 n_normalized = math::Vector3Normalize(n);
 
     // Define the v vector.
@@ -181,10 +188,22 @@ namespace math
     float su = size_window.x / 2;
     float sv = size_window.y / 2;
 
-    core::Matrix result = core::Flota16ToMatrix({d / (su * far), 0, (-(cu / d) * far), 0,
-                                                 0, d / (sv * far), (-(cv / d) * far), 0,
-                                                 0, 0, 1 / far, 0,
-                                                 0, 0, 0, 1});
+    // core::Matrix result = core::Flota16ToMatrix({d / (su * far), 0, (-(cu / d) * far), 0,
+    //                                              0, d / (sv * far), (-(cv / d) * far), 0,
+    //                                              0, 0, 1 / far, 0,
+    //                                              0, 0, 0, 1});
+
+    core::Matrix D = core::Flota16ToMatrix({1, 0, -cu / d, 0,
+                                            0, 1, -cv / d, 0,
+                                            0, 0, 1, 0,
+                                            0, 0, 0, 1});
+
+    core::Matrix E = core::Flota16ToMatrix({d / (su * far), 0, 0, 0,
+                                            0, d / (sv * far), 0, 0,
+                                            0, 0, 1 / far, 0,
+                                            0, 0, 0, 1});
+
+    core::Matrix result = math::MatrixMultiply(E, D);
 
     return result;
   }
@@ -264,7 +283,10 @@ namespace math
                                             0, 0, dz, near,
                                             0, 0, 0, 1});
 
-    core::Matrix M = K;
+    core::Matrix M = core::Flota16ToMatrix({1, 0, 0, 0.5f,
+                                            0, 1, 0, 0.5f,
+                                            0, 0, 1, 0.5f,
+                                            0, 0, 0, 1});
 
     core::Matrix result = math::MatrixMultiply(M, L);
     result = math::MatrixMultiply(result, K);
@@ -280,8 +302,8 @@ namespace math
    * @brief Verifica se um ponto está antes ou depois de uma borda de uma janela de recorte.
    *
    * @param p Ponto a ser verificado
-   * @param min Canto inferior esquerdo da janela de recorte
-   * @param max Canto superior direito da janela de recorte
+   * @param min Canto inferior esquerdo da borda de recorte
+   * @param max Canto superior direito da borda de recorte
    * @param edge Borda da janela de recorte a ser verificada
    *
    * @return true Se o ponto está dentro da janela de recorte;
@@ -304,6 +326,16 @@ namespace math
     }
   }
 
+  /**
+   * @brief Verifica se um ponto está antes ou depois de uma borda de uma janela de recorte.
+   *
+   * @param p Pontos a ser verificado
+   * @param min Canto inferior esquerdo da borda de recorte
+   * @param max Canto superior direito da borda de recorte
+   * @param plane Plano de recorte a ser verificado
+   * @return true Se o ponto está dentro da janela de recorte;
+   * @return false Se o ponto está fora da janela de recorte
+   */
   bool is_inside(core::Vector4 p, core::Vector3 min, core::Vector3 max, unsigned int plane)
   {
     switch (plane)
@@ -334,6 +366,8 @@ namespace math
    * @param max Canto superior direito da janela de recorte
    * @param edge Borda da janela de recorte
    * @return core::Vector3
+   *
+   * @note Utilizado no recorte de linhas 2D
    */
   core::Vector3 compute_intersection(core::Vector3 p1, core::Vector3 p2, core::Vector2 min, core::Vector2 max, unsigned int edge)
   {
@@ -372,59 +406,90 @@ namespace math
     return intersection;
   }
 
-  core::Vector4 compute_intersection(core::Vector4 p1, core::Vector4 p2, core::Vector3 min, core::Vector3 max, unsigned int plane)
+  /**
+   * @brief Calcula o ponto de interseção de uma linha com uma janela de recorte.
+   *
+   * @param p1 Pontos iniciais da linha (coordenadas e normal/cor)
+   * @param p2 Pontos finais da linha (coordenadas e normal/cor)
+   * @param min Canto inferior esquerdo da janela de recorte
+   * @param max Canto superior direito da janela de recorte
+   * @param plane Plano de recorte a ser verificado
+   * @return std::pair<core::Vector4, core::Vector3> Par de coordenadas e normal/cor
+   *
+   * @note Utilizado no recorte de polígonos 3D
+   */
+  std::pair<core::Vector4, core::Vector3> compute_intersection(std::pair<core::Vector4, core::Vector3> p1, std::pair<core::Vector4, core::Vector3> p2, core::Vector3 min, core::Vector3 max, unsigned int plane)
   {
     float u = 0.0f;
-    core::Vector4 intersection;
+    // first = Coordenadas dos vértices
+    // second = normal dos vértices/cor
+    std::pair<core::Vector4, core::Vector3> intersection;
 
     if (plane == LEFT)
     {
-      u = (min.x - p1.x) / (p2.x - p1.x);
-      intersection.x = min.x;
-      intersection.y = p1.y + u * (p2.y - p1.y);
-      intersection.z = p1.z + u * (p2.z - p1.z);
+      u = (min.x - p1.first.x) / (p2.first.x - p1.first.x);
+      intersection.first.x = min.x;
+      intersection.first.y = p1.first.y + u * (p2.first.y - p1.first.y);
+      intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
     }
     else if (plane == RIGHT)
     {
-      u = (max.x - p1.x) / (p2.x - p1.x);
-      intersection.x = max.x;
-      intersection.y = p1.y + u * (p2.y - p1.y);
-      intersection.z = p1.z + u * (p2.z - p1.z);
+      u = (max.x - p1.first.x) / (p2.first.x - p1.first.x);
+      intersection.first.x = max.x;
+      intersection.first.y = p1.first.y + u * (p2.first.y - p1.first.y);
+      intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
     }
     else if (plane == BOTTOM)
     {
-      u = (min.y - p1.y) / (p2.y - p1.y);
-      intersection.x = p1.x + u * (p2.x - p1.x);
-      intersection.y = min.y;
-      intersection.z = p1.z + u * (p2.z - p1.z);
+      u = (min.y - p1.first.y) / (p2.first.y - p1.first.y);
+      intersection.first.x = p1.first.x + u * (p2.first.x - p1.first.x);
+      intersection.first.y = min.y;
+      intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
     }
     else if (plane == TOP)
     {
-      u = (max.y - p1.y) / (p2.y - p1.y);
-      intersection.x = p1.x + u * (p2.x - p1.x);
-      intersection.y = max.y;
-      intersection.z = p1.z + u * (p2.z - p1.z);
+      u = (max.y - p1.first.y) / (p2.first.y - p1.first.y);
+      intersection.first.x = p1.first.x + u * (p2.first.x - p1.first.x);
+      intersection.first.y = max.y;
+      intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
     }
     else if (plane == NEAR)
     {
-      u = (min.z - p1.z) / (p2.z - p1.z);
-      intersection.x = p1.x + u * (p2.x - p1.x);
-      intersection.y = p1.y + u * (p2.y - p1.y);
-      intersection.z = min.z;
+      u = (min.z - p1.first.z) / (p2.first.z - p1.first.z);
+      intersection.first.x = p1.first.x + u * (p2.first.x - p1.first.x);
+      intersection.first.y = p1.first.y + u * (p2.first.y - p1.first.y);
+      intersection.first.z = min.z;
     }
     else if (plane == FAR)
     {
-      u = (max.z - p1.z) / (p2.z - p1.z);
-      intersection.x = p1.x + u * (p2.x - p1.x);
-      intersection.y = p1.y + u * (p2.y - p1.y);
-      intersection.z = max.z;
+      u = (max.z - p1.first.z) / (p2.first.z - p1.first.z);
+      intersection.first.x = p1.first.x + u * (p2.first.x - p1.first.x);
+      intersection.first.y = p1.first.y + u * (p2.first.y - p1.first.y);
+      intersection.first.z = max.z;
     }
 
-    intersection.w = p1.w + u * (p2.w - p1.w);
+    intersection.first.w = p1.first.w + u * (p2.first.w - p1.first.w);
+
+    intersection.second.x = math::Lerp(p1.second.x, p2.second.x, u);
+    intersection.second.y = math::Lerp(p1.second.y, p2.second.y, u);
+    intersection.second.z = math::Lerp(p1.second.z, p2.second.z, u);
 
     return intersection;
   }
 
+  /**
+   * @brief Calcula o ponto de interseção de uma linha com uma janela de recorte.
+   *
+   * @param p1 Pontos iniciais da linha (coordenadas e normal/cor)
+   * @param p2 Pontos finais da linha (coordenadas e normal/cor)
+   * @param min Canto inferior esquerdo da borda de recorte
+   * @param max Canto superior direito da borda de recorte
+   * @param edge Plano de borda a ser verificada
+   * @return std::pair<core::Vector4, core::Vector3> Par de coordenadas e normal/cor
+   *
+   * @note Utilizado no recorte de polígonos 2D
+   * @todo Refatorar para utilizar o mesmo método de cálculo de interseção dos poligonos 3D
+   */
   std::pair<core::Vector3, core::Vector3> compute_intersection(std::pair<core::Vector3, core::Vector3> p1, std::pair<core::Vector3, core::Vector3> p2, core::Vector2 min, core::Vector2 max, unsigned int edge)
   {
     float u = 0.0f;
@@ -433,51 +498,35 @@ namespace math
     if (edge == LEFT)
     {
       u = (min.x - p1.first.x) / (p2.first.x - p1.first.x);
-
       intersection.first.x = min.x;
       intersection.first.y = p1.first.y + u * (p2.first.y - p1.first.y);
       intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
-
-      intersection.second.x = math::Lerp(p1.second.x, p2.second.x, u);
-      intersection.second.y = math::Lerp(p1.second.y, p2.second.y, u);
-      intersection.second.z = math::Lerp(p1.second.z, p2.second.z, u);
     }
     else if (edge == RIGHT)
     {
       u = (max.x - p1.first.x) / (p2.first.x - p1.first.x);
-
       intersection.first.x = max.x;
       intersection.first.y = p1.first.y + u * (p2.first.y - p1.first.y);
       intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
-
-      intersection.second.x = math::Lerp(p1.second.x, p2.second.x, u);
-      intersection.second.y = math::Lerp(p1.second.y, p2.second.y, u);
-      intersection.second.z = math::Lerp(p1.second.z, p2.second.z, u);
     }
     else if (edge == BOTTOM)
     {
       u = (min.y - p1.first.y) / (p2.first.y - p1.first.y);
-
       intersection.first.x = p1.first.x + u * (p2.first.x - p1.first.x);
       intersection.first.y = min.y;
       intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
-
-      intersection.second.x = math::Lerp(p1.second.x, p2.second.x, u);
-      intersection.second.y = math::Lerp(p1.second.y, p2.second.y, u);
-      intersection.second.z = math::Lerp(p1.second.z, p2.second.z, u);
     }
     else if (edge == TOP)
     {
       u = (max.y - p1.first.y) / (p2.first.y - p1.first.y);
-
       intersection.first.x = p1.first.x + u * (p2.first.x - p1.first.x);
       intersection.first.y = max.y;
       intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
-
-      intersection.second.x = math::Lerp(p1.second.x, p2.second.x, u);
-      intersection.second.y = math::Lerp(p1.second.y, p2.second.y, u);
-      intersection.second.z = math::Lerp(p1.second.z, p2.second.z, u);
     }
+
+    intersection.second.x = math::Lerp(p1.second.x, p2.second.x, u);
+    intersection.second.y = math::Lerp(p1.second.y, p2.second.y, u);
+    intersection.second.z = math::Lerp(p1.second.z, p2.second.z, u);
 
     return intersection;
   }
@@ -544,6 +593,17 @@ namespace math
     return result;
   }
 
+  /**
+   * @brief Clipa um polígono 2D
+   *
+   * @param polygon Lista de vértices do polígono percorridos no sentido anti-horário (coordenadas e normal/cor)
+   * @param min Limite inferior esquerdo da janela de recorte
+   * @param max Limite superior direito da janela de recorte
+   * @return std::vector<std::pair<core::Vector3, core::Vector3>> Lista de vértices e normal/cor do polígono clipado
+   *
+   * @note O algoritmo de Sutherland-Hodgman é utilizado
+   * @note Refatorar para utilizar a mesma função de clipagem dos polígonos 2D
+   */
   std::vector<std::pair<core::Vector3, core::Vector3>> clip2D_polygon(const std::vector<std::pair<core::Vector3, core::Vector3>> &polygon, const core::Vector2 &min, const core::Vector2 &max)
   {
     std::vector<std::pair<core::Vector3, core::Vector3>> result = polygon;
@@ -596,13 +656,21 @@ namespace math
     return result;
   }
 
-  std::vector<std::pair<core::Vector4, core::Vertex *>> clip3D_polygon(const std::vector<std::pair<core::Vector4, core::Vertex *>> &polygon)
+  /**
+   * @brief Clipa um polígono 3D
+   *
+   * @param polygon Lista de vértices do polígono percorridos no sentido anti-horário (coordenadas e normal/cor)
+   * @return std::vector<std::pair<core::Vector4, core::Vector3>> Lista de vértices e normal/cor do polígono clipado
+   *
+   * @note O algoritmo de Sutherland-Hodgman é utilizado
+   */
+  std::vector<std::pair<core::Vector4, core::Vector3>> clip3D_polygon(const std::vector<std::pair<core::Vector4, core::Vector3>> &polygon)
   {
     // Define volume de recorte fixo (coordenadas normalizadas)
     const core::Vector3 min = {-1, -1, 0};
     const core::Vector3 max = {1, 1, 1};
 
-    std::vector<std::pair<core::Vector4, core::Vertex *>> result = polygon;
+    std::vector<std::pair<core::Vector4, core::Vector3>> result = polygon;
 
     // Lista de planos de recorte 3D (6 faces do cubo)
     const std::vector<std::tuple<core::Vector3, core::Vector3, unsigned int>> planes = {
@@ -614,11 +682,6 @@ namespace math
         {{min.x, min.y, max.z}, {max.x, max.y, max.z}, FAR}     // Plano far (z = 1)
     };
 
-    // std::cout << "Polygon before clipping: " << std::endl;
-    // std::cout << polygon.size() << std::endl;
-    // for (const auto &p : polygon)
-    //   std::cout << p << std::endl;
-
     // Itera sobre cada plano de recorte
     for (const auto &plane_def : planes)
     {
@@ -627,16 +690,7 @@ namespace math
       const core::Vector3 &plane_max = std::get<1>(plane_def);
       unsigned int plane_type = std::get<2>(plane_def);
 
-      // std::cout << "Plane type: " << (plane_type == LEFT ? "LEFT" : plane_type == RIGHT ? "RIGHT"
-      //                                                           : plane_type == BOTTOM  ? "BOTTOM"
-      //                                                           : plane_type == TOP     ? "TOP"
-      //                                                           : plane_type == NEAR    ? "NEAR"
-      //                                                                                   : "FAR")
-      //           << std::endl;
-      // std::cout << "Plane min: " << plane_min << std::endl;
-      // std::cout << "Plane max: " << plane_max << std::endl;
-
-      std::vector<std::pair<core::Vector4, core::Vertex *>> input = result;
+      std::vector<std::pair<core::Vector4, core::Vector3>> input = result;
       result.clear();
 
       // Itera sobre cada aresta do polígono
@@ -646,20 +700,14 @@ namespace math
         core::Vector4 p1 = input[i].first;
         core::Vector4 p2 = input[k].first;
 
-        // std::cout << "P1: " << p1 << std::endl;
-        // std::cout << "P2: " << p2 << std::endl;
-
         // Testa se os pontos estão dentro da janela de recorte
         bool p1_inside = is_inside(p1, plane_min, plane_max, plane_type);
         bool p2_inside = is_inside(p2, plane_min, plane_max, plane_type);
 
-        // std::cout << "P1 inside: " << p1_inside << std::endl;
-        // std::cout << "P2 inside: " << p2_inside << std::endl;
-
         // Ambos os pontos estão dentro da janela, então adiciona o ponto final
         if (p1_inside && p2_inside)
         {
-          result.push_back(std::make_pair(p2, input[k].second));
+          result.push_back(input[k]);
         }
         // Nenhum dos pontos está dentro da janela, então não adiciona nenhum ponto
         else if (!p1_inside && !p2_inside)
@@ -670,32 +718,22 @@ namespace math
         else
         {
           // Calcula o ponto de interseção
-          core::Vector4 intersection = compute_intersection(p1, p2, plane_min, plane_max, plane_type);
+          std::pair<core::Vector4, core::Vector3> intersection = compute_intersection(input[i], input[k], plane_min, plane_max, plane_type);
 
           // Somente o primeiro ponto está fora da janela, então adiciona o ponto de interseção e o ponto final
           if (!p1_inside && p2_inside)
           {
-            result.push_back(std::make_pair(intersection, input[i].second));
+            result.push_back(intersection);
             result.push_back(input[k]);
           }
           // Somente o segundo ponto está fora da janela, então adiciona o ponto de interseção
           else if (p1_inside && !p2_inside)
           {
-            result.push_back(std::make_pair(intersection, input[k].second));
+            result.push_back(intersection);
           }
         }
       }
-
-      // std::cout << "Processou plano" << std::endl;
-      // std::cout << "---" << std::endl;
     }
-
-    // std::cout << "Polygon after clipping: " << std::endl;
-    // std::cout << result.size() << std::endl;
-    // for (const auto &p : result)
-    //   std::cout << p << std::endl;
-
-    // std::cout << "---------------------------------" << std::endl;
 
     return result; // Retorna o polígono clipado
   }

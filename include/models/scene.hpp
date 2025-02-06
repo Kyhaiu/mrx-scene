@@ -163,6 +163,11 @@ namespace models
      * @note 1 - Caixa envolvente
      */
     int centroid_algorithm = CENTROID_BY_MEAN;
+    /**
+     * @brief Flag que controla o recorte de linhas
+     *
+     */
+    bool clipping = true;
 
     // Construtor and Destrutor
     Scene();

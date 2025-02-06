@@ -205,4 +205,47 @@ namespace utils
     DrawLineBuffer(vertexes, color, z_buffer, color_buffer);
   }
 
+  /**
+   * @brief Obtém a box envolvente de uma lista de vértices
+   *
+   * @param vertexes Lista de vertices
+   *
+   * @note x = min_x, y = min_y, z = max_x, w = max_y
+   * @note Utilizado no pipeline do smith (pois o recorte 3d impossibilita chamar a função getBox() da Mesh)
+   * @return core::Vector4 Box envolvente da malha
+   */
+  core::Vector4 GetBoundingBox(const std::vector<core::Vector3> &vertexes)
+  {
+    float min_x = std::numeric_limits<float>::max();
+    float min_y = std::numeric_limits<float>::max();
+    float max_x = std::numeric_limits<float>::min();
+    float max_y = std::numeric_limits<float>::min();
+
+    float x, y;
+
+    for (auto v : vertexes)
+    {
+      x = v.x;
+      y = v.y;
+
+      if (x < min_x)
+      {
+        min_x = x;
+      }
+      if (y < min_y)
+      {
+        min_y = y;
+      }
+      if (x > max_x)
+      {
+        max_x = x;
+      }
+      if (y > max_y)
+      {
+        max_y = y;
+      }
+    }
+
+    return {min_x, min_y, max_x, max_y};
+  }
 } // namespace utils
