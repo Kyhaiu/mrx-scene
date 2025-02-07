@@ -39,7 +39,10 @@
  **********************************************************************************************/
 #pragma once
 
+#include <utils/nlohmann/json.hpp>
 #include <core/vector.hpp>
+
+using json = nlohmann::json;
 
 namespace models
 {
@@ -78,12 +81,31 @@ namespace models
    * @param diffuse Cor difusa (separa por canal)
    * @param specular Cor especular (separa por canal)
    */
-  typedef struct
+  typedef struct Material
   {
     ColorChannels ambient;
     ColorChannels diffuse;
     ColorChannels specular;
     float shininess;
+
+    json to_json()
+    {
+      return json{
+          {"ambient", {ambient.r, ambient.g, ambient.b}},
+          {"diffuse", {diffuse.r, diffuse.g, diffuse.b}},
+          {"specular", {specular.r, specular.g, specular.b}},
+          {"shininess", shininess}};
+    }
+
+    static Material from_json(json json_data)
+    {
+      Material material;
+      material.ambient = {json_data["ambient"][0], json_data["ambient"][1], json_data["ambient"][2]};
+      material.diffuse = {json_data["diffuse"][0], json_data["diffuse"][1], json_data["diffuse"][2]};
+      material.specular = {json_data["specular"][0], json_data["specular"][1], json_data["specular"][2]};
+      material.shininess = json_data["shininess"];
+      return material;
+    }
   } Material;
 
 } // namespace models

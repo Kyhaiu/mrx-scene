@@ -223,6 +223,16 @@ namespace models
     this->selected = selected;
   }
 
+  /**
+   * @brief Método que define o material do objeto
+   *
+   * @param material Material do objeto
+   */
+  void Mesh::setMaterial(models::Material material)
+  {
+    this->material = material;
+  }
+
   //------------------------------------------------------------------------------------------------
   // Functions
   //------------------------------------------------------------------------------------------------
@@ -693,6 +703,8 @@ namespace models
 
     j["index_vertices"] = index_vertices;
 
+    j["material"] = this->material.to_json();
+
     return j;
   }
 
@@ -726,5 +738,8 @@ namespace models
     }
 
     this->createMesh(this->index_vertices);
+
+    models::Material material = models::Material::from_json(json_data["material"]);
+    this->setMaterial(material);
   }
 } // namespace models

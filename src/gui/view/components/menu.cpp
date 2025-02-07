@@ -39,9 +39,10 @@ namespace GUI
       if (ImGui::BeginMenu("Inserir"))
       {
         if (ImGui::MenuItem("Cubo"))
-          controller->addObject(shapes::cube());
+          controller->addObject(shapes::cube(controller->getScene()->getCamera()->target));
         if (ImGui::MenuItem("Pirâmide"))
-          controller->addObject(shapes::pyramid());
+          controller->addObject(shapes::pyramid(3, 3, controller->getScene()->getCamera()->target));
+
         if (ImGui::BeginMenu("Esfera"))
         {
           if (ImGui::BeginMenu("Esfera"))
@@ -65,7 +66,7 @@ namespace GUI
 
             if (ImGui::Button("Criar"))
             {
-              controller->addObject(shapes::icosphere(controller->insertionOptions.radius, controller->insertionOptions.subdivisions));
+              controller->addObject(shapes::icosphere(controller->insertionOptions.radius, controller->insertionOptions.subdivisions, controller->getScene()->getCamera()->target));
             }
             ImGui::EndMenu();
           }
@@ -82,7 +83,7 @@ namespace GUI
 
           if (ImGui::Button("Criar"))
           {
-            controller->addObject(shapes::cone(controller->insertionOptions.radius, controller->insertionOptions.height, controller->insertionOptions.segments));
+            controller->addObject(shapes::cone(controller->insertionOptions.radius, controller->insertionOptions.height, controller->insertionOptions.segments, controller->getScene()->getCamera()->target));
           }
 
           ImGui::EndMenu();

@@ -172,6 +172,7 @@ namespace models
     void setId(const std::string &id);
     void setName(const std::string &name);
     void setSelected(bool selected);
+    void setMaterial(models::Material material);
 
     // Functions
     void createMesh(std::vector<std::vector<int>> index_faces);

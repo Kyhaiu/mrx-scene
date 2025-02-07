@@ -513,7 +513,8 @@ namespace models
   {
     models::Camera3D *camera = this->getCamera();
 
-    models::LightOrbital(&this->omni_lights[0], 0.02f);
+    // models::LightOrbital(&this->omni_lights[0], 0.02f);
+    this->omni_lights[0].position = {camera->position.x, camera->position.y + 10.0f, camera->position.z};
 
     // Esta etapa é idêntica ao pipeline de Adair
     core::Matrix sru_src_matrix = math::pipeline_adair::sru_to_src(camera->position, camera->target, LEFT_HANDED);
@@ -560,8 +561,6 @@ namespace models
         else
           object->determineNormalsByAverage();
 
-      // std::cout << "Objeto: " << object->getName() << std::endl;
-
       core::Vector3 centroid = this->centroid_algorithm == CENTROID_BY_MEAN ? object->getCentroidByMean() : object->getCentroidByWrapBox();
 
       // usado como variável temporária pro flat shading e pro bounding box
@@ -569,9 +568,9 @@ namespace models
 
       vertexes_object.clear();
       int num_clipped_faces = 0;
+
       for (auto face : object->getFaces())
       {
-
         core::HalfEdge *he = face->getHalfEdge();
         clipped_vertices.clear();
 
@@ -581,10 +580,13 @@ namespace models
 
           vectorResult = math::MatrixMultiplyVector(result, v);
 
-          vectorResult.x = vectorResult.x;
-          vectorResult.y = vectorResult.y;
-          vectorResult.z = vectorResult.z;
-          clipped_vertices.push_back(std::make_pair(vectorResult, he->getOrigin()->getNormal()));
+          if (vectorResult.w != 0.0f && vectorResult.w > EPSILON)
+          {
+            vectorResult.x = vectorResult.x;
+            vectorResult.y = vectorResult.y;
+            vectorResult.z = vectorResult.z;
+            clipped_vertices.push_back(std::make_pair(vectorResult, he->getOrigin()->getNormal()));
+          }
 
           he = he->getNext();
           if (he == face->getHalfEdge())
@@ -593,6 +595,11 @@ namespace models
 
         if (this->lighting_model == GOURAUD_SHADING)
         {
+          if (clipped_vertices.size() < 3)
+          {
+            num_clipped_faces++;
+            continue;
+          }
           // No Gouraud Shading, a cor de cada vértice é calculada antes do recorte
 
           core::Vector3 eye = this->getCamera()->position;
@@ -611,24 +618,16 @@ namespace models
         if (this->clipping)
           clipped_vertices = math::clip3D_polygon(clipped_vertices);
 
-        if (clipped_vertices.size() < 3)
-        {
-          num_clipped_faces++;
-          continue;
-        }
-
         for (auto &v : clipped_vertices)
         {
           core::Vector4 v_screen = math::MatrixMultiplyVector(viewport_matrix, v.first);
 
           v_screen.x = v_screen.x / v_screen.w;
           v_screen.y = v_screen.y / v_screen.w;
-          v_screen.z = v_screen.z / v_screen.w;
+          v_screen.z = v_screen.z;
 
           v.first = v_screen;
         }
-
-        // std::cout << "-----------------" << std::endl;
 
         face->setVisible(face->isVisible(camera->position));
 
@@ -681,16 +680,6 @@ namespace models
 
           utils::DrawFaceBufferPhongShading(vertexes, centroid, this->getCamera()->position, object->material, this->global_light, this->omni_lights, this->z_buffer, this->color_buffer);
         }
-      }
-
-      if (object == this->getSelectedObject())
-      {
-        // Todas as faces foram recortadas
-        // #TODO Achar um jeito de indicar se o objeto foi totalmente recortado
-        if (num_clipped_faces == object->getFaces().size())
-          continue;
-        core::Vector4 box = utils::GetBoundingBox(vertexes_object);
-        utils::DrawBoundingBox({box.x, box.y}, {box.z, box.w}, models::YELLOW, this->z_buffer, this->color_buffer);
       }
     }
   }

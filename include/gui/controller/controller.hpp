@@ -40,6 +40,10 @@ namespace GUI
     float height;
     int segments;
     int rings;
+    float inner_radius;
+    float outer_radius;
+    int major_segments;
+    int minor_segments;
   } insertion_options_parameters;
 
   enum ItemSelected

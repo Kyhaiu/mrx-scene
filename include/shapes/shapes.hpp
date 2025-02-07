@@ -57,11 +57,16 @@
 
 namespace shapes
 {
-  models::Mesh *cube();
+
+#define DEFAULT_SHIFT core::Vector3{0.0f, 0.0f, 0.0f}
+
+  models::Mesh *cube(core::Vector3 shift = DEFAULT_SHIFT);
   models::Mesh *canonical_volume(float z_min);
-  models::Mesh *pyramid(float base = 3.0f, float height = 3.0f);
+  models::Mesh *pyramid(float base = 3.0f, float height = 3.0f, core::Vector3 shift = DEFAULT_SHIFT);
   models::Mesh *sphere(float radius, int rings = 30, int segments = 30);
-  models::Mesh *icosphere(float radius, int subdivisions = 3);
-  models::Mesh *polygon(int sides, float radius);
-  models::Mesh *cone(float radius, float height, int segments = 30);
+  models::Mesh *icosphere(float radius, int subdivisions = 3, core::Vector3 shift = DEFAULT_SHIFT);
+  models::Mesh *polygon(int sides, float radius, core::Vector3 shift = DEFAULT_SHIFT);
+  models::Mesh *cone(float radius, float height, int segments = 30, core::Vector3 shift = DEFAULT_SHIFT);
+  models::Mesh *torus(float majorRadius, float minorRadius, int majorSegments, int minorSegments, core::Vector3 shift);
+  models::Mesh *cylinder(float radius, float height, int segments, core::Vector3 shift);
 }

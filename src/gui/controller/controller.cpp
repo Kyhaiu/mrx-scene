@@ -16,7 +16,7 @@ GUI::Controller::Controller(float canvasWidth, float canvasHeight)
       {-2, -2},
       {2, 2});
 
-  this->insertionOptions = {1, 1.0f, 1.0f, 10, 10};
+  this->insertionOptions = {1, 1.0f, 1.0f, 10, 10, 1.0f, 0.5f, 100, 100};
 }
 
 /**
@@ -276,17 +276,17 @@ void GUI::Controller::handleEvents(const SDL_Event &event, SDL_Window *window, f
       }
       else
       {
-        models::CameraMoveRight(this->scene->getCamera(), -0.09f, true);
+        models::CameraMoveRight(this->scene->getCamera(), -1.0f, true);
       }
       break;
     case SDLK_w:
-      models::CameraMoveForward(this->scene->getCamera(), 0.09f, true);
+      models::CameraMoveForward(this->scene->getCamera(), 1.0f, true);
       break;
     case SDLK_s:
-      models::CameraMoveForward(this->scene->getCamera(), -0.09f, true);
+      models::CameraMoveForward(this->scene->getCamera(), -1.0f, true);
       break;
     case SDLK_a:
-      models::CameraMoveRight(this->scene->getCamera(), 0.09f, true);
+      models::CameraMoveRight(this->scene->getCamera(), 1.0f, true);
       break;
     }
     break;

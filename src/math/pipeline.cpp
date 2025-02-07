@@ -421,60 +421,44 @@ namespace math
   std::pair<core::Vector4, core::Vector3> compute_intersection(std::pair<core::Vector4, core::Vector3> p1, std::pair<core::Vector4, core::Vector3> p2, core::Vector3 min, core::Vector3 max, unsigned int plane)
   {
     float u = 0.0f;
-    // first = Coordenadas dos vértices
-    // second = normal dos vértices/cor
-    std::pair<core::Vector4, core::Vector3> intersection;
 
-    if (plane == LEFT)
+    switch (plane)
     {
+    case LEFT:
       u = (min.x - p1.first.x) / (p2.first.x - p1.first.x);
-      intersection.first.x = min.x;
-      intersection.first.y = p1.first.y + u * (p2.first.y - p1.first.y);
-      intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
-    }
-    else if (plane == RIGHT)
-    {
+      break;
+    case RIGHT:
       u = (max.x - p1.first.x) / (p2.first.x - p1.first.x);
-      intersection.first.x = max.x;
-      intersection.first.y = p1.first.y + u * (p2.first.y - p1.first.y);
-      intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
-    }
-    else if (plane == BOTTOM)
-    {
+      break;
+    case BOTTOM:
       u = (min.y - p1.first.y) / (p2.first.y - p1.first.y);
-      intersection.first.x = p1.first.x + u * (p2.first.x - p1.first.x);
-      intersection.first.y = min.y;
-      intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
-    }
-    else if (plane == TOP)
-    {
+      break;
+    case TOP:
       u = (max.y - p1.first.y) / (p2.first.y - p1.first.y);
-      intersection.first.x = p1.first.x + u * (p2.first.x - p1.first.x);
-      intersection.first.y = max.y;
-      intersection.first.z = p1.first.z + u * (p2.first.z - p1.first.z);
-    }
-    else if (plane == NEAR)
-    {
+      break;
+    case NEAR:
       u = (min.z - p1.first.z) / (p2.first.z - p1.first.z);
-      intersection.first.x = p1.first.x + u * (p2.first.x - p1.first.x);
-      intersection.first.y = p1.first.y + u * (p2.first.y - p1.first.y);
-      intersection.first.z = min.z;
-    }
-    else if (plane == FAR)
-    {
+      break;
+    case FAR:
       u = (max.z - p1.first.z) / (p2.first.z - p1.first.z);
-      intersection.first.x = p1.first.x + u * (p2.first.x - p1.first.x);
-      intersection.first.y = p1.first.y + u * (p2.first.y - p1.first.y);
-      intersection.first.z = max.z;
+      break;
+    default:
+      break;
     }
+    // pos = Posição interpolada; attr = Normal/Cor interpolada
+    core::Vector4 pos;
+    core::Vector3 attr;
 
-    intersection.first.w = p1.first.w + u * (p2.first.w - p1.first.w);
+    pos.x = math::Lerp(p1.first.x, p2.first.x, u);
+    pos.y = math::Lerp(p1.first.y, p2.first.y, u);
+    pos.z = math::Lerp(p1.first.z, p2.first.z, u);
+    pos.w = math::Lerp(p1.first.w, p2.first.w, u);
 
-    intersection.second.x = math::Lerp(p1.second.x, p2.second.x, u);
-    intersection.second.y = math::Lerp(p1.second.y, p2.second.y, u);
-    intersection.second.z = math::Lerp(p1.second.z, p2.second.z, u);
+    attr.x = math::Lerp(p1.second.x, p2.second.x, u);
+    attr.y = math::Lerp(p1.second.y, p2.second.y, u);
+    attr.z = math::Lerp(p1.second.z, p2.second.z, u);
 
-    return intersection;
+    return {pos, attr};
   }
 
   /**
@@ -734,7 +718,6 @@ namespace math
         }
       }
     }
-
     return result; // Retorna o polígono clipado
   }
 
@@ -873,7 +856,7 @@ namespace math
 
       for (int j = 0; j < scanline.size(); j += 2)
       {
-        int k = (j + 1);
+        int k = (j + 1) % scanline.size();
         core::Vector3 start = scanline[j];
         core::Vector3 end = scanline[k];
 
