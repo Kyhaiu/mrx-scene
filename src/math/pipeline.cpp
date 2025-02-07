@@ -651,7 +651,7 @@ namespace math
   std::vector<std::pair<core::Vector4, core::Vector3>> clip3D_polygon(const std::vector<std::pair<core::Vector4, core::Vector3>> &polygon)
   {
     // Define volume de recorte fixo (coordenadas normalizadas)
-    const core::Vector3 min = {-1, -1, 0};
+    const core::Vector3 min = {-1, -1, 0.01f};
     const core::Vector3 max = {1, 1, 1};
 
     std::vector<std::pair<core::Vector4, core::Vector3>> result = polygon;

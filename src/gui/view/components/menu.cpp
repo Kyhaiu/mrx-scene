@@ -73,7 +73,34 @@ namespace GUI
 
           ImGui::EndMenu();
         }
+        if (ImGui::BeginMenu("Cilindro"))
+        {
 
+          ImGui::SliderFloat("Raio", &controller->insertionOptions.radius, 0.1f, 3.0f);
+          ImGui::SliderFloat("Altura", &controller->insertionOptions.height, 0.1f, 3.0f);
+          ImGui::SliderInt("Segmentos", &controller->insertionOptions.segments, 3, 100);
+
+          if (ImGui::Button("Criar"))
+          {
+            controller->addObject(shapes::cylinder(controller->insertionOptions.radius, controller->insertionOptions.height, controller->insertionOptions.segments, controller->getScene()->getCamera()->target));
+          }
+
+          ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Torus"))
+        {
+          ImGui::SliderFloat("Raio", &controller->insertionOptions.inner_radius, 0.1f, 3.0f);
+          ImGui::SliderFloat("Raio do tubo", &controller->insertionOptions.outer_radius, 0.1f, 3.0f);
+          ImGui::SliderInt("Segmentos", &controller->insertionOptions.segments, 3, 100);
+          ImGui::SliderInt("Anéis", &controller->insertionOptions.rings, 3, 100);
+
+          if (ImGui::Button("Criar"))
+          {
+            controller->addObject(shapes::torus(controller->insertionOptions.inner_radius, controller->insertionOptions.outer_radius, controller->insertionOptions.rings, controller->insertionOptions.segments, controller->getScene()->getCamera()->target));
+          }
+
+          ImGui::EndMenu();
+        }
         if (ImGui::BeginMenu("Cone"))
         {
 

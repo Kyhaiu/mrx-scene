@@ -117,6 +117,8 @@ namespace GUI
         ImGui::PopStyleColor(1);
         ImGui::SameLine();
 
+        core::Vector3 origin = object->getVertices()[0]->getVector().toVector3();
+
         float rotation_degrees = rotation[i] * 180.0f / PI;                                                               // Converte radianos para graus para o slider
         if (ImGui::DragFloat(("##rotation-" + std::string(labels[i])).c_str(), &rotation_degrees, 1.0f, -360.0f, 360.0f)) // Slider em graus
         {

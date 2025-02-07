@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+#undef near
+#undef far
+
 GUI::UI::UI(SDL_Window *window, SDL_Renderer *renderer)
     : window(window), renderer(renderer)
 {
@@ -148,6 +151,8 @@ void GUI::UI::render()
     core::Vector3 vrp = this->controller->getScene()->getCamera()->position;
     core::Vector3 eye = this->controller->getScene()->getCamera()->target;
 
+    models::Camera3D *camera = this->controller->getScene()->getCamera();
+
     // Container com 20% da largura da tela
     ImGui::SetNextWindowPos(ImVec2(0, 20));
     ImGui::SetNextWindowSize(ImVec2(this->controller->windowWidth * 0.2f, ImGui::GetWindowSize().y));
@@ -155,6 +160,13 @@ void GUI::UI::render()
 
     // Desenha os fps na tela
     ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::YELLOW)), "FPS: %.1f", ImGui::GetIO().Framerate);
+
+    ImGui::Text("Pipeline: ");
+    ImGui::SameLine();
+    if (this->controller->getScene()->pipeline_model == SMITH_PIPELINE)
+      ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::CYAN)), "SMITH");
+    else
+      ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::CYAN)), "ADAIR");
 
     ImGui::Text("VRP");
     ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::RED)), "X: ");
@@ -181,6 +193,13 @@ void GUI::UI::render()
     ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::GREEN)), "Z: ");
     ImGui::SameLine();
     ImGui::Text("%d", static_cast<int>(eye.z));
+
+    ImGui::Text("Near: ");
+    ImGui::SameLine();
+    ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::MAGENTA)), "%d", (int)camera->near);
+    ImGui::Text("Far: ");
+    ImGui::SameLine();
+    ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::MAGENTA)), "%d", (int)camera->far);
 
     // padding de 50px verticalmente
     ImGui::Dummy(ImVec2(0, 50));
