@@ -410,19 +410,78 @@ void GUI::Controller::end_benchmark()
 {
   this->benchmarking = false;
 
+  // Finaliza o benchmark
   models::benchmark_end(&this->benchmark_results);
 
-  std::cout << "Benchmark results:" << std::endl;
-  std::cout << "Total time: " << this->benchmark_results.total_time.count() << "s" << std::endl;
-  std::cout << "Total frames: " << this->benchmark_results.total_frames << std::endl;
-  std::cout << "Average FPS: " << this->benchmark_results.average_fps << std::endl;
-  std::cout << "Average frame time: " << this->benchmark_results.average_frame_time << "s" << std::endl;
-  std::cout << "Min frame time: " << this->benchmark_results.min_frame_time << "s" << std::endl;
-  std::cout << "Max frame time: " << this->benchmark_results.max_frame_time << "s" << std::endl;
-  std::cout << "Worst 10% frame times:" << std::endl;
-  for (auto time : this->benchmark_results.worst_10_percentile)
+  std::string filename;
+  std::string output_dir = "C:\\Users\\marco\\OneDrive\\Documentos\\TCC\\mrx-scene\\resultados";
+  std::string shading_model;
+  std::string repetition = std::to_string(this->benchmark_repetitions);
+
+  if (this->getScene()->lighting_model == FLAT_SHADING)
+    shading_model = "flat";
+  else if (this->getScene()->lighting_model == GOURAUD_SHADING)
+    shading_model = "gouraud";
+  else
+    shading_model = "phong";
+
+  if (this->getScene()->pipeline_model == SMITH_PIPELINE)
   {
-    std::cout << time << "s" << std::endl;
+    filename = "benchmark_pipeline_smith_" + shading_model + "_results_" + repetition + ".txt";
+    output_dir += "\\SMITH\\";
+  }
+  else
+  {
+    filename = "benchmark_pipeline_adair_" + shading_model + "_results_" + repetition + ".txt";
+    output_dir += "\\ADAIR\\";
+  }
+
+  if (this->getScene()->lighting_model == FLAT_SHADING)
+    output_dir += "\\FLAT\\";
+  else if (this->getScene()->lighting_model == GOURAUD_SHADING)
+    output_dir += "\\GOURAUD\\";
+  else
+    output_dir += "\\PHONG\\";
+
+  // Caminho completo
+  std::string full_path = output_dir + "\\" + filename;
+
+  // Abre um arquivo para escrita
+  std::ofstream outFile(full_path);
+  if (!outFile.is_open())
+  {
+    std::cerr << "Erro ao abrir o arquivo para escrita!" << std::endl;
+    return;
+  }
+
+  // Escreve os resultados no arquivo
+  outFile << "=== Benchmark Results ===\n\n"
+          << "Configuration:\n"
+          << "Pipeline: " << (this->getScene()->pipeline_model == SMITH_PIPELINE ? "Smith" : "Adair") << "\n"
+          << "Shading: " << shading_model << "\n"
+          << "Repetitions: " << this->benchmark_repetitions << "\n\n"
+          << "Performance Metrics:\n"
+          << std::fixed << std::setprecision(4)
+          << "Total Time: " << this->benchmark_results.total_time.count() << " s\n"
+          << "Total Frames: " << this->benchmark_results.total_frames << "\n"
+          << "Average FPS: " << this->benchmark_results.average_fps << "\n"
+          << "Avg Frame Time: " << this->benchmark_results.average_frame_time << " ms\n"
+          << "Min Frame Time: " << this->benchmark_results.min_frame_time << " ms\n"
+          << "Max Frame Time: " << this->benchmark_results.max_frame_time << " ms\n\n"
+          << "Worst 10% Frame Times (ms):\n";
+
+  for (const auto &time : this->benchmark_results.worst_10_percentile)
+  {
+    outFile << time << "\n";
+  }
+
+  outFile.close();
+  std::cout << "Results of benchmark " + repetition + " saved to: " << filename << std::endl;
+  this->benchmark_repetitions--;
+
+  if (this->benchmark_repetitions >= 1)
+  {
+    start_benchmark();
   }
 }
 
@@ -465,4 +524,24 @@ void GUI::Controller::update_benchmark(double frame_time)
       this->benchmark_results.worst_10_percentile.push_back(sorted_times[i]);
     }
   }
+}
+
+void GUI::Controller::update_camera_benchmark()
+{
+  models::Camera3D *camera = this->getScene()->getCamera();
+
+  if (this->type_camera_movement == ORBITAL_MOVEMENT)
+  {
+    models::CameraOrbital(camera, this->camera_rotation_sensitivity);
+    accumulatedAngle += this->camera_rotation_sensitivity;
+
+    // Se acumulou 360 graus (2π radianos) ou mais, reinicia o movimento
+    if (accumulatedAngle >= 2 * M_PI)
+    {
+      accumulatedAngle = 0.0f; // reinicia o contador
+      this->type_camera_movement = FREE_MOVEMENT;
+    }
+  }
+  else
+    models::CameraMoveForward(camera, 1.0f, true);
 }

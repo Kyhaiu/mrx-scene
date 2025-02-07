@@ -263,7 +263,8 @@ namespace models
     core::Matrix rotation = math::MatrixRotate(math::Vector3Normalize({0, 1, 0}), orbitalSpeed);
     core::Vector3 view = math::Vector3Subtract(camera->position, camera->target);
     view = math::Vector3Transform(view, rotation);
-    camera->position = math::Vector3Add(camera->target, view);
+    core::Vector3 newPos = math::Vector3Add(camera->target, view);
+    camera->position = newPos;
   }
 
   /**

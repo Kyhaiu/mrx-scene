@@ -8,6 +8,7 @@
 #include <models/camera.hpp>
 #include <models/benchmark.hpp>
 #include <utils/file.hpp>
+#include <filesystem> // Para verificação de diretório
 
 namespace GUI
 {
@@ -54,6 +55,9 @@ namespace GUI
     OMNI_LIGHT,
     CAMERA
   };
+
+#define FREE_MOVEMENT 0
+#define ORBITAL_MOVEMENT 1
 
   class Controller
   {
@@ -108,6 +112,19 @@ namespace GUI
      */
     float camera_rotation_sensitivity = 0.01667f;
     /**
+     * @brief Tipo de movimentação utilizada na câmera
+     *
+     * @note FREE_MOVEMENT = 0 (Movimentação livre WASD)
+     * @note ORBITAL_MOVEMENT = 1 (Movimento Orbital em torno do foco)
+     */
+    int type_camera_movement = FREE_MOVEMENT;
+    /**
+     * @brief Angulo acumulado da camera
+     *
+     * @note Usado no benchmark para trocar a movimentação da câmera
+     */
+    float accumulatedAngle = 0.0f;
+    /**
      * @brief Parâmetros de inserção de objetos
      */
     insertion_options_parameters insertionOptions;
@@ -134,6 +151,11 @@ namespace GUI
      *
      */
     models::Benchmark benchmark_results;
+    /**
+     * @brief Quantidade de repetições do benchmarking
+     *
+     */
+    int benchmark_repetitions = 10;
     /**
      * @brief Tipo do elemento selecionado na cena
      *
@@ -175,5 +197,6 @@ namespace GUI
     void start_benchmark();
     void end_benchmark();
     void update_benchmark(double frame_time);
+    void update_camera_benchmark();
   };
 }

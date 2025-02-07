@@ -138,6 +138,7 @@ void GUI::UI::render()
 
   // Rendeniza o diálogo de arquivos, caso ele tenha sido aberto no menu
   this->fileDialog.Display();
+  models::Camera3D *camera = this->controller->getScene()->getCamera();
 
   if (this->controller->benchmarking)
   {
@@ -145,13 +146,23 @@ void GUI::UI::render()
     ImGui::SetNextWindowSize(ImVec2(static_cast<float>(this->controller->windowWidth), static_cast<float>(this->controller->windowHeight)));
     ImGui::Begin("benchmark", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBringToFrontOnFocus);
 
-    // models::CameraOrbital(this->controller->getScene()->getCamera(), this->controller->camera_rotation_sensitivity);
-    models::CameraMoveForward(this->controller->getScene()->getCamera(), 1.0f, true);
+    if (camera->position == core::Vector3{0.0f, 0.0f, 0.0f})
+    {
+      if (this->controller->type_camera_movement == ORBITAL_MOVEMENT)
+      {
+        this->controller->type_camera_movement = FREE_MOVEMENT;
+        // Re centraliza a camera no eixo Z
+        //  Arredonda pra baixo pra eliminar casa decimais que a rotação deixou
+        camera->position = {0.0f, 0.0f, 0.0f};
+      }
+      else
+        this->controller->type_camera_movement = ORBITAL_MOVEMENT;
+    }
 
-    core::Vector3 vrp = this->controller->getScene()->getCamera()->position;
-    core::Vector3 eye = this->controller->getScene()->getCamera()->target;
+    this->controller->update_camera_benchmark();
 
-    models::Camera3D *camera = this->controller->getScene()->getCamera();
+    core::Vector3 vrp = camera->position;
+    core::Vector3 eye = camera->target;
 
     // Container com 20% da largura da tela
     ImGui::SetNextWindowPos(ImVec2(0, 20));
@@ -298,6 +309,9 @@ void GUI::UI::render()
     this->controller->update_benchmark(frame_time.count());
 
     ImGui::End();
+
+    if (vrp.z <= -192.0f)
+      this->controller->end_benchmark();
   }
   else
   {

@@ -84,6 +84,8 @@ namespace core
   // Types and Structures Definition
   // ---------------------------------------------------------------------------------
 
+#define EPSILON 0.000001f
+
   typedef struct Vector2
   {
     float x;
@@ -130,7 +132,9 @@ namespace core
 
     bool operator==(const Vector3 &v) const
     {
-      return x == v.x && y == v.y && z == v.z;
+      return (std::fabs(v.x - x) < EPSILON &&
+              std::fabs(v.y - y) < EPSILON &&
+              std::fabs(v.z - z) < EPSILON);
     }
 
     json to_json()

@@ -174,10 +174,7 @@ namespace GUI
 
         if (ImGui::MenuItem("Benchmark"))
         {
-          if (!controller->benchmarking)
-            controller->start_benchmark();
-          else
-            controller->end_benchmark();
+          controller->start_benchmark();
         }
 
         ImGui::EndMenu();
