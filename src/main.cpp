@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
   // Setup window
   SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_MAXIMIZED);
-  SDL_Window *window = SDL_CreateWindow("Dear ImGui SDL2+SDLRenderer example", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_width, window_height, window_flags);
+  SDL_Window *window = SDL_CreateWindow("MRX - PIPELINE TESTER", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window_width, window_height, window_flags);
   SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 
   // Setup Dear ImGui context

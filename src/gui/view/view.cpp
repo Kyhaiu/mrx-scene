@@ -128,6 +128,8 @@ void GUI::UI::object_properties()
  */
 void GUI::UI::render()
 {
+  // Mede o tempo de rasterização
+  auto start_time = std::chrono::high_resolution_clock::now();
 
   // Start the Dear ImGui frame
   ImGui_ImplSDL2_NewFrame();
@@ -254,7 +256,7 @@ void GUI::UI::render()
       ImGui::Text("%.4f ms", current_time);
       ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::YELLOW)), "Average frame time:");
       ImGui::SameLine();
-      ImGui::Text("%.4f ms", this->controller->benchmark_results.average_frame_time * 1000);
+      ImGui::Text("%.4f ms", this->controller->benchmark_results.average_frame_time);
 
       ImGui::TextColored(ImColor(models::GET_COLOR_UI32(models::GREEN)), "Min frame time:");
       ImGui::SameLine();
@@ -298,15 +300,8 @@ void GUI::UI::render()
 
     ImGui::End();
 
-    // Mede o tempo de rasterização
-    auto start_time = std::chrono::high_resolution_clock::now();
     this->controller->updateScene();
     this->viewport(this->controller->getScene());
-    auto end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> frame_time = end_time - start_time;
-
-    // Atualiza o benchmark com o tempo do frame
-    this->controller->update_benchmark(frame_time.count());
 
     ImGui::End();
 
@@ -349,6 +344,15 @@ void GUI::UI::render()
   SDL_RenderClear(this->renderer);
   ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), this->renderer);
   SDL_RenderPresent(this->renderer);
+
+  if (this->controller->benchmarking)
+  {
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> frame_time = end_time - start_time;
+
+    // Atualiza o benchmark com o tempo do frame
+    this->controller->update_benchmark(frame_time.count());
+  }
 }
 
 /**

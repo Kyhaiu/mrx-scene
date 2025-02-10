@@ -212,6 +212,7 @@ namespace core
     bool isHole();
     bool isConterClockwise(core::Vector3 a, core::Vector3 b);
     bool isVisible(const core::Vector3 camera_position);
+    bool isVisibleAltered(const core::Vector3 n);
     void getFaceNormal();
     core::Vector3 getFaceCentroid(bool screen_coords = false);
 

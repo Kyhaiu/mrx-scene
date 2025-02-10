@@ -629,7 +629,10 @@ namespace models
           v.first = v_screen;
         }
 
-        face->setVisible(face->isVisible(camera->position));
+        // face->setVisible(face->isVisible(camera->position));
+        core::Vector3 n = {camera->target.x - camera->position.x, camera->target.y - camera->position.y, camera->target.z - camera->position.z};
+
+        face->setVisible(face->isVisibleAltered(n));
 
         if (!face->getVisible())
           continue;

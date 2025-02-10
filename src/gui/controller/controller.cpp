@@ -427,7 +427,7 @@ void GUI::Controller::end_benchmark()
 
   if (this->getScene()->pipeline_model == SMITH_PIPELINE)
   {
-    filename = "benchmark_pipeline_smith_" + shading_model + "_results_" + repetition + ".txt";
+    filename = "benchmark_pipeline_smith_" + shading_model + "_results_" + (repetition) + ".txt";
     output_dir += "\\SMITH\\";
   }
   else
@@ -464,7 +464,7 @@ void GUI::Controller::end_benchmark()
           << std::fixed << std::setprecision(4)
           << "Total Time: " << this->benchmark_results.total_time.count() << " s\n"
           << "Total Frames: " << this->benchmark_results.total_frames << "\n"
-          << "Average FPS: " << this->benchmark_results.average_fps << "\n"
+          << "Average FPS: " << this->benchmark_results.total_frames / this->benchmark_results.total_time.count() << "\n"
           << "Avg Frame Time: " << this->benchmark_results.average_frame_time << " ms\n"
           << "Min Frame Time: " << this->benchmark_results.min_frame_time << " ms\n"
           << "Max Frame Time: " << this->benchmark_results.max_frame_time << " ms\n\n"
@@ -477,9 +477,9 @@ void GUI::Controller::end_benchmark()
 
   outFile.close();
   std::cout << "Results of benchmark " + repetition + " saved to: " << filename << std::endl;
-  this->benchmark_repetitions--;
+  this->benchmark_repetitions++;
 
-  if (this->benchmark_repetitions >= 1)
+  if (this->benchmark_repetitions <= 10)
   {
     start_benchmark();
   }
@@ -490,7 +490,7 @@ void GUI::Controller::update_benchmark(double frame_time)
   // Adiciona o tempo do frame ao vetor de tempos
   this->benchmark_results.frame_times.push_back(frame_time);
 
-  // Atualiza o tempo total de execução
+  // Atualiza o tempo total de execução corretamente
   this->benchmark_results.total_time += std::chrono::duration<double>(frame_time);
 
   // Atualiza o número total de frames
@@ -506,11 +506,18 @@ void GUI::Controller::update_benchmark(double frame_time)
     this->benchmark_results.max_frame_time = frame_time;
   }
 
-  // Calcula a média de tempo de frame
-  this->benchmark_results.average_frame_time = this->benchmark_results.total_time.count() / this->benchmark_results.total_frames;
+  // Calcula a média de tempo de frame corretamente
+  this->benchmark_results.average_frame_time = (this->benchmark_results.total_time.count() / this->benchmark_results.total_frames);
 
-  // Calcula a média de FPS
-  this->benchmark_results.average_fps = this->benchmark_results.total_frames / this->benchmark_results.total_time.count();
+  // Calcula a média de FPS corretamente
+  if (this->benchmark_results.total_time.count() > 0)
+  {
+    this->benchmark_results.average_fps = this->benchmark_results.total_frames / this->benchmark_results.total_time.count();
+  }
+  else
+  {
+    this->benchmark_results.average_fps = 0.0;
+  }
 
   // Atualiza os 10% piores frames
   if (this->benchmark_results.frame_times.size() >= 10)
@@ -518,11 +525,8 @@ void GUI::Controller::update_benchmark(double frame_time)
     std::vector<double> sorted_times = this->benchmark_results.frame_times;
     std::sort(sorted_times.begin(), sorted_times.end());
     int worst_count = sorted_times.size() / 10;
-    this->benchmark_results.worst_10_percentile.clear();
-    for (int i = sorted_times.size() - worst_count; i < sorted_times.size(); i++)
-    {
-      this->benchmark_results.worst_10_percentile.push_back(sorted_times[i]);
-    }
+    this->benchmark_results.worst_10_percentile.assign(
+        sorted_times.end() - worst_count, sorted_times.end());
   }
 }
 

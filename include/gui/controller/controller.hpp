@@ -155,7 +155,7 @@ namespace GUI
      * @brief Quantidade de repetições do benchmarking
      *
      */
-    int benchmark_repetitions = 10;
+    int benchmark_repetitions = 1;
     /**
      * @brief Tipo do elemento selecionado na cena
      *

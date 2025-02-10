@@ -266,6 +266,14 @@ namespace core
     return math::Vector3DotProduct(this->normal, face2camera) > 0;
   }
 
+  bool Face::isVisibleAltered(const core::Vector3 n)
+  {
+
+    this->getFaceNormal();
+
+    return math::Vector3DotProduct(this->normal, n) < 0;
+  }
+
   /**
    * @brief Calcula o vetor normal da face
    *
