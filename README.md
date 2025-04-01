@@ -1,6 +1,6 @@
 # <h1 align="center">MRX Engine</h1>
 
-> A graphics engine initially made for the final paper at Computer Graphics course at UNIOESTE. Made from scratch using C++ without using any engine or library.
+> A graphics engine initially made for the final paper at Computer Graphics course at UNIOESTE. Made from scratch using C++ without using any engine to draw objects
 
 ## Dependencies
 
