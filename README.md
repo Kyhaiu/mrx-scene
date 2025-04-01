@@ -1,4 +1,4 @@
-# <h1 align="center">Bloom Engine</h1>
+# <h1 align="center">MRX Engine</h1>
 
 > A graphics engine initially made for the final paper at Computer Graphics course at UNIOESTE. Made from scratch using C++ without using any engine or library.
 
