@@ -117,6 +117,8 @@ You can add the following objects to the scene:
 
 ## Enhancements
 
+- [ ] Apply paralelism on the rasterization
+- [ ] Fix some bugs marked as TODO in the project code
 - [ ] Scale window with the buttons +1 and -1.
 - [ ] Base refactor
 - [ ] Global shadows
