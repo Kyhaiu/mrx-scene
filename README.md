@@ -27,7 +27,7 @@ xmake && xmake run
 On Windows:
 
 ```bash
-xmake && xmake run
+xmake; xmake run
 ```
 
 ### In case of errors during the installation of the dependencies:
